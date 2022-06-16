@@ -1,0 +1,9 @@
+node_modules
+deployments
+cache
+artifacts
+typechain-types
+types/**
+.vscode
+deployments/local
+save

@@ -1,0 +1,20 @@
+name: On Push checks
+on:
+  push:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Compile, test and test deploy
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn compile
+      - name: test
+        run: yarn test
+      - name: deploy local script
+        run: npx concurrently --kill-others -s command-1  "npx hardhat node" "sleep 2 & npx yarn deploy:local"
