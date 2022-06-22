@@ -146,7 +146,7 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
     Attestation[] memory attestations = new Attestation[](1);
 
     uint256 attestationCollectionId = AUTHORIZED_COLLECTION_ID_FIRST +
-      claim.groupProperties.listIndex;
+      claim.groupProperties.groupIndex;
     if (attestationCollectionId > AUTHORIZED_COLLECTION_ID_LAST)
       revert CollectionIdOutOfBound(attestationCollectionId);
 
@@ -224,7 +224,7 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
     override
     returns (uint256)
   {
-    uint256 ticketIdentifier = _encodeInSnarkField(address(this), claim.groupProperties.listIndex);
+    uint256 ticketIdentifier = _encodeInSnarkField(address(this), claim.groupProperties.groupIndex);
     return ticketIdentifier;
   }
 

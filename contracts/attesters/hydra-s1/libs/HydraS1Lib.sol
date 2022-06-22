@@ -13,7 +13,7 @@ struct HydraS1Claim {
 }
 
 struct HydraS1GroupProperties {
-  uint128 listIndex;
+  uint128 groupIndex;
   uint32 generationTimestamp;
   bool isScore;
 }
@@ -148,13 +148,13 @@ library HydraS1Lib {
   }
 
   function _generateGroupIdFromProperties(
-    uint128 listIndex,
+    uint128 groupIndex,
     uint32 generationTimestamp,
     bool isScore
   ) internal pure returns (uint256) {
     return
       _generateGroupIdFromEncodedProperties(
-        _encodeGroupProperties(listIndex, generationTimestamp, isScore)
+        _encodeGroupProperties(groupIndex, generationTimestamp, isScore)
       );
   }
 
@@ -167,11 +167,11 @@ library HydraS1Lib {
   }
 
   function _encodeGroupProperties(
-    uint128 listIndex,
+    uint128 groupIndex,
     uint32 generationTimestamp,
     bool isScore
   ) internal pure returns (bytes memory) {
-    return abi.encode(listIndex, generationTimestamp, isScore);
+    return abi.encode(groupIndex, generationTimestamp, isScore);
   }
 
   function _validateClaim(Claim memory claim) internal pure {

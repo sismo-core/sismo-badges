@@ -150,12 +150,12 @@ describe('Test E2E Protocol', () => {
       // Deploy Sismo Protocol Core contracts
       ticketIdentifier1 = await generateTicketIdentifier(
         hydraS1SimpleAttester.address,
-        group1.properties.listIndex
+        group1.properties.groupIndex
       );
 
       ticketIdentifier2 = await generateTicketIdentifier(
         hydraS1SoulboundAttester.address,
-        group2.properties.listIndex
+        group2.properties.groupIndex
       );
 
       request1 = {
