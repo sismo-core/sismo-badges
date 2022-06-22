@@ -13,7 +13,7 @@ struct HydraS1Claim {
 }
 
 struct HydraS1GroupProperties {
-  uint128 listIndex;
+  uint128 groupIndex;
   uint32 generationTimestamp;
   bool isScore;
 }
@@ -66,7 +66,7 @@ library HydraS1Lib {
         _getExpectedExternalNullifier(self),
         _getTicket(self),
         _getValue(self),
-        _getaccountsTreeValue(self),
+        _getAccountsTreeValue(self),
         _getIsStrict(self),
         _getCommitmentMapperPubKey(self)
       );
@@ -133,7 +133,7 @@ library HydraS1Lib {
     return self.input[7];
   }
 
-  function _getaccountsTreeValue(HydraS1ProofData memory self) internal pure returns (uint256) {
+  function _getAccountsTreeValue(HydraS1ProofData memory self) internal pure returns (uint256) {
     return self.input[8];
   }
 
@@ -148,13 +148,13 @@ library HydraS1Lib {
   }
 
   function _generateGroupIdFromProperties(
-    uint128 listIndex,
+    uint128 groupIndex,
     uint32 generationTimestamp,
     bool isScore
   ) internal pure returns (uint256) {
     return
       _generateGroupIdFromEncodedProperties(
-        _encodeGroupProperties(listIndex, generationTimestamp, isScore)
+        _encodeGroupProperties(groupIndex, generationTimestamp, isScore)
       );
   }
 
@@ -167,11 +167,11 @@ library HydraS1Lib {
   }
 
   function _encodeGroupProperties(
-    uint128 listIndex,
+    uint128 groupIndex,
     uint32 generationTimestamp,
     bool isScore
   ) internal pure returns (bytes memory) {
-    return abi.encode(listIndex, generationTimestamp, isScore);
+    return abi.encode(groupIndex, generationTimestamp, isScore);
   }
 
   function _validateClaim(Claim memory claim) internal pure {

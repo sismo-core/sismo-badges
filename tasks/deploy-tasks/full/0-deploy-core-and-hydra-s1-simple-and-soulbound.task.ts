@@ -49,10 +49,12 @@ async function deploymentAction(
   { options }: { options: DeployOptions },
   hre: HardhatRuntimeEnvironment
 ): Promise<Deployed0> {
-  console.log('0-deploy-core-and-hydra-s1-simple-and-soulbound: ', hre.network.name);
   const deployer = await getDeployer(hre);
   const config = deploymentsConfig[hre.network.name];
   options = { ...config.deployOptions, ...options };
+  if (options.manualConfirm || options.log) {
+    console.log('0-deploy-core-and-hydra-s1-simple-and-soulbound: ', hre.network.name);
+  }
   // Only deploy contracts without giving final ownership.
   // Owners of the different contract are the deployer
   const { attestationsRegistry, badges, front } = (await hre.run('deploy-core', {

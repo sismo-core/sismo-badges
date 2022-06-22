@@ -139,7 +139,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
     it('Should generate a proof with a Hydra S1 prover and verify it onchain using the attester', async () => {
       ticketIdentifier = await generateTicketIdentifier(
         hydraS1SimpleAttester.address,
-        group1.properties.listIndex
+        group1.properties.groupIndex
       );
 
       request = {
@@ -172,7 +172,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         BigNumber.from(destination1.identifier).toHexString()
       );
       expect(args.attestation.collectionId).to.equal(
-        collectionIdFirst.add(group1.properties.listIndex)
+        collectionIdFirst.add(group1.properties.groupIndex)
       );
       expect(args.attestation.value).to.equal(0);
       expect(args.attestation.timestamp).to.equal(group1.properties.generationTimestamp);
@@ -212,7 +212,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
       const wrongRequest = { ...request, claims: [{ ...request.claims[0] }] };
       const wrongGroupProperties = { ...group1.properties };
 
-      wrongGroupProperties.listIndex = group2.properties.listIndex;
+      wrongGroupProperties.groupIndex = group2.properties.groupIndex;
       const wrongEncodedProperties = encodeGroupProperties(wrongGroupProperties);
       wrongRequest.claims[0].extraData = wrongEncodedProperties;
       await expect(
