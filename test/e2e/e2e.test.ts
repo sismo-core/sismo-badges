@@ -15,7 +15,7 @@ import { RequestStruct } from 'types/Attester';
 import { getEventArgs } from '../utils/expectEvent';
 import { HydraS1Prover, SnarkProof, KVMerkleTree, HydraS1Account } from '@sismo-core/hydra-s1';
 import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
 import {
@@ -25,13 +25,17 @@ import {
   generateLists,
   Group,
   encodeGroupProperties,
+  evmSnapshot,
+  evmRevert,
 } from '../utils';
 import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
+import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
+import { getAttestationValuesAndAssert, getBadgeBalancesAndAssert } from '../utils';
 
 const config = deploymentsConfig[hre.network.name];
-
 describe('Test E2E Protocol', () => {
   let chainId: number;
+  let snapshotId: string;
 
   // contracts
   let attestationsRegistry: AttestationsRegistry;
@@ -41,12 +45,12 @@ describe('Test E2E Protocol', () => {
   let commitmentMapperRegistry: CommitmentMapperRegistry;
   let front: Front;
   let badges: Badges;
+  let earlyUserCollectionId;
 
   // hydra s1 prover
   let prover: HydraS1Prover;
   let commitmentMapper: CommitmentMapperTester;
   let commitmentMapperPubKey: EddsaPublicKey;
-
   let registryTree: KVMerkleTree;
 
   // Test Signers
@@ -56,20 +60,27 @@ describe('Test E2E Protocol', () => {
 
   // Test accounts
   let source1: HydraS1Account;
+  let source2: HydraS1Account;
   let destination1: HydraS1Account;
   let destination2: HydraS1Account;
 
   // Data source test
   let source1Value: BigNumber;
+  let source2Value: BigNumber;
   let accountsTree1: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
   let group1: Group;
   let group2: Group;
 
   // Valid request and proof
-  let request: RequestStruct;
-  let proof: SnarkProof;
-  let ticketIdentifier: BigNumber;
+  let request1: RequestStruct;
+  let request2: RequestStruct;
+  let proofRequest1: SnarkProof;
+  let proofRequest2: SnarkProof;
+  let ticketIdentifier1: BigNumber;
+  let ticketIdentifier2: BigNumber;
+  let attestationsRequested1: AttestationStructOutput[];
+  let attestationsRequested2: AttestationStructOutput[];
 
   before(async () => {
     const signers = await hre.ethers.getSigners();
@@ -86,6 +97,7 @@ describe('Test E2E Protocol', () => {
     );
 
     source1 = hydraS1Accounts[0];
+    source2 = hydraS1Accounts[4];
     destination1 = hydraS1Accounts[1];
     destination2 = hydraS1Accounts[3];
 
@@ -99,6 +111,7 @@ describe('Test E2E Protocol', () => {
     group1 = groups[0];
     group2 = groups[1];
     source1Value = accountsTree1.getValue(BigNumber.from(source1.identifier).toHexString());
+    source2Value = accountsTree1.getValue(BigNumber.from(source2.identifier).toHexString());
 
     // 4 - Init Proving scheme
     prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
@@ -108,7 +121,7 @@ describe('Test E2E Protocol', () => {
   /********************************** DEPLOYMENTS **************************************/
   /*************************************************************************************/
 
-  describe('Deployments', () => {
+  describe('Deployments, setup contracts and prepare test requests', () => {
     it('Should deploy and setup core', async () => {
       // Deploy Sismo Protocol Core contracts
       ({
@@ -125,22 +138,27 @@ describe('Test E2E Protocol', () => {
         },
       })) as Deployed0);
       const root = registryTree.getRoot();
-      await availableRootsRegistry.registerRootForAttester(hydraS1SimpleAttester.address, root);
+      await (
+        await availableRootsRegistry.registerRootForAttester(hydraS1SimpleAttester.address, root)
+      ).wait();
+      await (
+        await availableRootsRegistry.registerRootForAttester(hydraS1SoulboundAttester.address, root)
+      ).wait();
+      earlyUserCollectionId = await front.EARLY_USER_COLLECTION();
     });
-  });
-
-  /*************************************************************************************/
-  /***************************** GENERATE VALID ATTESTATION ****************************/
-  /*************************************************************************************/
-
-  describe('Generate valid attestation from front', () => {
-    it('Should generate an attestation from hydra-s1 simple and receive the early user attestation', async () => {
-      ticketIdentifier = await generateTicketIdentifier(
+    it('Should prepare test requests', async () => {
+      // Deploy Sismo Protocol Core contracts
+      ticketIdentifier1 = await generateTicketIdentifier(
         hydraS1SimpleAttester.address,
         group1.properties.listIndex
       );
 
-      request = {
+      ticketIdentifier2 = await generateTicketIdentifier(
+        hydraS1SoulboundAttester.address,
+        group2.properties.listIndex
+      );
+
+      request1 = {
         claims: [
           {
             groupId: group1.id,
@@ -151,60 +169,139 @@ describe('Test E2E Protocol', () => {
         destination: BigNumber.from(destination1.identifier).toHexString(),
       };
 
-      proof = await prover.generateSnarkProof({
+      proofRequest1 = await prover.generateSnarkProof({
         source: source1,
         destination: destination1,
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: ticketIdentifier1,
         isStrict: !group1.properties.isScore,
       });
 
-      const attestationRequested = await hydraS1SimpleAttester.buildAttestations(
-        request,
-        proof.toBytes()
+      request2 = {
+        claims: [
+          {
+            groupId: group2.id,
+            claimedValue: source2Value,
+            extraData: encodeGroupProperties(group2.properties),
+          },
+        ],
+        destination: BigNumber.from(destination1.identifier).toHexString(),
+      };
+
+      proofRequest2 = await prover.generateSnarkProof({
+        source: source2,
+        destination: destination1,
+        claimedValue: source2Value,
+        chainId: chainId,
+        accountsTree: accountsTree2,
+        ticketIdentifier: ticketIdentifier2,
+        isStrict: !group2.properties.isScore,
+      });
+
+      attestationsRequested1 = await front.buildAttestations(
+        hydraS1SimpleAttester.address,
+        request1,
+        proofRequest1.toBytes()
       );
 
-      const tx = await front.generateAttestations(
-        hydraS1SimpleAttester.address,
-        request,
-        proof.toBytes()
+      attestationsRequested2 = await front.buildAttestations(
+        hydraS1SoulboundAttester.address,
+        request2,
+        proofRequest2.toBytes()
+      );
+      snapshotId = await evmSnapshot(hre);
+    });
+  });
+
+  /*************************************************************************************/
+  /***************************** GENERATE VALID ATTESTATION ****************************/
+  /*************************************************************************************/
+
+  describe('Generate valid attestation from front', () => {
+    it('Should generate attestations from hydra s1 simple and hydra s1 soulbound via batch', async () => {
+      const tx = await front.batchGenerateAttestations(
+        [hydraS1SimpleAttester.address, hydraS1SoulboundAttester.address],
+        [request1, request2],
+        [proofRequest1.toBytes(), proofRequest2.toBytes()]
       );
       const { events } = await tx.wait();
       const args = getEventArgs(events, 'EarlyUserAttestationGenerated');
 
-      expect(args.destination).to.equal(request.destination);
+      expect(args.destination).to.equal(request1.destination);
 
-      const attestationValue = await attestationsRegistry.getAttestationValue(
-        attestationRequested[0].collectionId,
-        request.destination
+      await getAttestationValuesAndAssert(
+        attestationsRegistry,
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
+        [request1.destination, request2.destination],
+        [attestationsRequested1[0].value, attestationsRequested2[0].value]
       );
 
-      expect(attestationValue).to.be.equal(attestationRequested[0].value);
-
-      const badgeBalance = await badges.balanceOf(
-        request.destination,
-        attestationRequested[0].collectionId
+      await getBadgeBalancesAndAssert(
+        badges,
+        [
+          attestationsRequested1[0].collectionId,
+          attestationsRequested2[0].collectionId,
+          earlyUserCollectionId,
+        ],
+        [request1.destination, request2.destination, request1.destination],
+        [attestationsRequested1[0].value, attestationsRequested2[0].value, 1]
+      );
+    });
+    it('Should reset contracts', async () => {
+      await evmRevert(hre, snapshotId);
+      await getAttestationValuesAndAssert(
+        attestationsRegistry,
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
+        [request1.destination, request2.destination],
+        [0, 0, 0]
       );
 
-      expect(badgeBalance).to.be.equal(attestationRequested[0].value);
+      await getBadgeBalancesAndAssert(
+        badges,
+        [
+          attestationsRequested1[0].collectionId,
+          attestationsRequested2[0].collectionId,
+          earlyUserCollectionId,
+        ],
+        [request1.destination, request2.destination, request1.destination],
+        [0, 0, 0]
+      );
+    });
+    it('Should generate attestations from hydra s1 simple and hydra s1 soulbound via front and two separate txs', async () => {
+      const tx = await front.generateAttestations(
+        hydraS1SimpleAttester.address,
+        request1,
+        proofRequest1.toBytes()
+      );
+      await front.generateAttestations(
+        hydraS1SoulboundAttester.address,
+        request2,
+        proofRequest2.toBytes()
+      );
+      const { events } = await tx.wait();
+      const args = getEventArgs(events, 'EarlyUserAttestationGenerated');
 
-      const earlyUserCollectionId = await front.EARLY_USER_COLLECTION();
+      expect(args.destination).to.equal(request1.destination);
 
-      const earlyUserAttestationValue = await attestationsRegistry.getAttestationValue(
-        earlyUserCollectionId,
-        request.destination
+      await getAttestationValuesAndAssert(
+        attestationsRegistry,
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
+        [request1.destination, request2.destination],
+        [attestationsRequested1[0].value, attestationsRequested2[0].value]
       );
 
-      expect(earlyUserAttestationValue).to.be.equal(1);
-
-      const balanceOfEarlyUserBadge = await badges.balanceOf(
-        request.destination,
-        earlyUserCollectionId
+      await getBadgeBalancesAndAssert(
+        badges,
+        [
+          attestationsRequested1[0].collectionId,
+          attestationsRequested2[0].collectionId,
+          earlyUserCollectionId,
+        ],
+        [request1.destination, request2.destination, request1.destination],
+        [attestationsRequested1[0].value, attestationsRequested2[0].value, 1]
       );
-
-      expect(balanceOfEarlyUserBadge).to.be.equal(1);
     });
   });
 });
