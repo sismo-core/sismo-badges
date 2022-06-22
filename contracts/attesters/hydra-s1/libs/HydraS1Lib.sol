@@ -66,7 +66,7 @@ library HydraS1Lib {
         _getExpectedExternalNullifier(self),
         _getTicket(self),
         _getValue(self),
-        _getaccountsTreeValue(self),
+        _getAccountsTreeValue(self),
         _getIsStrict(self),
         _getCommitmentMapperPubKey(self)
       );
@@ -133,7 +133,7 @@ library HydraS1Lib {
     return self.input[7];
   }
 
-  function _getaccountsTreeValue(HydraS1ProofData memory self) internal pure returns (uint256) {
+  function _getAccountsTreeValue(HydraS1ProofData memory self) internal pure returns (uint256) {
     return self.input[8];
   }
 
