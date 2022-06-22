@@ -27,7 +27,6 @@ import {
   encodeGroupProperties,
   evmSnapshot,
   evmRevert,
-  getAttestationsValues,
 } from '../utils';
 import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
 import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
@@ -205,17 +204,12 @@ describe('Test E2E Protocol', () => {
         })
       ).toBytes();
 
-      attestationsRequested1 = await front.buildAttestations(
-        hydraS1SimpleAttester.address,
-        request1,
-        proofRequest1
+      [attestationsRequested1, attestationsRequested2] = await front.batchBuildAttestations(
+        [hydraS1SimpleAttester.address, hydraS1SoulboundAttester.address],
+        [request1, request2],
+        [proofRequest1, proofRequest2]
       );
 
-      attestationsRequested2 = await front.buildAttestations(
-        hydraS1SoulboundAttester.address,
-        request2,
-        proofRequest2
-      );
       snapshotId = await evmSnapshot(hre);
     });
   });
@@ -236,8 +230,7 @@ describe('Test E2E Protocol', () => {
 
       expect(args.destination).to.eql(request1.destination);
 
-      const attestationsValues = await getAttestationsValues(
-        attestationsRegistry,
+      const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
         [
           attestationsRequested1[0].collectionId,
           attestationsRequested2[0].collectionId,
@@ -270,8 +263,7 @@ describe('Test E2E Protocol', () => {
     it('Should reset contracts', async () => {
       await evmRevert(hre, snapshotId);
 
-      const attestationsValues = await getAttestationsValues(
-        attestationsRegistry,
+      const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
         [
           attestationsRequested1[0].collectionId,
           attestationsRequested2[0].collectionId,
@@ -309,8 +301,7 @@ describe('Test E2E Protocol', () => {
 
       expect(args.destination).to.eql(request1.destination);
 
-      const attestationsValues = await getAttestationsValues(
-        attestationsRegistry,
+      const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
         [
           attestationsRequested1[0].collectionId,
           attestationsRequested2[0].collectionId,

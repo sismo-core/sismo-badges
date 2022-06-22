@@ -92,4 +92,24 @@ interface IAttestationsRegistry {
     external
     view
     returns (uint32);
+
+  /**
+   * @dev Getter of the data of specific attestations
+   * @param collectionIds Collection identifiers of the targeted attestations
+   * @param owners Owners of the targeted attestations
+   */
+  function getAttestationDataBatch(uint256[] memory collectionIds, address[] memory owners)
+    external
+    view
+    returns (AttestationData[] memory);
+
+  /**
+   * @dev Getter of the values of specific attestations
+   * @param collectionIds Collection identifiers of the targeted attestations
+   * @param owners Owners of the targeted attestations
+   */
+  function getAttestationValueBatch(uint256[] memory collectionIds, address[] memory owners)
+    external
+    view
+    returns (uint256[] memory);
 }
