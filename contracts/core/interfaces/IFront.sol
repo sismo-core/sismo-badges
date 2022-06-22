@@ -48,5 +48,5 @@ interface IFront {
     address attester,
     Request calldata request,
     bytes calldata proofData
-  ) external returns (Attestation[] memory);
+  ) external view returns (Attestation[] memory);
 }
