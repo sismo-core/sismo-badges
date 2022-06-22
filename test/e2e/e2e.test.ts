@@ -1,4 +1,4 @@
-import hre, { ethers } from 'hardhat';
+import hre from 'hardhat';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 import {
@@ -15,7 +15,7 @@ import { RequestStruct } from 'types/Attester';
 import { getEventArgs } from '../utils/expectEvent';
 import { HydraS1Prover, SnarkProof, KVMerkleTree, HydraS1Account } from '@sismo-core/hydra-s1';
 import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
 import {
@@ -27,10 +27,11 @@ import {
   encodeGroupProperties,
   evmSnapshot,
   evmRevert,
+  getAttestationValuesAndAssert,
+  getBadgeBalancesAndAssert,
 } from '../utils';
 import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
 import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
-import { getAttestationValuesAndAssert, getBadgeBalancesAndAssert } from '../utils';
 
 const config = deploymentsConfig[hre.network.name];
 describe('Test E2E Protocol', () => {
@@ -118,7 +119,7 @@ describe('Test E2E Protocol', () => {
   });
 
   /*************************************************************************************/
-  /********************************** DEPLOYMENTS **************************************/
+  /********************************** SETUP ********************************************/
   /*************************************************************************************/
 
   describe('Deployments, setup contracts and prepare test requests', () => {
@@ -216,7 +217,7 @@ describe('Test E2E Protocol', () => {
   });
 
   /*************************************************************************************/
-  /***************************** GENERATE VALID ATTESTATION ****************************/
+  /***************************** TESTS *************************************************/
   /*************************************************************************************/
 
   describe('Generate valid attestation from front', () => {

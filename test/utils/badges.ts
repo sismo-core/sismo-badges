@@ -8,10 +8,10 @@ export async function getBadgeBalancesAndAssert(
   addresses: string[],
   expectedValue: BigNumberish[]
 ): Promise<BigNumberish[]> {
-  const values: BigNumberish[] = [];
+  const balances: BigNumberish[] = [];
   for (const [index, collectionId] of collectionsIds.entries()) {
-    const value = await badges.balanceOf(addresses[index], collectionId);
-    expect(value).to.be.equal(expectedValue[index]);
+    const balance = await badges.balanceOf(addresses[index], collectionId);
+    expect(balance).to.be.equal(expectedValue[index]);
   }
-  return values;
+  return balances;
 }
