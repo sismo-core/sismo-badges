@@ -27,8 +27,7 @@ import {
   encodeGroupProperties,
   evmSnapshot,
   evmRevert,
-  getAttestationValuesAndAssert,
-  getBadgeBalancesAndAssert,
+  getAttestationsValues,
 } from '../utils';
 import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
 import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
@@ -76,8 +75,8 @@ describe('Test E2E Protocol', () => {
   // Valid request and proof
   let request1: RequestStruct;
   let request2: RequestStruct;
-  let proofRequest1: SnarkProof;
-  let proofRequest2: SnarkProof;
+  let proofRequest1: string;
+  let proofRequest2: string;
   let ticketIdentifier1: BigNumber;
   let ticketIdentifier2: BigNumber;
   let attestationsRequested1: AttestationStructOutput[];
@@ -125,6 +124,7 @@ describe('Test E2E Protocol', () => {
   describe('Deployments, setup contracts and prepare test requests', () => {
     it('Should deploy and setup core', async () => {
       // Deploy Sismo Protocol Core contracts
+
       ({
         attestationsRegistry,
         badges,
@@ -170,15 +170,17 @@ describe('Test E2E Protocol', () => {
         destination: BigNumber.from(destination1.identifier).toHexString(),
       };
 
-      proofRequest1 = await prover.generateSnarkProof({
-        source: source1,
-        destination: destination1,
-        claimedValue: source1Value,
-        chainId: chainId,
-        accountsTree: accountsTree1,
-        ticketIdentifier: ticketIdentifier1,
-        isStrict: !group1.properties.isScore,
-      });
+      proofRequest1 = (
+        await prover.generateSnarkProof({
+          source: source1,
+          destination: destination1,
+          claimedValue: source1Value,
+          chainId: chainId,
+          accountsTree: accountsTree1,
+          ticketIdentifier: ticketIdentifier1,
+          isStrict: !group1.properties.isScore,
+        })
+      ).toBytes();
 
       request2 = {
         claims: [
@@ -191,118 +193,152 @@ describe('Test E2E Protocol', () => {
         destination: BigNumber.from(destination1.identifier).toHexString(),
       };
 
-      proofRequest2 = await prover.generateSnarkProof({
-        source: source2,
-        destination: destination1,
-        claimedValue: source2Value,
-        chainId: chainId,
-        accountsTree: accountsTree2,
-        ticketIdentifier: ticketIdentifier2,
-        isStrict: !group2.properties.isScore,
-      });
+      proofRequest2 = (
+        await prover.generateSnarkProof({
+          source: source2,
+          destination: destination1,
+          claimedValue: source2Value,
+          chainId: chainId,
+          accountsTree: accountsTree2,
+          ticketIdentifier: ticketIdentifier2,
+          isStrict: !group2.properties.isScore,
+        })
+      ).toBytes();
 
       attestationsRequested1 = await front.buildAttestations(
         hydraS1SimpleAttester.address,
         request1,
-        proofRequest1.toBytes()
+        proofRequest1
       );
 
       attestationsRequested2 = await front.buildAttestations(
         hydraS1SoulboundAttester.address,
         request2,
-        proofRequest2.toBytes()
+        proofRequest2
       );
       snapshotId = await evmSnapshot(hre);
     });
   });
 
   /*************************************************************************************/
-  /***************************** TESTS *************************************************/
+  /************************ATTESTATIONS AND BADGES GENERATIONS**************************/
   /*************************************************************************************/
 
-  describe('Generate valid attestation from front', () => {
+  describe('Test attestations generations', () => {
     it('Should generate attestations from hydra s1 simple and hydra s1 soulbound via batch', async () => {
       const tx = await front.batchGenerateAttestations(
         [hydraS1SimpleAttester.address, hydraS1SoulboundAttester.address],
         [request1, request2],
-        [proofRequest1.toBytes(), proofRequest2.toBytes()]
+        [proofRequest1, proofRequest2]
       );
       const { events } = await tx.wait();
       const args = getEventArgs(events, 'EarlyUserAttestationGenerated');
 
-      expect(args.destination).to.equal(request1.destination);
+      expect(args.destination).to.eql(request1.destination);
 
-      await getAttestationValuesAndAssert(
+      const attestationsValues = await getAttestationsValues(
         attestationsRegistry,
-        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
-        [request1.destination, request2.destination],
-        [attestationsRequested1[0].value, attestationsRequested2[0].value]
-      );
-
-      await getBadgeBalancesAndAssert(
-        badges,
         [
           attestationsRequested1[0].collectionId,
           attestationsRequested2[0].collectionId,
           earlyUserCollectionId,
         ],
-        [request1.destination, request2.destination, request1.destination],
-        [attestationsRequested1[0].value, attestationsRequested2[0].value, 1]
+        [request1.destination, request2.destination, request1.destination]
       );
+
+      const expectedAttestationsValues = [
+        attestationsRequested1[0].value,
+        attestationsRequested2[0].value,
+        BigNumber.from(1),
+      ];
+
+      expect(attestationsValues).to.be.eql(expectedAttestationsValues);
+
+      const balances = await badges.balanceOfBatch(
+        [request1.destination, request2.destination, request1.destination],
+        [
+          attestationsRequested1[0].collectionId,
+          attestationsRequested2[0].collectionId,
+          earlyUserCollectionId,
+        ]
+      );
+
+      const expectedBalances = expectedAttestationsValues;
+
+      expect(balances).to.be.eql(expectedBalances);
     });
     it('Should reset contracts', async () => {
       await evmRevert(hre, snapshotId);
-      await getAttestationValuesAndAssert(
-        attestationsRegistry,
-        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
-        [request1.destination, request2.destination],
-        [0, 0, 0]
-      );
 
-      await getBadgeBalancesAndAssert(
-        badges,
+      const attestationsValues = await getAttestationsValues(
+        attestationsRegistry,
         [
           attestationsRequested1[0].collectionId,
           attestationsRequested2[0].collectionId,
           earlyUserCollectionId,
         ],
-        [request1.destination, request2.destination, request1.destination],
-        [0, 0, 0]
+        [request1.destination, request2.destination, request1.destination]
       );
+
+      const expectedAttestationsValues = [BigNumber.from(0), BigNumber.from(0), BigNumber.from(0)];
+
+      expect(attestationsValues).to.be.eql(expectedAttestationsValues);
+
+      const balances = await badges.balanceOfBatch(
+        [request1.destination, request2.destination, request1.destination],
+        [
+          attestationsRequested1[0].collectionId,
+          attestationsRequested2[0].collectionId,
+          earlyUserCollectionId,
+        ]
+      );
+
+      const expectedBalances = expectedAttestationsValues;
+
+      expect(balances).to.be.eql(expectedBalances);
     });
     it('Should generate attestations from hydra s1 simple and hydra s1 soulbound via front and two separate txs', async () => {
       const tx = await front.generateAttestations(
         hydraS1SimpleAttester.address,
         request1,
-        proofRequest1.toBytes()
+        proofRequest1
       );
-      await front.generateAttestations(
-        hydraS1SoulboundAttester.address,
-        request2,
-        proofRequest2.toBytes()
-      );
+      await front.generateAttestations(hydraS1SoulboundAttester.address, request2, proofRequest2);
       const { events } = await tx.wait();
       const args = getEventArgs(events, 'EarlyUserAttestationGenerated');
 
-      expect(args.destination).to.equal(request1.destination);
+      expect(args.destination).to.eql(request1.destination);
 
-      await getAttestationValuesAndAssert(
+      const attestationsValues = await getAttestationsValues(
         attestationsRegistry,
-        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
-        [request1.destination, request2.destination],
-        [attestationsRequested1[0].value, attestationsRequested2[0].value]
-      );
-
-      await getBadgeBalancesAndAssert(
-        badges,
         [
           attestationsRequested1[0].collectionId,
           attestationsRequested2[0].collectionId,
           earlyUserCollectionId,
         ],
-        [request1.destination, request2.destination, request1.destination],
-        [attestationsRequested1[0].value, attestationsRequested2[0].value, 1]
+        [request1.destination, request2.destination, request1.destination]
       );
+
+      const expectedAttestationsValues = [
+        attestationsRequested1[0].value,
+        attestationsRequested2[0].value,
+        BigNumber.from(1),
+      ];
+
+      expect(attestationsValues).to.be.eql(expectedAttestationsValues);
+
+      const balances = await badges.balanceOfBatch(
+        [request1.destination, request2.destination, request1.destination],
+        [
+          attestationsRequested1[0].collectionId,
+          attestationsRequested2[0].collectionId,
+          earlyUserCollectionId,
+        ]
+      );
+
+      const expectedBalances = expectedAttestationsValues;
+
+      expect(balances).to.be.eql(expectedBalances);
     });
   });
 });
