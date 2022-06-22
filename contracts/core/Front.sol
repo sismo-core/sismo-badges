@@ -79,7 +79,7 @@ contract Front is IFront {
     address attester,
     Request calldata request,
     bytes calldata proofData
-  ) external override returns (Attestation[] memory) {
+  ) external view override returns (Attestation[] memory) {
     return _forwardAttestationsBuild(attester, request, proofData);
   }
 
@@ -87,7 +87,7 @@ contract Front is IFront {
     address attester,
     Request calldata request,
     bytes calldata proofData
-  ) internal returns (Attestation[] memory) {
+  ) internal view returns (Attestation[] memory) {
     return IAttester(attester).buildAttestations(request, proofData);
   }
 

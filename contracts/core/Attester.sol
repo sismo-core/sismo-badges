@@ -127,6 +127,7 @@ abstract contract Attester is IAttester {
    */
   function buildAttestations(Request calldata request, bytes calldata proofData)
     public
+    view
     virtual
     returns (Attestation[] memory);
 

@@ -48,6 +48,7 @@ interface IAttester {
    */
   function buildAttestations(Request calldata request, bytes calldata proofData)
     external
+    view
     returns (Attestation[] memory);
 
   /**
