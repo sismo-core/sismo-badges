@@ -38,7 +38,7 @@ contract Front is IFront {
     address attester,
     Request calldata request,
     bytes calldata proofData
-  ) external returns (Attestation[] memory) {
+  ) external override returns (Attestation[] memory) {
     Attestation[] memory attestations = _forwardAttestationsGeneration(
       attester,
       request,
@@ -52,19 +52,25 @@ contract Front is IFront {
    * @dev generate multiple attestations at once, to the same destination, generates an early user attestation
    * @param attesters Attesters targeted by the attesters
    * @param requests Requests sent to attester
-   * @param dataArray Data sent with each request
+   * @param proofDataArray Data sent with each request
    */
   function batchGenerateAttestations(
     address[] calldata attesters,
     Request[] calldata requests,
-    bytes[] calldata dataArray
-  ) external {
+    bytes[] calldata proofDataArray
+  ) external override returns (Attestation[][] memory) {
+    Attestation[][] memory attestations = new Attestation[][](attesters.length);
     address destination = requests[0].destination;
     for (uint256 i = 0; i < attesters.length; i++) {
       if (requests[i].destination != destination) revert DifferentRequestsDestinations();
-      _forwardAttestationsGeneration(attesters[i], requests[i], dataArray[i]);
+      attestations[i] = _forwardAttestationsGeneration(
+        attesters[i],
+        requests[i],
+        proofDataArray[i]
+      );
     }
     _generateEarlyUserAttestation(destination);
+    return attestations;
   }
 
   /**
@@ -81,6 +87,27 @@ contract Front is IFront {
     bytes calldata proofData
   ) external view override returns (Attestation[] memory) {
     return _forwardAttestationsBuild(attester, request, proofData);
+  }
+
+  /**
+   * @dev build the attestations from multiple user requests.
+   * Forwards to the build function of targeted attester
+   * @param attesters Targeted attesters
+   * @param requests User requests
+   * @param proofDataArray Data sent along the request to prove its validity
+   * @return attestations Attestations that will be recorded
+   */
+  function batchBuildAttestations(
+    address[] calldata attesters,
+    Request[] calldata requests,
+    bytes[] calldata proofDataArray
+  ) external view override returns (Attestation[][] memory) {
+    Attestation[][] memory attestations = new Attestation[][](attesters.length);
+
+    for (uint256 i = 0; i < attesters.length; i++) {
+      attestations[i] = _forwardAttestationsBuild(attesters[i], requests[i], proofDataArray[i]);
+    }
+    return attestations;
   }
 
   function _forwardAttestationsBuild(

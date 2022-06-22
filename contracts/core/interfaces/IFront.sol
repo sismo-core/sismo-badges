@@ -28,13 +28,13 @@ interface IFront {
    * @dev generate multiple attestations at once, to the same destination
    * @param attesters Attesters targeted by the attesters
    * @param requests Requests sent to attester
-   * @param dataArray Data sent with each request
+   * @param proofDataArray Data sent with each request
    */
   function batchGenerateAttestations(
     address[] calldata attesters,
     Request[] calldata requests,
-    bytes[] calldata dataArray
-  ) external;
+    bytes[] calldata proofDataArray
+  ) external returns (Attestation[][] memory);
 
   /**
    * @dev build the attestations from a user request targeting a specific attester.
@@ -49,4 +49,18 @@ interface IFront {
     Request calldata request,
     bytes calldata proofData
   ) external view returns (Attestation[] memory);
+
+  /**
+   * @dev build the attestations from multiple user requests.
+   * Forwards to the build function(s) of targeted attester(s)
+   * @param attesters Targeted attesters
+   * @param requests User requests
+   * @param proofDataArray Data sent along the request to prove its validity
+   * @return attestations Attestations that will be recorded
+   */
+  function batchBuildAttestations(
+    address[] calldata attesters,
+    Request[] calldata requests,
+    bytes[] calldata proofDataArray
+  ) external view returns (Attestation[][] memory);
 }

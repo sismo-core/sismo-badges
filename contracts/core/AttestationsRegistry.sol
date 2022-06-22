@@ -138,7 +138,7 @@ contract AttestationsRegistry is
     override
     returns (AttestationData memory)
   {
-    return (_attestationsData[collectionId][owner]);
+    return _getAttestationData(collectionId, owner);
   }
 
   /**
@@ -223,6 +223,42 @@ contract AttestationsRegistry is
   }
 
   /**
+   * @dev Getter of the data of specific attestations
+   * @param collectionIds Collection identifiers of the targeted attestations
+   * @param owners Owners of the targeted attestations
+   */
+  function getAttestationDataBatch(uint256[] memory collectionIds, address[] memory owners)
+    external
+    view
+    override
+    returns (AttestationData[] memory)
+  {
+    AttestationData[] memory attestationsDataArray = new AttestationData[](collectionIds.length);
+    for (uint256 i = 0; i < collectionIds.length; i++) {
+      attestationsDataArray[i] = _getAttestationData(collectionIds[i], owners[i]);
+    }
+    return attestationsDataArray;
+  }
+
+  /**
+   * @dev Getter of the values of specific attestations
+   * @param collectionIds Collection identifiers of the targeted attestations
+   * @param owners Owners of the targeted attestations
+   */
+  function getAttestationValueBatch(uint256[] memory collectionIds, address[] memory owners)
+    external
+    view
+    override
+    returns (uint256[] memory)
+  {
+    uint256[] memory attestationsValues = new uint256[](collectionIds.length);
+    for (uint256 i = 0; i < collectionIds.length; i++) {
+      attestationsValues[i] = _getAttestationValue(collectionIds[i], owners[i]);
+    }
+    return attestationsValues;
+  }
+
+  /**
    * @dev Function that trigger a TransferSingle event from the stateless ERC1155 Badges contract
    * It enables off-chain apps such as opensea to catch the "shadow mints/burns" of badges
    */
@@ -240,6 +276,14 @@ contract AttestationsRegistry is
 
     // if isGreaterValue is true, function triggers mint event. Otherwise triggers burn event.
     BADGES.triggerTransferEvent(operator, from, to, badgeTokenId, value);
+  }
+
+  function _getAttestationData(uint256 collectionId, address owner)
+    internal
+    view
+    returns (AttestationData memory)
+  {
+    return (_attestationsData[collectionId][owner]);
   }
 
   function _getAttestationValue(uint256 collectionId, address owner)
