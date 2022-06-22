@@ -38,9 +38,14 @@ contract Front is IFront {
     address attester,
     Request calldata request,
     bytes calldata proofData
-  ) external {
-    _forwardAttestations(attester, request, proofData);
+  ) external returns (Attestation[] memory) {
+    Attestation[] memory attestations = _forwardAttestationsGeneration(
+      attester,
+      request,
+      proofData
+    );
     _generateEarlyUserAttestation(request.destination);
+    return attestations;
   }
 
   /**
@@ -49,7 +54,7 @@ contract Front is IFront {
    * @param requests Requests sent to attester
    * @param dataArray Data sent with each request
    */
-  function generateBatchAttestations(
+  function batchGenerateAttestations(
     address[] calldata attesters,
     Request[] calldata requests,
     bytes[] calldata dataArray
@@ -57,17 +62,41 @@ contract Front is IFront {
     address destination = requests[0].destination;
     for (uint256 i = 0; i < attesters.length; i++) {
       if (requests[i].destination != destination) revert DifferentRequestsDestinations();
-      _forwardAttestations(attesters[i], requests[i], dataArray[i]);
+      _forwardAttestationsGeneration(attesters[i], requests[i], dataArray[i]);
     }
     _generateEarlyUserAttestation(destination);
   }
 
-  function _forwardAttestations(
+  /**
+   * @dev build the attestations from a user request targeting a specific attester.
+   * Forwards to the build function of targeted attester
+   * @param attester Targeted attester
+   * @param request User request
+   * @param proofData Data sent along the request to prove its validity
+   * @return attestations Attestations that will be recorded
+   */
+  function buildAttestations(
     address attester,
     Request calldata request,
     bytes calldata proofData
-  ) internal {
-    IAttester(attester).generateAttestations(request, proofData);
+  ) external override returns (Attestation[] memory) {
+    return _forwardAttestationsBuild(attester, request, proofData);
+  }
+
+  function _forwardAttestationsBuild(
+    address attester,
+    Request calldata request,
+    bytes calldata proofData
+  ) internal returns (Attestation[] memory) {
+    return IAttester(attester).buildAttestations(request, proofData);
+  }
+
+  function _forwardAttestationsGeneration(
+    address attester,
+    Request calldata request,
+    bytes calldata proofData
+  ) internal returns (Attestation[] memory) {
+    return IAttester(attester).generateAttestations(request, proofData);
   }
 
   function _generateEarlyUserAttestation(address destination) internal {
