@@ -120,7 +120,7 @@ abstract contract Attester is IAttester {
 
   /**
    * @dev MANDATORY: must be implemented in attesters
-   * It should construct attestations from the user request and the proof
+   * It should build attestations from the user request and the proof
    * @param request User request
    * @param proofData Data sent along the request to prove its validity
    * @return attestations Attestations that will be recorded
