@@ -18,7 +18,6 @@ type Attestations = {
 describe('Test Attestations Registry contract', () => {
   let deployer: SignerWithAddress;
   let secondDeployer: SignerWithAddress;
-  let notOwner: SignerWithAddress;
   let user: SignerWithAddress;
   let issuer: SignerWithAddress;
 
@@ -33,7 +32,7 @@ describe('Test Attestations Registry contract', () => {
   before(async () => {
     const signers = await ethers.getSigners();
 
-    [deployer, secondDeployer, notOwner, user, issuer] = signers;
+    [deployer, secondDeployer, user, issuer] = signers;
 
     firstAuthorizedRange = {
       min: 3,
