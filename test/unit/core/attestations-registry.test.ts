@@ -462,6 +462,50 @@ describe('Test Attestations Registry contract', () => {
   });
 
   /*************************************************************************************/
+  /**************************** GET ATTESTATION DATA BATCH *****************************/
+  /*************************************************************************************/
+  describe('Get Attestation Data Batch', () => {
+    it('Should return the right data', async () => {
+      expect(
+        await attestationsRegistry.getAttestationDataBatch(
+          [firstAuthorizedRange.min, secondAuthorizedRange.min],
+          [user.address, user.address]
+        )
+      ).to.be.eql([
+        [
+          attestations.first.issuer,
+          BigNumber.from(attestations.first.value),
+          attestations.first.timestamp,
+          ethers.utils.hexlify(attestations.first.extraData),
+        ],
+        [
+          attestations.second.issuer,
+          BigNumber.from(attestations.second.value),
+          attestations.second.timestamp,
+          ethers.utils.hexlify(attestations.second.extraData),
+        ],
+      ]);
+    });
+  });
+
+  /*************************************************************************************/
+  /**************************** GET ATTESTATION VALUE BATCH ****************************/
+  /*************************************************************************************/
+  describe('Get Attestation Value Batch', () => {
+    it('Should return the right data', async () => {
+      expect(
+        await attestationsRegistry.getAttestationValueBatch(
+          [firstAuthorizedRange.min, secondAuthorizedRange.min],
+          [user.address, user.address]
+        )
+      ).to.be.eql([
+        BigNumber.from(attestations.first.value),
+        BigNumber.from(attestations.second.value),
+      ]);
+    });
+  });
+
+  /*************************************************************************************/
   /****************************** DELETE ATTESTATIONS **********************************/
   /*************************************************************************************/
   describe('Delete attestations', () => {
