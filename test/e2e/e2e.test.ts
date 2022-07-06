@@ -1,35 +1,34 @@
-import hre from 'hardhat';
 import { expect } from 'chai';
-import { describe } from 'mocha';
+import hre from 'hardhat';
 import {
-  AvailableRootsRegistry,
-  HydraS1SimpleAttester,
   AttestationsRegistry,
+  AvailableRootsRegistry,
   Badges,
   CommitmentMapperRegistry,
   Front,
+  HydraS1SimpleAttester,
   HydraS1SoulboundAttester,
 } from 'types';
 import { RequestStruct } from 'types/Attester';
 
-import { getEventArgs } from '../utils/expectEvent';
-import { HydraS1Prover, SnarkProof, KVMerkleTree, HydraS1Account } from '@sismo-core/hydra-s1';
-import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
-import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
-import {
-  generateAttesterGroups,
-  generateTicketIdentifier,
-  generateHydraS1Accounts,
-  generateLists,
-  Group,
-  encodeGroupProperties,
-  evmSnapshot,
-  evmRevert,
-} from '../utils';
+import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
+import { HydraS1Account, HydraS1Prover, KVMerkleTree } from '@sismo-core/hydra-s1';
+import { BigNumber } from 'ethers';
 import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
 import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
+import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
+import {
+  encodeGroupProperties,
+  evmRevert,
+  evmSnapshot,
+  generateAttesterGroups,
+  generateHydraS1Accounts,
+  generateLists,
+  generateTicketIdentifier,
+  Group,
+} from '../utils';
+import { getEventArgs } from '../utils/expectEvent';
 
 const config = deploymentsConfig[hre.network.name];
 describe('Test E2E Protocol', () => {
