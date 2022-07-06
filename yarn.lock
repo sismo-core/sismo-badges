@@ -790,11 +790,19 @@
     circomlib "^2.0.3"
     circomlibjs "^0.1.2"
     ethers "^5.6.1"
+"@sismo-core/crypto@^1.0.2":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@sismo-core/crypto/-/crypto-1.0.3.tgz#300d2e8172f510824aee9d514f94dcaa6575d757"
+  integrity sha512-fmspFl3OiUu76jgC4AY3sEt7cRt64RenZHfcOLDhx/jZDnVBuCzrYdYPC7zaP6gkgv+YlNPE3FUwuVNpZ45hRw==
+  dependencies:
+    circomlib "^2.0.3"
+    circomlibjs "^0.1.2"
+    ethers "^5.6.1"
 
-"@sismo-core/hydra-s1@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/@sismo-core/hydra-s1/-/hydra-s1-1.0.1.tgz"
-  integrity sha512-XFXZEW87FQikugruOIRv1CBmqRKVjAYVwgmXkiU/n5c7qN/PCzecfX2F9MJ8rHoxkjbVLx3qQ4cDLQdMeMbaVw==
+"@sismo-core/hydra-s1@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@sismo-core/hydra-s1/-/hydra-s1-1.0.2.tgz#18b3ffbc95066abb7d0a00102466186988079a2f"
+  integrity sha512-VCcJ42+myU83mQOqVvfy2jbXNTAdpsRKVEMjR621FC7WAaG62pOq6W7MVPoZ4APd/4RBV6TAWLv09FVTDHHnng==
   dependencies:
     "@sismo-core/crypto" "^1.1.4"
     "@sismo-core/kv-merkle-tree" "^1.0.4"
