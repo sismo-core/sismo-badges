@@ -19,12 +19,7 @@ interface IAttestationsRegistryConfigLogic {
     uint256 lastCollectionId
   );
   event IssuerAuthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
-  event IssuerUnauthorized(
-    address issuer,
-    uint256 rangeIndex,
-    uint256 firstCollectionId,
-    uint256 lastCollectionId
-  );
+  event IssuerUnauthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
 
   /**
    * @dev Authorize an issuer for a specific range
