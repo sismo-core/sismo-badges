@@ -42,7 +42,7 @@
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@openzeppelin/contracts": "^4.5.0",
     "@sismo-core/commitment-mapper-tester-js": "^1.0.11",
-    "@sismo-core/hydra-s1": "^1.0.1",
+    "@sismo-core/hydra-s1": "^1.0.2",
     "@trufflesuite/eth-sig-util": "^1.4.2",
     "@typechain/ethers-v5": "^9.0.0",
     "@typescript-eslint/eslint-plugin": "^5.22.0",
