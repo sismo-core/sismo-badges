@@ -1,40 +1,39 @@
-import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
-import { describe } from 'mocha';
+import hre from 'hardhat';
 import {
-  AvailableRootsRegistry,
-  HydraS1SimpleAttester,
   AttestationsRegistry,
+  AvailableRootsRegistry,
   Badges,
   CommitmentMapperRegistry,
+  HydraS1SimpleAttester,
 } from 'types';
 import { RequestStruct } from 'types/Attester';
 
-import { getEventArgs } from '../../../utils/expectEvent';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { CommitmentMapperTester } from '@sismo-core/commitment-mapper-tester-js';
 import {
-  HydraS1Prover,
-  SnarkProof,
-  KVMerkleTree,
   EddsaPublicKey,
   HydraS1Account,
+  HydraS1Prover,
+  KVMerkleTree,
+  SnarkProof,
   SNARK_FIELD,
 } from '@sismo-core/hydra-s1';
-import { CommitmentMapperTester } from '@sismo-core/commitment-mapper-tester-js';
 import { BigNumber } from 'ethers';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
 import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
 import {
+  encodeGroupProperties,
   generateAttesterGroups,
-  generateTicketIdentifier,
+  generateGroupIdFromEncodedProperties,
+  generateGroupIdFromProperties,
   generateHydraS1Accounts,
   generateLists,
-  generateGroupIdFromProperties,
-  generateGroupIdFromEncodedProperties,
+  generateTicketIdentifier,
   Group,
-  encodeGroupProperties,
   toBytes,
 } from '../../../utils';
-import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
+import { getEventArgs } from '../../../utils/expectEvent';
 
 const config = deploymentsConfig[hre.network.name];
 const collectionIdFirst = BigNumber.from(config.hydraS1SimpleAttester.collectionIdFirst);

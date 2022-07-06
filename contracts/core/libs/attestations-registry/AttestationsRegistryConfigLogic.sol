@@ -77,7 +77,7 @@ contract AttestationsRegistryConfigLogic is
     uint256[] memory rangeIndexes
   ) external override onlyOwner {
     for (uint256 i = 0; i < rangeIndexes.length; i++) {
-      _unauthorizeRange(issuer, rangeIndexes[i], ranges[i].min, ranges[i].max);
+      _unauthorizeRange(issuer, rangeIndexes[i] - i, ranges[i].min, ranges[i].max);
     }
   }
 
@@ -143,6 +143,6 @@ contract AttestationsRegistryConfigLogic is
       _authorizedRanges[issuer].length - 1
     ];
     _authorizedRanges[issuer].pop();
-    emit IssuerUnauthorized(issuer, rangeIndex, firstCollectionId, lastCollectionId);
+    emit IssuerUnauthorized(issuer, firstCollectionId, lastCollectionId);
   }
 }
