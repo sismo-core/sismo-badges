@@ -18,7 +18,7 @@ import {Request, Attestation} from './libs/Structs.sol';
 contract Front is IFront {
   IAttestationsRegistry public immutable ATTESTATIONS_REGISTRY;
   uint256 public constant EARLY_USER_COLLECTION = 0;
-  uint32 public constant ETHCC_TIMESTAMP = 1658494044;
+  uint32 public constant EARLY_USER_BADGE_END_DATE = 1663200000; // Sept 15
 
   /**
    * @dev Constructor
@@ -128,7 +128,7 @@ contract Front is IFront {
 
   function _generateEarlyUserAttestation(address destination) internal {
     uint32 currentTimestamp = uint32(block.timestamp);
-    if (currentTimestamp < ETHCC_TIMESTAMP) {
+    if (currentTimestamp < EARLY_USER_BADGE_END_DATE) {
       bool alreadyHasAttestation = ATTESTATIONS_REGISTRY.hasAttestation(
         EARLY_USER_COLLECTION,
         destination
