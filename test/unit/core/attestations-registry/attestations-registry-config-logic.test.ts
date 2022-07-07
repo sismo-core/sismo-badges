@@ -1,7 +1,13 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import hre, { ethers } from 'hardhat';
-import { AttestationsRegistry, Badges } from 'types';
+import { getImplementation } from '../../../../utils';
+import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
+import {
+  AttestationsRegistry,
+  Badges,
+  TransparentUpgradeableProxy__factory,
+} from '../../../../types';
 
 describe('Test Attestations Registry Config Logic contract', () => {
   let deployer: SignerWithAddress;
@@ -522,6 +528,30 @@ describe('Test Attestations Registry Config Logic contract', () => {
       await expect(attestationsRegistry.renounceOwnership())
         .to.emit(attestationsRegistry, 'OwnershipTransferred')
         .withArgs(deployer.address, ethers.constants.AddressZero);
+    });
+  });
+
+  describe('Update Implementation', () => {
+    it('Should update implementation', async () => {
+      const proxyAdminSigner = await ethers.getSigner(
+        deploymentsConfig[hre.network.name].deployOptions.proxyAdmin as string
+      );
+      const { attestationsRegistry: newImplementation } = await hre.run(
+        'deploy-attestations-registry',
+        {
+          badges: secondDeployer.address,
+          owner: secondDeployer.address,
+          options: { behindProxy: false },
+        }
+      );
+      const attestationsRegistryProxy = TransparentUpgradeableProxy__factory.connect(
+        attestationsRegistry.address,
+        proxyAdminSigner
+      );
+      await (await attestationsRegistryProxy.upgradeTo(newImplementation.address)).wait();
+
+      const implementationAddress = await getImplementation(attestationsRegistryProxy);
+      expect(implementationAddress).to.be.eql(newImplementation.address);
     });
   });
 });
