@@ -59,7 +59,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     availableRootsRegistry: {
       owner: ALPHA_POLYGON_ROOTS_OWNER_RELAYER,
-      initialRoot: '0x0670ff32e1319d9759e4be733408b20ba698cdb892a3a62807601aa24be2057f',
+      initialRoot: '0x163c3224fa82070fbee7692146f505144b0307d668d8e8f803171b6ee7a4cd00',
     },
     commitmentMapper: {
       owner: ALPHA_POLYGON_OWNER,
