@@ -48,18 +48,19 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1SimpleAttester: {
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
+      initialRoot: '0x163c3224fa82070fbee7692146f505144b0307d668d8e8f803171b6ee7a4cd00',
     },
     hydraS1SoulboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
+      initialRoot: '0',
     },
     attestationsRegistry: {
       owner: ALPHA_POLYGON_OWNER,
     },
     availableRootsRegistry: {
       owner: ALPHA_POLYGON_ROOTS_OWNER_RELAYER,
-      initialRoot: '0x163c3224fa82070fbee7692146f505144b0307d668d8e8f803171b6ee7a4cd00',
     },
     commitmentMapper: {
       owner: ALPHA_POLYGON_OWNER,
@@ -89,10 +90,12 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1SimpleAttester: {
       collectionIdFirst: '100001',
       collectionIdLast: '200000',
+      initialRoot: '0',
     },
     hydraS1SoulboundAttester: {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
+      initialRoot: '0',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
     attestationsRegistry: {
@@ -100,7 +103,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     availableRootsRegistry: {
       owner: ALPHA_RINKEBY_ROOTS_OWNER_RELAYER,
-      initialRoot: '0',
     },
     commitmentMapper: {
       owner: ALPHA_RINKEBY_OWNER,
@@ -118,8 +120,8 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       proxyAdmin: '0xc11d0d9e1e6c16ea5e5395e0129ca34262ca2315',
     },
     badges: {
-      // account 0 of shared mneomonic
-      owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
+      // account 1 of shared mneomonic
+      owner: '0xFd247FF5380d7DA60E9018d1D29d529664839Af2',
       uri: 'https://metadata-dev.badges.zikies.io/default-badges/local/{id}.json',
     },
     front: {
@@ -129,21 +131,22 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1SimpleAttester: {
       collectionIdFirst: '100001',
       collectionIdLast: '200000',
+      initialRoot: '0x29c161c3ff1113059a064605aa9ddcfe636110a659037ef048f02a2e0233a79b',
     },
     hydraS1SoulboundAttester: {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
+      initialRoot: '0x29c161c3ff1113059a064605aa9ddcfe636110a659037ef048f02a2e0233a79b',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
     attestationsRegistry: {
-      owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
+      owner: '0xFd247FF5380d7DA60E9018d1D29d529664839Af2',
     },
     availableRootsRegistry: {
-      owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
-      initialRoot: '0x29c161c3ff1113059a064605aa9ddcfe636110a659037ef048f02a2e0233a79b',
+      owner: '0xFd247FF5380d7DA60E9018d1D29d529664839Af2',
     },
     commitmentMapper: {
-      owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
+      owner: '0xFd247FF5380d7DA60E9018d1D29d529664839Af2',
       EdDSAPubKeyX: '0x1e468ad0fcde4edec429cd41eb28a0e78d4f31fa2c25172ef677468b2b38a9dc',
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
       commitmentMapperAddress: ethers.constants.AddressZero,
@@ -169,10 +172,12 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1SimpleAttester: {
       collectionIdFirst: '100001',
       collectionIdLast: '200000',
+      initialRoot: '0x2bf49366e553a2fd3bfcbb6ce6ff51bab6f5a68408ac1beda1901b10b08bf26c',
     },
     hydraS1SoulboundAttester: {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
+      initialRoot: '0x2bf49366e553a2fd3bfcbb6ce6ff51bab6f5a68408ac1beda1901b10b08bf26c',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
     attestationsRegistry: {
@@ -180,7 +185,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     availableRootsRegistry: {
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
-      initialRoot: '0x2bf49366e553a2fd3bfcbb6ce6ff51bab6f5a68408ac1beda1901b10b08bf26c',
     },
     commitmentMapper: {
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
