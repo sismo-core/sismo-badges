@@ -13,7 +13,7 @@ async function deploymentAction(
   hre: HardhatRuntimeEnvironment
 ): Promise<void> {
   if (root === '0') {
-    if (options.log) {
+    if (options?.log) {
       console.log(`
       root ${root} for attester ${attester}. Not running the task.
     `);
@@ -38,13 +38,13 @@ async function deploymentAction(
     BigNumber.from(root)
   );
   if (isRootAlreadyRegistered) {
-    if (options.log) {
+    if (options?.log) {
       console.log(`
       Root: ${root} already registered for attester ${availableRootsRegistry.address}`);
     }
     return;
   }
-  if (options.log || options?.manualConfirm) {
+  if (options?.log || options?.manualConfirm) {
     console.log(`
   Adding new root to registry: ${availableRootsRegistry.address}
   Attester: ${attester}

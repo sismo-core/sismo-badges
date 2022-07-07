@@ -120,8 +120,8 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       proxyAdmin: '0xc11d0d9e1e6c16ea5e5395e0129ca34262ca2315',
     },
     badges: {
-      // account 1 of shared mneomonic
-      owner: '0xFd247FF5380d7DA60E9018d1D29d529664839Af2',
+      // account 0 of shared mneomonic
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
       uri: 'https://metadata-dev.badges.zikies.io/default-badges/local/{id}.json',
     },
     front: {
@@ -140,13 +140,13 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
     attestationsRegistry: {
-      owner: '0xFd247FF5380d7DA60E9018d1D29d529664839Af2',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     availableRootsRegistry: {
-      owner: '0xFd247FF5380d7DA60E9018d1D29d529664839Af2',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     commitmentMapper: {
-      owner: '0xFd247FF5380d7DA60E9018d1D29d529664839Af2',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
       EdDSAPubKeyX: '0x1e468ad0fcde4edec429cd41eb28a0e78d4f31fa2c25172ef677468b2b38a9dc',
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
       commitmentMapperAddress: ethers.constants.AddressZero,
