@@ -50,12 +50,19 @@ async function deploymentAction(
   await deployedCore.attestationsRegistry
     .connect(deployer)
     .authorizeRange(
+      deployedCore.front.address,
+      await deployedCore.front.EARLY_USER_COLLECTION(),
+      await deployedCore.front.EARLY_USER_COLLECTION()
+    );
+
+  await deployedCore.attestationsRegistry
+    .connect(deployer)
+    .authorizeRange(
       deployedMockAttester.mockAttester.address,
       await deployedMockAttester.mockAttester.ATTESTATION_ID_MIN(),
       await deployedMockAttester.mockAttester.ATTESTATION_ID_MAX()
     );
 
-  //@ts-ignore
   return { ...deployedCore, ...deployedMockAttester };
 }
 
