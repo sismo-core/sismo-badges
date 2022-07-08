@@ -13,7 +13,7 @@ export enum EthereumNetwork {
 }
 
 export enum PolygonNetwork {
-  matic = 'matic',
+  main = 'polygon-mainnet',
   mumbai = 'mumbai',
 }
 
@@ -35,7 +35,7 @@ export interface EthereumParamsPerNetwork<Network> {
 }
 
 export interface PolygonParamsPerNetwork<T> {
-  [PolygonNetwork.matic]: T;
+  [PolygonNetwork.main]: T;
   [PolygonNetwork.mumbai]: T;
 }
 
@@ -65,7 +65,7 @@ export const NETWORKS_RPC_URL: ParamsPerNetwork<string> = {
     'https://polygon-mumbai.g.alchemy.com/v2',
     process.env.MUMBAI_RPC_URL
   ),
-  [PolygonNetwork.matic]: alchemyUrlOrEnvVar(
+  [PolygonNetwork.main]: alchemyUrlOrEnvVar(
     'https://polygon-mainnet.g.alchemy.com/v2',
     process.env.POLYGON_RPC_URL
   ),

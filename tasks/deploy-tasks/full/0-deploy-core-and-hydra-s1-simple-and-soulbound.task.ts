@@ -76,16 +76,18 @@ async function deploymentAction(
     options,
   } as DeployCommitmentMapperArgs)) as DeployedCommitmentMapper;
 
+  const hydraS1SimpleArgs: DeployHydraS1SimpleAttesterArgs = {
+    collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
+    collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
+    commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
+    availableRootsRegistryAddress: availableRootsRegistry.address,
+    attestationsRegistryAddress: attestationsRegistry.address,
+    options,
+  };
+
   const { hydraS1SimpleAttester, hydraS1Verifier } = (await hre.run(
     'deploy-hydra-s1-simple-attester',
-    {
-      collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
-      collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
-      commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
-      availableRootsRegistryAddress: availableRootsRegistry.address,
-      attestationsRegistryAddress: attestationsRegistry.address,
-      options,
-    } as DeployHydraS1SimpleAttesterArgs
+    hydraS1SimpleArgs
   )) as DeployedHydraS1SimpleAttester;
 
   const soulBoundArgs: DeployHydraS1SoulboundAttesterArgs = {
@@ -102,6 +104,30 @@ async function deploymentAction(
     'deploy-hydra-s1-soulbound-attester',
     soulBoundArgs
   )) as DeployedHydraS1SoulboundAttester;
+
+  // Register an initial root for attester
+  if (options.manualConfirm || options.log) {
+    console.log(`
+    ----------------------------------------------------------------
+    * Register initial root for hydraS1SimpleAttester attester`);
+  }
+  await hre.run('register-for-attester', {
+    availableRootsRegistryAddress: availableRootsRegistry.address,
+    attester: hydraS1SimpleAttester.address,
+    root: config.hydraS1SimpleAttester.initialRoot,
+    options: getCommonOptions(options),
+  });
+  if (options.manualConfirm || options.log) {
+    console.log(`
+    ----------------------------------------------------------------
+    * Register initial root for hydraS1SoulboundAttester attester`);
+  }
+  await hre.run('register-for-attester', {
+    availableRootsRegistryAddress: availableRootsRegistry.address,
+    attester: hydraS1SoulboundAttester.address,
+    root: config.hydraS1SoulboundAttester.initialRoot,
+    options: getCommonOptions(options),
+  });
 
   // Give to the attester the authorization to write on the attestations Registry
   if (options.manualConfirm || options.log) {

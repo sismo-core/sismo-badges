@@ -20,10 +20,12 @@ export type DeploymentsConfigTypes = {
       collectionIdFirst: string;
       collectionIdLast: string;
       soulboundCooldownDuration: string;
+      initialRoot: string;
     };
     hydraS1SimpleAttester: {
       collectionIdFirst: string;
       collectionIdLast: string;
+      initialRoot: string;
     };
     // Conf related to the commitment mapper
     // https://github.com/sismo-core/sismo-commitment-mapper
@@ -31,7 +33,6 @@ export type DeploymentsConfigTypes = {
       owner: string;
       EdDSAPubKeyX: string;
       EdDSAPubKeyY: string;
-      commitmentMapperAddress: string;
     };
     badges: {
       owner: string;
@@ -41,7 +42,6 @@ export type DeploymentsConfigTypes = {
     // all the merkleRoots
     availableRootsRegistry: {
       owner: string;
-      initialRoot: string;
     };
     attestationsRegistry: {
       owner: string;

@@ -9,9 +9,17 @@ import { BigNumber, Signer } from 'ethers';
 let { RELAYER_API_KEY, RELAYER_API_SECRET } = process.env;
 
 async function deploymentAction(
-  { root, attester, relayed, log, availableRootsRegistryAddress, deploymentNamePrefix },
+  { root, attester, relayed, options, availableRootsRegistryAddress, deploymentNamePrefix },
   hre: HardhatRuntimeEnvironment
 ): Promise<void> {
+  if (root === '0') {
+    if (options?.log) {
+      console.log(`
+      root ${root} for attester ${attester}. Not running the task.
+    `);
+    }
+    return;
+  }
   let signer = (await getDeployer(hre)) as Signer;
   if (relayed) {
     if (RELAYER_API_KEY && RELAYER_API_SECRET) {
@@ -25,12 +33,29 @@ async function deploymentAction(
       (await hre.deployments.get(deploymentNamePrefix + 'AvailableRootsRegistry')).address,
     signer
   ) as AvailableRootsRegistry;
-  await availableRootsRegistry.registerRootForAttester(attester, BigNumber.from(root));
-  log &&
+  const isRootAlreadyRegistered = await availableRootsRegistry.isRootAvailableForAttester(
+    attester,
+    BigNumber.from(root)
+  );
+  if (isRootAlreadyRegistered) {
+    if (options?.log) {
+      console.log(`
+      Root: ${root} already registered for attester ${availableRootsRegistry.address}`);
+    }
+    return;
+  }
+  if (options?.log || options?.manualConfirm) {
     console.log(`
-  Added new root to registry: ${availableRootsRegistry.address}
+  Adding new root to registry: ${availableRootsRegistry.address}
+  Attester: ${attester}
   Root: ${root}
   `);
+  }
+  if (options?.manualConfirm) {
+    console.log();
+    await confirm();
+  }
+  await availableRootsRegistry.registerRootForAttester(attester, BigNumber.from(root));
 }
 
 task('register-for-attester')

@@ -76,13 +76,13 @@ async function deploymentAction(
 
   await hre.run('register-for-attester', {
     availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1SoulboundAttester.address,
-    root: config.availableRootsRegistry.initialRoot,
+    attester: hydraS1SimpleAttester.address,
+    root: config.hydraS1SimpleAttester.initialRoot,
   });
   await hre.run('register-for-attester', {
     availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1SimpleAttester.address,
-    root: config.availableRootsRegistry.initialRoot,
+    attester: hydraS1SoulboundAttester.address,
+    root: config.hydraS1SoulboundAttester.initialRoot,
   });
   options?.log && console.log('Contracts deployed on local');
 
