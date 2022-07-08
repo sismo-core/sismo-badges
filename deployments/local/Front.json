@@ -1,0 +1,519 @@
+{
+  "address": "0x95b5Ce4629c799C0F6f52dE2ece18A0C0521BcDe",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "attestationsRegistryAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "DifferentRequestsDestinations",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "destination",
+          "type": "address"
+        }
+      ],
+      "name": "EarlyUserAttestationGenerated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "ATTESTATIONS_REGISTRY",
+      "outputs": [
+        {
+          "internalType": "contract IAttestationsRegistry",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "EARLY_USER_COLLECTION",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ETHCC_TIMESTAMP",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "attesters",
+          "type": "address[]"
+        },
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "groupId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "claimedValue",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "extraData",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Claim[]",
+              "name": "claims",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "address",
+              "name": "destination",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct Request[]",
+          "name": "requests",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "proofDataArray",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "batchBuildAttestations",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "collectionId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "issuer",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "extraData",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Attestation[][]",
+          "name": "",
+          "type": "tuple[][]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "attesters",
+          "type": "address[]"
+        },
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "groupId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "claimedValue",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "extraData",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Claim[]",
+              "name": "claims",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "address",
+              "name": "destination",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct Request[]",
+          "name": "requests",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "proofDataArray",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "batchGenerateAttestations",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "collectionId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "issuer",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "extraData",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Attestation[][]",
+          "name": "",
+          "type": "tuple[][]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "attester",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "groupId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "claimedValue",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "extraData",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Claim[]",
+              "name": "claims",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "address",
+              "name": "destination",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct Request",
+          "name": "request",
+          "type": "tuple"
+        },
+        {
+          "internalType": "bytes",
+          "name": "proofData",
+          "type": "bytes"
+        }
+      ],
+      "name": "buildAttestations",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "collectionId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "issuer",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "extraData",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Attestation[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "attester",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "groupId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "claimedValue",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "extraData",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Claim[]",
+              "name": "claims",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "address",
+              "name": "destination",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct Request",
+          "name": "request",
+          "type": "tuple"
+        },
+        {
+          "internalType": "bytes",
+          "name": "proofData",
+          "type": "bytes"
+        }
+      ],
+      "name": "generateAttestations",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "collectionId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "issuer",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "extraData",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Attestation[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x02994a56c513ab0e7d9b02d6be28c00093ca9d8283883af2697280732412ed1f",
+  "receipt": {
+    "to": null,
+    "from": "0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC",
+    "contractAddress": "0x09BB437175e93AD70408Cf89724e5D9a2dC49512",
+    "transactionIndex": 0,
+    "gasUsed": "955822",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x3047beda3df39d25d1556fe7e4e7dffb2464f347e323951160263eb7421995c7",
+    "transactionHash": "0x02994a56c513ab0e7d9b02d6be28c00093ca9d8283883af2697280732412ed1f",
+    "logs": [],
+    "blockNumber": 68,
+    "cumulativeGasUsed": "955822",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xFaaa736497b4AC6a23a4A62bEdFCd5bCbb178bfB"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "ddee74ab32d7fd2413b571558be47026",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.14+commit.80d49f37\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"attestationsRegistryAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"DifferentRequestsDestinations\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\"}],\"name\":\"EarlyUserAttestationGenerated\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"ATTESTATIONS_REGISTRY\",\"outputs\":[{\"internalType\":\"contract IAttestationsRegistry\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"EARLY_USER_COLLECTION\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ETHCC_TIMESTAMP\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"attesters\",\"type\":\"address[]\"},{\"components\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"groupId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"claimedValue\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"internalType\":\"struct Claim[]\",\"name\":\"claims\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\"}],\"internalType\":\"struct Request[]\",\"name\":\"requests\",\"type\":\"tuple[]\"},{\"internalType\":\"bytes[]\",\"name\":\"proofDataArray\",\"type\":\"bytes[]\"}],\"name\":\"batchBuildAttestations\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"collectionId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"issuer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation[][]\",\"name\":\"\",\"type\":\"tuple[][]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"attesters\",\"type\":\"address[]\"},{\"components\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"groupId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"claimedValue\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"internalType\":\"struct Claim[]\",\"name\":\"claims\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\"}],\"internalType\":\"struct Request[]\",\"name\":\"requests\",\"type\":\"tuple[]\"},{\"internalType\":\"bytes[]\",\"name\":\"proofDataArray\",\"type\":\"bytes[]\"}],\"name\":\"batchGenerateAttestations\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"collectionId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"issuer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation[][]\",\"name\":\"\",\"type\":\"tuple[][]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"components\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"groupId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"claimedValue\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"internalType\":\"struct Claim[]\",\"name\":\"claims\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\"}],\"internalType\":\"struct Request\",\"name\":\"request\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"proofData\",\"type\":\"bytes\"}],\"name\":\"buildAttestations\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"collectionId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"issuer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"attester\",\"type\":\"address\"},{\"components\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"groupId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"claimedValue\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"internalType\":\"struct Claim[]\",\"name\":\"claims\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\"}],\"internalType\":\"struct Request\",\"name\":\"request\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"proofData\",\"type\":\"bytes\"}],\"name\":\"generateAttestations\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"collectionId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"issuer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"internalType\":\"struct Attestation[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Sismo\",\"kind\":\"dev\",\"methods\":{\"batchBuildAttestations(address[],((uint256,uint256,bytes)[],address)[],bytes[])\":{\"details\":\"build the attestations from multiple user requests. Forwards to the build function of targeted attester\",\"params\":{\"attesters\":\"Targeted attesters\",\"proofDataArray\":\"Data sent along the request to prove its validity\",\"requests\":\"User requests\"},\"returns\":{\"_0\":\"attestations Attestations that will be recorded\"}},\"batchGenerateAttestations(address[],((uint256,uint256,bytes)[],address)[],bytes[])\":{\"details\":\"generate multiple attestations at once, to the same destination, generates an early user attestation\",\"params\":{\"attesters\":\"Attesters targeted by the attesters\",\"proofDataArray\":\"Data sent with each request\",\"requests\":\"Requests sent to attester\"}},\"buildAttestations(address,((uint256,uint256,bytes)[],address),bytes)\":{\"details\":\"build the attestations from a user request targeting a specific attester. Forwards to the build function of targeted attester\",\"params\":{\"attester\":\"Targeted attester\",\"proofData\":\"Data sent along the request to prove its validity\",\"request\":\"User request\"},\"returns\":{\"_0\":\"attestations Attestations that will be recorded\"}},\"constructor\":{\"details\":\"Constructor\",\"params\":{\"attestationsRegistryAddress\":\"Attestations registry contract address\"}},\"generateAttestations(address,((uint256,uint256,bytes)[],address),bytes)\":{\"details\":\"Forward a request to an attester and generates an early user attestation\",\"params\":{\"attester\":\"Attester targeted by the request\",\"proofData\":\"Data provided to the attester to back the request\",\"request\":\"Request sent to the attester\"}}},\"title\":\"Front\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"This is the Front contract of the Sismo protocol Behind a proxy, it routes attestations request to the targeted attester and can perform some actions This specific implementation rewards early users with a early user attestation if they used sismo before ethcc conference For more information: https://front.docs.sismo.io\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/core/Front.sol\":\"Front\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/core/Front.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.14;\\n\\nimport {IFront} from './interfaces/IFront.sol';\\nimport {IAttester} from './interfaces/IAttester.sol';\\nimport {IAttestationsRegistry} from './interfaces/IAttestationsRegistry.sol';\\nimport {Request, Attestation} from './libs/Structs.sol';\\n\\n/**\\n * @title Front\\n * @author Sismo\\n * @notice This is the Front contract of the Sismo protocol\\n * Behind a proxy, it routes attestations request to the targeted attester and can perform some actions\\n * This specific implementation rewards early users with a early user attestation if they used sismo before ethcc conference\\n\\n * For more information: https://front.docs.sismo.io\\n */\\ncontract Front is IFront {\\n  IAttestationsRegistry public immutable ATTESTATIONS_REGISTRY;\\n  uint256 public constant EARLY_USER_COLLECTION = 0;\\n  uint32 public constant ETHCC_TIMESTAMP = 1658494044;\\n\\n  /**\\n   * @dev Constructor\\n   * @param attestationsRegistryAddress Attestations registry contract address\\n   */\\n  constructor(address attestationsRegistryAddress) {\\n    ATTESTATIONS_REGISTRY = IAttestationsRegistry(attestationsRegistryAddress);\\n  }\\n\\n  /**\\n   * @dev Forward a request to an attester and generates an early user attestation\\n   * @param attester Attester targeted by the request\\n   * @param request Request sent to the attester\\n   * @param proofData Data provided to the attester to back the request\\n   */\\n  function generateAttestations(\\n    address attester,\\n    Request calldata request,\\n    bytes calldata proofData\\n  ) external override returns (Attestation[] memory) {\\n    Attestation[] memory attestations = _forwardAttestationsGeneration(\\n      attester,\\n      request,\\n      proofData\\n    );\\n    _generateEarlyUserAttestation(request.destination);\\n    return attestations;\\n  }\\n\\n  /**\\n   * @dev generate multiple attestations at once, to the same destination, generates an early user attestation\\n   * @param attesters Attesters targeted by the attesters\\n   * @param requests Requests sent to attester\\n   * @param proofDataArray Data sent with each request\\n   */\\n  function batchGenerateAttestations(\\n    address[] calldata attesters,\\n    Request[] calldata requests,\\n    bytes[] calldata proofDataArray\\n  ) external override returns (Attestation[][] memory) {\\n    Attestation[][] memory attestations = new Attestation[][](attesters.length);\\n    address destination = requests[0].destination;\\n    for (uint256 i = 0; i < attesters.length; i++) {\\n      if (requests[i].destination != destination) revert DifferentRequestsDestinations();\\n      attestations[i] = _forwardAttestationsGeneration(\\n        attesters[i],\\n        requests[i],\\n        proofDataArray[i]\\n      );\\n    }\\n    _generateEarlyUserAttestation(destination);\\n    return attestations;\\n  }\\n\\n  /**\\n   * @dev build the attestations from a user request targeting a specific attester.\\n   * Forwards to the build function of targeted attester\\n   * @param attester Targeted attester\\n   * @param request User request\\n   * @param proofData Data sent along the request to prove its validity\\n   * @return attestations Attestations that will be recorded\\n   */\\n  function buildAttestations(\\n    address attester,\\n    Request calldata request,\\n    bytes calldata proofData\\n  ) external view override returns (Attestation[] memory) {\\n    return _forwardAttestationsBuild(attester, request, proofData);\\n  }\\n\\n  /**\\n   * @dev build the attestations from multiple user requests.\\n   * Forwards to the build function of targeted attester\\n   * @param attesters Targeted attesters\\n   * @param requests User requests\\n   * @param proofDataArray Data sent along the request to prove its validity\\n   * @return attestations Attestations that will be recorded\\n   */\\n  function batchBuildAttestations(\\n    address[] calldata attesters,\\n    Request[] calldata requests,\\n    bytes[] calldata proofDataArray\\n  ) external view override returns (Attestation[][] memory) {\\n    Attestation[][] memory attestations = new Attestation[][](attesters.length);\\n\\n    for (uint256 i = 0; i < attesters.length; i++) {\\n      attestations[i] = _forwardAttestationsBuild(attesters[i], requests[i], proofDataArray[i]);\\n    }\\n    return attestations;\\n  }\\n\\n  function _forwardAttestationsBuild(\\n    address attester,\\n    Request calldata request,\\n    bytes calldata proofData\\n  ) internal view returns (Attestation[] memory) {\\n    return IAttester(attester).buildAttestations(request, proofData);\\n  }\\n\\n  function _forwardAttestationsGeneration(\\n    address attester,\\n    Request calldata request,\\n    bytes calldata proofData\\n  ) internal returns (Attestation[] memory) {\\n    return IAttester(attester).generateAttestations(request, proofData);\\n  }\\n\\n  function _generateEarlyUserAttestation(address destination) internal {\\n    uint32 currentTimestamp = uint32(block.timestamp);\\n    if (currentTimestamp < ETHCC_TIMESTAMP) {\\n      bool alreadyHasAttestation = ATTESTATIONS_REGISTRY.hasAttestation(\\n        EARLY_USER_COLLECTION,\\n        destination\\n      );\\n\\n      if (!alreadyHasAttestation) {\\n        Attestation[] memory attestations = new Attestation[](1);\\n        attestations[0] = Attestation(\\n          EARLY_USER_COLLECTION,\\n          destination,\\n          address(this),\\n          1,\\n          currentTimestamp,\\n          'With strong love from Sismo'\\n        );\\n        ATTESTATIONS_REGISTRY.recordAttestations(attestations);\\n        emit EarlyUserAttestationGenerated(destination);\\n      }\\n    }\\n  }\\n}\\n\",\"keccak256\":\"0xe372dd8858319173ea63b2d5ef29a30a54e87833332f3ee98bd65fe075ea17e3\",\"license\":\"MIT\"},\"contracts/core/interfaces/IAttestationsRegistry.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.14;\\n\\nimport {Attestation, AttestationData} from '../libs/Structs.sol';\\n\\n/**\\n * @title IAttestationsRegistry\\n * @author Sismo\\n * @notice This is the interface of the AttestationRegistry\\n */\\ninterface IAttestationsRegistry {\\n  event AttestationRecorded(Attestation attestation);\\n  event AttestationDeleted(Attestation attestation);\\n\\n  /**\\n   * @dev Main function to be called by authorized issuers\\n   * @param attestations Attestations to be recorded (creates a new one or overrides an existing one)\\n   */\\n  function recordAttestations(Attestation[] calldata attestations) external;\\n\\n  /**\\n   * @dev Delete function to be called by authorized issuers\\n   * @param attestations Attestations to be deleted\\n   */\\n  function deleteAttestations(Attestation[] calldata attestations) external;\\n\\n  /**\\n   * @dev Returns whether a user has an attestation from a collection\\n   * @param collectionId Collection identifier of the targeted attestation\\n   * @param owner Owner of the targeted attestation\\n   */\\n  function hasAttestation(uint256 collectionId, address owner) external returns (bool);\\n\\n  /**\\n   * @dev Getter of the data of a specific attestation\\n   * @param collectionId Collection identifier of the targeted attestation\\n   * @param owner Owner of the targeted attestation\\n   */\\n  function getAttestationData(uint256 collectionId, address owner)\\n    external\\n    view\\n    returns (AttestationData memory);\\n\\n  /**\\n   * @dev Getter of the value of a specific attestation\\n   * @param collectionId Collection identifier of the targeted attestation\\n   * @param owner Owner of the targeted attestation\\n   */\\n  function getAttestationValue(uint256 collectionId, address owner) external view returns (uint256);\\n\\n  /**\\n   * @dev Getter of the data of a specific attestation as tuple\\n   * @param collectionId Collection identifier of the targeted attestation\\n   * @param owner Owner of the targeted attestation\\n   */\\n  function getAttestationDataTuple(uint256 collectionId, address owner)\\n    external\\n    view\\n    returns (\\n      address,\\n      uint256,\\n      uint32,\\n      bytes memory\\n    );\\n\\n  /**\\n   * @dev Getter of the extraData of a specific attestation\\n   * @param collectionId Collection identifier of the targeted attestation\\n   * @param owner Owner of the targeted attestation\\n   */\\n  function getAttestationExtraData(uint256 collectionId, address owner)\\n    external\\n    view\\n    returns (bytes memory);\\n\\n  /**\\n   * @dev Getter of the issuer of a specific attestation\\n   * @param collectionId Collection identifier of the targeted attestation\\n   * @param owner Owner of the targeted attestation\\n   */\\n  function getAttestationIssuer(uint256 collectionId, address owner)\\n    external\\n    view\\n    returns (address);\\n\\n  /**\\n   * @dev Getter of the timestamp of a specific attestation\\n   * @param collectionId Collection identifier of the targeted attestation\\n   * @param owner Owner of the targeted attestation\\n   */\\n  function getAttestationTimestamp(uint256 collectionId, address owner)\\n    external\\n    view\\n    returns (uint32);\\n\\n  /**\\n   * @dev Getter of the data of specific attestations\\n   * @param collectionIds Collection identifiers of the targeted attestations\\n   * @param owners Owners of the targeted attestations\\n   */\\n  function getAttestationDataBatch(uint256[] memory collectionIds, address[] memory owners)\\n    external\\n    view\\n    returns (AttestationData[] memory);\\n\\n  /**\\n   * @dev Getter of the values of specific attestations\\n   * @param collectionIds Collection identifiers of the targeted attestations\\n   * @param owners Owners of the targeted attestations\\n   */\\n  function getAttestationValueBatch(uint256[] memory collectionIds, address[] memory owners)\\n    external\\n    view\\n    returns (uint256[] memory);\\n}\\n\",\"keccak256\":\"0xb5e25bd7e0372c9973e582fb7fe96318c145831a5452d8c79eb848a7464b0297\",\"license\":\"MIT\"},\"contracts/core/interfaces/IAttester.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.14;\\n\\nimport {Request, Attestation} from '../libs/Structs.sol';\\nimport {IAttestationsRegistry} from '../interfaces/IAttestationsRegistry.sol';\\n\\n/**\\n * @title IAttester\\n * @author Sismo\\n * @notice This is the interface for the attesters in Sismo Protocol\\n */\\ninterface IAttester {\\n  event AttestationGenerated(Attestation attestation);\\n\\n  event AttestationDeleted(Attestation attestation);\\n\\n  error AttestationDeletionNotImplemented();\\n\\n  /**\\n   * @dev Main external function. Allows to generate attestations by making a request and submitting proof\\n   * @param request User request\\n   * @param proofData Data sent along the request to prove its validity\\n   * @return attestations Attestations that has been recorded\\n   */\\n  function generateAttestations(Request calldata request, bytes calldata proofData)\\n    external\\n    returns (Attestation[] memory);\\n\\n  /**\\n   * @dev External facing function. Allows to delete an attestation by submitting proof\\n   * @param collectionIds Collection identifier of attestations to delete\\n   * @param attestationsOwner Owner of attestations to delete\\n   * @param proofData Data sent along the deletion request to prove its validity\\n   * @return attestations Attestations that was deleted\\n   */\\n  function deleteAttestations(\\n    uint256[] calldata collectionIds,\\n    address attestationsOwner,\\n    bytes calldata proofData\\n  ) external returns (Attestation[] memory);\\n\\n  /**\\n   * @dev MANDATORY: must be implemented in attesters\\n   * It should build attestations from the user request and the proof\\n   * @param request User request\\n   * @param proofData Data sent along the request to prove its validity\\n   * @return attestations Attestations that will be recorded\\n   */\\n  function buildAttestations(Request calldata request, bytes calldata proofData)\\n    external\\n    view\\n    returns (Attestation[] memory);\\n\\n  /**\\n   * @dev Attestation registry address getter\\n   * @return attestationRegistry Address of the registry\\n   */\\n  function getAttestationRegistry() external view returns (IAttestationsRegistry);\\n}\\n\",\"keccak256\":\"0xafe9c1a742d7570033c8d74cee203e09ee9b7461eaed6d2ca77697449e2ce95d\",\"license\":\"MIT\"},\"contracts/core/interfaces/IFront.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.14;\\n\\nimport {Request, Attestation} from '../libs/Structs.sol';\\n\\n/**\\n * @title IFront\\n * @author Sismo\\n * @notice This is the interface of the Front Contract\\n */\\ninterface IFront {\\n  error DifferentRequestsDestinations();\\n  event EarlyUserAttestationGenerated(address destination);\\n\\n  /**\\n   * @dev Forward a request to an attester and generates an early user attestation\\n   * @param attester Attester targeted by the request\\n   * @param request Request sent to the attester\\n   * @param proofData Data provided to the attester to back the request\\n   */\\n  function generateAttestations(\\n    address attester,\\n    Request calldata request,\\n    bytes calldata proofData\\n  ) external returns (Attestation[] memory);\\n\\n  /**\\n   * @dev generate multiple attestations at once, to the same destination\\n   * @param attesters Attesters targeted by the attesters\\n   * @param requests Requests sent to attester\\n   * @param proofDataArray Data sent with each request\\n   */\\n  function batchGenerateAttestations(\\n    address[] calldata attesters,\\n    Request[] calldata requests,\\n    bytes[] calldata proofDataArray\\n  ) external returns (Attestation[][] memory);\\n\\n  /**\\n   * @dev build the attestations from a user request targeting a specific attester.\\n   * Forwards to the build function of targeted attester\\n   * @param attester Targeted attester\\n   * @param request User request\\n   * @param proofData Data sent along the request to prove its validity\\n   * @return attestations Attestations that will be recorded\\n   */\\n  function buildAttestations(\\n    address attester,\\n    Request calldata request,\\n    bytes calldata proofData\\n  ) external view returns (Attestation[] memory);\\n\\n  /**\\n   * @dev build the attestations from multiple user requests.\\n   * Forwards to the build function(s) of targeted attester(s)\\n   * @param attesters Targeted attesters\\n   * @param requests User requests\\n   * @param proofDataArray Data sent along the request to prove its validity\\n   * @return attestations Attestations that will be recorded\\n   */\\n  function batchBuildAttestations(\\n    address[] calldata attesters,\\n    Request[] calldata requests,\\n    bytes[] calldata proofDataArray\\n  ) external view returns (Attestation[][] memory);\\n}\\n\",\"keccak256\":\"0xfeab84e36830c432f91d0cbe1beb430331529829ce667a6371fbad47baa12191\",\"license\":\"MIT\"},\"contracts/core/libs/Structs.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.14;\\n\\n/**\\n * @title  Attestations Registry State\\n * @author Sismo\\n * @notice This contract holds all of the storage variables and data\\n *         structures used by the AttestationsRegistry and parent\\n *         contracts.\\n */\\n\\n// User Attestation Request, can be made by any user\\n// The context of an Attestation Request is a specific attester contract\\n// Each attester has groups of accounts in its available data\\n// eg: for a specific attester:\\n//     group 1 <=> accounts that sent txs on mainnet\\n//     group 2 <=> accounts that sent txs on polygon\\n// eg: for another attester:\\n//     group 1 <=> accounts that sent eth txs in 2022\\n//     group 2 <=> accounts sent eth txs in 2021\\nstruct Request {\\n  // implicit address attester;\\n  // implicit uint256 chainId;\\n  Claim[] claims;\\n  address destination; // destination that will receive the end attestation\\n}\\n\\nstruct Claim {\\n  uint256 groupId; // user claims to have an account in this group\\n  uint256 claimedValue; // user claims this value for its account in the group\\n  bytes extraData; // arbitrary data, may be required by the attester to verify claims or generate a specific attestation\\n}\\n\\n/**\\n * @dev Attestation Struct. This is the struct receive as argument by the Attestation Registry.\\n * @param collectionId Attestation collection\\n * @param owner Attestation collection\\n * @param issuer Attestation collection\\n * @param value Attestation collection\\n * @param timestamp Attestation collection\\n * @param extraData Attestation collection\\n */\\nstruct Attestation {\\n  // implicit uint256 chainId;\\n  uint256 collectionId; // Id of the attestation collection (in the registry)\\n  address owner; // Owner of the attestation\\n  address issuer; // Contract that created or last updated the record.\\n  uint256 value; // Value of the attestation\\n  uint32 timestamp; // Timestamp chosen by the attester, should correspond to the effective date of the attestation\\n  // it is different from the recording timestamp (date when the attestation was recorded)\\n  // e.g a proof of NFT ownership may have be recorded today which is 2 month old data.\\n  bytes extraData; // arbitrary data that can be added by the attester\\n}\\n\\n// Attestation Data, stored in the registry\\n// The context is a specific owner of a specific collection\\nstruct AttestationData {\\n  // implicit uint256 chainId\\n  // implicit uint256 collectionId - from context\\n  // implicit owner\\n  address issuer; // Address of the contract that recorded the attestation\\n  uint256 value; // Value of the attestation\\n  uint32 timestamp; // Effective date of issuance of the attestation. (can be different from the recording timestamp)\\n  bytes extraData; // arbitrary data that can be added by the attester\\n}\\n\",\"keccak256\":\"0x893d9a10429878dd4077388ff4da954c20b86a3c172a7bbdd10a01eb5d39b6a0\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x60a060405234801561001057600080fd5b506040516110e83803806110e883398101604081905261002f91610040565b6001600160a01b0316608052610070565b60006020828403121561005257600080fd5b81516001600160a01b038116811461006957600080fd5b9392505050565b60805161104f610099600039600081816101060152818161051d01526106c1015261104f6000f3fe608060405234801561001057600080fd5b506004361061007d5760003560e01c806389a504771161005b57806389a50477146100eb578063ac9d654114610101578063aebddc6914610140578063c0a92c911461015357600080fd5b8063369b88be146100825780633ee490ce146100ab57806386fa70f3146100cb575b600080fd5b610095610090366004610809565b610166565b6040516100a291906108d3565b60405180910390f35b6100be6100b9366004610a11565b610321565b6040516100a29190610abd565b6100d66362da9c5c81565b60405163ffffffff90911681526020016100a2565b6100f3600081565b6040519081526020016100a2565b6101287f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016100a2565b6100be61014e366004610a11565b610354565b610095610161366004610809565b610362565b606060008667ffffffffffffffff81111561018357610183610b88565b6040519080825280602002602001820160405280156101b657816020015b60608152602001906001900390816101a15790505b5090506000868660008181106101ce576101ce610b9e565b90506020028101906101e09190610bb4565b6101f1906040810190602001610bd4565b905060005b8881101561030b57816001600160a01b031688888381811061021a5761021a610b9e565b905060200281019061022c9190610bb4565b61023d906040810190602001610bd4565b6001600160a01b0316146102645760405163f1b973df60e01b815260040160405180910390fd5b6102db8a8a8381811061027957610279610b9e565b905060200201602081019061028e9190610bd4565b8989848181106102a0576102a0610b9e565b90506020028101906102b29190610bb4565b8888858181106102c4576102c4610b9e565b90506020028101906102d69190610bf8565b610467565b8382815181106102ed576102ed610b9e565b6020026020010181905250808061030390610c3f565b9150506101f6565b50610315816104e1565b50979650505050505050565b6060600061033186868686610467565b905061034b6103466040870160208801610bd4565b6104e1565b95945050505050565b606061034b8585858561076d565b606060008667ffffffffffffffff81111561037f5761037f610b88565b6040519080825280602002602001820160405280156103b257816020015b606081526020019060019003908161039d5790505b50905060005b87811015610315576104378989838181106103d5576103d5610b9e565b90506020020160208101906103ea9190610bd4565b8888848181106103fc576103fc610b9e565b905060200281019061040e9190610bb4565b87878581811061042057610420610b9e565b90506020028101906104329190610bf8565b61076d565b82828151811061044957610449610b9e565b6020026020010181905250808061045f90610c3f565b9150506103b8565b60405163e60f999f60e01b81526060906001600160a01b0386169063e60f999f9061049a90879087908790600401610c8f565b6000604051808303816000875af11580156104b9573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261034b9190810190610ea1565b426362da9c5c63ffffffff82161015610769576040516211023960e41b81526000600482018190526001600160a01b03848116602484015290917f0000000000000000000000000000000000000000000000000000000000000000909116906301102390906044016020604051808303816000875af1158015610568573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061058c9190610ff7565b90508061076757604080516001808252818301909252600091816020015b6105fb6040518060c001604052806000815260200160006001600160a01b0316815260200160006001600160a01b0316815260200160008152602001600063ffffffff168152602001606081525090565b8152602001906001900390816105aa5790505090506040518060c0016040528060008152602001856001600160a01b03168152602001306001600160a01b03168152602001600181526020018463ffffffff1681526020016040518060400160405280601b81526020017f57697468207374726f6e67206c6f76652066726f6d205369736d6f00000000008152508152508160008151811061069f5761069f610b9e565b602090810291909101015260405163ebc5c09360e01b81526001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000169063ebc5c093906106f6908490600401610abd565b600060405180830381600087803b15801561071057600080fd5b505af1158015610724573d6000803e3d6000fd5b50506040516001600160a01b03871681527f65566f56ce57729c92989973ff6ac5bdd213f57bf75d7248c4190d6d3634738e9250602001905060405180910390a1505b505b5050565b604051630af411a360e41b81526060906001600160a01b0386169063af411a30906107a090879087908790600401610c8f565b600060405180830381865afa1580156104b9573d6000803e3d6000fd5b60008083601f8401126107cf57600080fd5b50813567ffffffffffffffff8111156107e757600080fd5b6020830191508360208260051b850101111561080257600080fd5b9250929050565b6000806000806000806060878903121561082257600080fd5b863567ffffffffffffffff8082111561083a57600080fd5b6108468a838b016107bd565b9098509650602089013591508082111561085f57600080fd5b61086b8a838b016107bd565b9096509450604089013591508082111561088457600080fd5b5061089189828a016107bd565b979a9699509497509295939492505050565b60005b838110156108be5781810151838201526020016108a6565b838111156108cd576000848401525b50505050565b60208152600060208201835180825260408401915060408160051b8501016020860160005b838110156109dd57868303603f19018552815180518085526020918201918086019190600582901b87010160005b828110156109c357601f1980898403018552855180518452602081015160018060a01b03808216602087015280604084015116604087015250506060810151606085015263ffffffff608082015116608085015260a0810151905060c060a085015280518060c08601526109a18160e08701602085016108a3565b6020978801979690960195601f019091169290920160e0019150600101610926565b5060209889019890965094909401935050506001016108f8565b50909695505050505050565b6001600160a01b03811681146109fe57600080fd5b50565b8035610a0c816109e9565b919050565b60008060008060608587031215610a2757600080fd5b8435610a32816109e9565b9350602085013567ffffffffffffffff80821115610a4f57600080fd5b9086019060408289031215610a6357600080fd5b90935060408601359080821115610a7957600080fd5b818701915087601f830112610a8d57600080fd5b813581811115610a9c57600080fd5b886020828501011115610aae57600080fd5b95989497505060200194505050565b60006020808301818452808551808352604092508286019150828160051b87010184880160005b83811015610b7a57888303603f19018552815180518452878101516001600160a01b03908116898601528782015116878501526060808201519085015260808082015163ffffffff169085015260a09081015160c091850182905280519185018290529060e090610b5a81838801858d016108a3565b96890196601f01601f191694909401909301925090860190600101610ae4565b509098975050505050505050565b634e487b7160e01b600052604160045260246000fd5b634e487b7160e01b600052603260045260246000fd5b60008235603e19833603018112610bca57600080fd5b9190910192915050565b600060208284031215610be657600080fd5b8135610bf1816109e9565b9392505050565b6000808335601e19843603018112610c0f57600080fd5b83018035915067ffffffffffffffff821115610c2a57600080fd5b60200191503681900382131561080257600080fd5b600060018201610c5f57634e487b7160e01b600052601160045260246000fd5b5060010190565b81835281816020850137506000828201602090810191909152601f909101601f19169091010190565b60006040808352608083018635601e19883603018112610cae57600080fd5b87018035602080830167ffffffffffffffff80841115610ccd57600080fd5b8360051b803603831315610ce057600080fd5b878a018890529584905260a09589018601956000908a01607e1936889003015b86831015610d9a578b8903609f190182528435818112610d1f57600080fd5b8801868101358a528a8101358a88015260608082013536839003603e19018112610d4857600080fd5b9091018b8101919088013586811115610d6057600080fd5b803603831315610d6f57600080fd5b818d8d0152610d81828d018285610c66565b9b50505094860194506001929092019190850190610d00565b5050505050610daa818b01610a01565b6001600160a01b0381166060890152945086840381880152505050610dd0818688610c66565b979650505050505050565b60405160c0810167ffffffffffffffff81118282101715610dfe57610dfe610b88565b60405290565b604051601f8201601f1916810167ffffffffffffffff81118282101715610e2d57610e2d610b88565b604052919050565b600082601f830112610e4657600080fd5b815167ffffffffffffffff811115610e6057610e60610b88565b610e73601f8201601f1916602001610e04565b818152846020838601011115610e8857600080fd5b610e998260208301602087016108a3565b949350505050565b60006020808385031215610eb457600080fd5b825167ffffffffffffffff80821115610ecc57600080fd5b818501915085601f830112610ee057600080fd5b815181811115610ef257610ef2610b88565b8060051b610f01858201610e04565b9182528381018501918581019089841115610f1b57600080fd5b86860192505b83831015610fea57825185811115610f395760008081fd5b860160c0818c03601f1901811315610f515760008081fd5b610f59610ddb565b898301518152604080840151610f6e816109e9565b828c0152606084810151610f81816109e9565b8083850152506080915081850151818401525060a08085015163ffffffff81168114610fad5760008081fd5b83830152928401519289841115610fc657600091508182fd5b610fd48f8d86880101610e35565b9083015250845250509186019190860190610f21565b9998505050505050505050565b60006020828403121561100957600080fd5b81518015158114610bf157600080fdfea2646970667358221220d9a1c7aad810ed99a78caa532fde55f566630b5c54222acef1c8f3ed994787b364736f6c634300080e0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061007d5760003560e01c806389a504771161005b57806389a50477146100eb578063ac9d654114610101578063aebddc6914610140578063c0a92c911461015357600080fd5b8063369b88be146100825780633ee490ce146100ab57806386fa70f3146100cb575b600080fd5b610095610090366004610809565b610166565b6040516100a291906108d3565b60405180910390f35b6100be6100b9366004610a11565b610321565b6040516100a29190610abd565b6100d66362da9c5c81565b60405163ffffffff90911681526020016100a2565b6100f3600081565b6040519081526020016100a2565b6101287f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016100a2565b6100be61014e366004610a11565b610354565b610095610161366004610809565b610362565b606060008667ffffffffffffffff81111561018357610183610b88565b6040519080825280602002602001820160405280156101b657816020015b60608152602001906001900390816101a15790505b5090506000868660008181106101ce576101ce610b9e565b90506020028101906101e09190610bb4565b6101f1906040810190602001610bd4565b905060005b8881101561030b57816001600160a01b031688888381811061021a5761021a610b9e565b905060200281019061022c9190610bb4565b61023d906040810190602001610bd4565b6001600160a01b0316146102645760405163f1b973df60e01b815260040160405180910390fd5b6102db8a8a8381811061027957610279610b9e565b905060200201602081019061028e9190610bd4565b8989848181106102a0576102a0610b9e565b90506020028101906102b29190610bb4565b8888858181106102c4576102c4610b9e565b90506020028101906102d69190610bf8565b610467565b8382815181106102ed576102ed610b9e565b6020026020010181905250808061030390610c3f565b9150506101f6565b50610315816104e1565b50979650505050505050565b6060600061033186868686610467565b905061034b6103466040870160208801610bd4565b6104e1565b95945050505050565b606061034b8585858561076d565b606060008667ffffffffffffffff81111561037f5761037f610b88565b6040519080825280602002602001820160405280156103b257816020015b606081526020019060019003908161039d5790505b50905060005b87811015610315576104378989838181106103d5576103d5610b9e565b90506020020160208101906103ea9190610bd4565b8888848181106103fc576103fc610b9e565b905060200281019061040e9190610bb4565b87878581811061042057610420610b9e565b90506020028101906104329190610bf8565b61076d565b82828151811061044957610449610b9e565b6020026020010181905250808061045f90610c3f565b9150506103b8565b60405163e60f999f60e01b81526060906001600160a01b0386169063e60f999f9061049a90879087908790600401610c8f565b6000604051808303816000875af11580156104b9573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261034b9190810190610ea1565b426362da9c5c63ffffffff82161015610769576040516211023960e41b81526000600482018190526001600160a01b03848116602484015290917f0000000000000000000000000000000000000000000000000000000000000000909116906301102390906044016020604051808303816000875af1158015610568573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061058c9190610ff7565b90508061076757604080516001808252818301909252600091816020015b6105fb6040518060c001604052806000815260200160006001600160a01b0316815260200160006001600160a01b0316815260200160008152602001600063ffffffff168152602001606081525090565b8152602001906001900390816105aa5790505090506040518060c0016040528060008152602001856001600160a01b03168152602001306001600160a01b03168152602001600181526020018463ffffffff1681526020016040518060400160405280601b81526020017f57697468207374726f6e67206c6f76652066726f6d205369736d6f00000000008152508152508160008151811061069f5761069f610b9e565b602090810291909101015260405163ebc5c09360e01b81526001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000169063ebc5c093906106f6908490600401610abd565b600060405180830381600087803b15801561071057600080fd5b505af1158015610724573d6000803e3d6000fd5b50506040516001600160a01b03871681527f65566f56ce57729c92989973ff6ac5bdd213f57bf75d7248c4190d6d3634738e9250602001905060405180910390a1505b505b5050565b604051630af411a360e41b81526060906001600160a01b0386169063af411a30906107a090879087908790600401610c8f565b600060405180830381865afa1580156104b9573d6000803e3d6000fd5b60008083601f8401126107cf57600080fd5b50813567ffffffffffffffff8111156107e757600080fd5b6020830191508360208260051b850101111561080257600080fd5b9250929050565b6000806000806000806060878903121561082257600080fd5b863567ffffffffffffffff8082111561083a57600080fd5b6108468a838b016107bd565b9098509650602089013591508082111561085f57600080fd5b61086b8a838b016107bd565b9096509450604089013591508082111561088457600080fd5b5061089189828a016107bd565b979a9699509497509295939492505050565b60005b838110156108be5781810151838201526020016108a6565b838111156108cd576000848401525b50505050565b60208152600060208201835180825260408401915060408160051b8501016020860160005b838110156109dd57868303603f19018552815180518085526020918201918086019190600582901b87010160005b828110156109c357601f1980898403018552855180518452602081015160018060a01b03808216602087015280604084015116604087015250506060810151606085015263ffffffff608082015116608085015260a0810151905060c060a085015280518060c08601526109a18160e08701602085016108a3565b6020978801979690960195601f019091169290920160e0019150600101610926565b5060209889019890965094909401935050506001016108f8565b50909695505050505050565b6001600160a01b03811681146109fe57600080fd5b50565b8035610a0c816109e9565b919050565b60008060008060608587031215610a2757600080fd5b8435610a32816109e9565b9350602085013567ffffffffffffffff80821115610a4f57600080fd5b9086019060408289031215610a6357600080fd5b90935060408601359080821115610a7957600080fd5b818701915087601f830112610a8d57600080fd5b813581811115610a9c57600080fd5b886020828501011115610aae57600080fd5b95989497505060200194505050565b60006020808301818452808551808352604092508286019150828160051b87010184880160005b83811015610b7a57888303603f19018552815180518452878101516001600160a01b03908116898601528782015116878501526060808201519085015260808082015163ffffffff169085015260a09081015160c091850182905280519185018290529060e090610b5a81838801858d016108a3565b96890196601f01601f191694909401909301925090860190600101610ae4565b509098975050505050505050565b634e487b7160e01b600052604160045260246000fd5b634e487b7160e01b600052603260045260246000fd5b60008235603e19833603018112610bca57600080fd5b9190910192915050565b600060208284031215610be657600080fd5b8135610bf1816109e9565b9392505050565b6000808335601e19843603018112610c0f57600080fd5b83018035915067ffffffffffffffff821115610c2a57600080fd5b60200191503681900382131561080257600080fd5b600060018201610c5f57634e487b7160e01b600052601160045260246000fd5b5060010190565b81835281816020850137506000828201602090810191909152601f909101601f19169091010190565b60006040808352608083018635601e19883603018112610cae57600080fd5b87018035602080830167ffffffffffffffff80841115610ccd57600080fd5b8360051b803603831315610ce057600080fd5b878a018890529584905260a09589018601956000908a01607e1936889003015b86831015610d9a578b8903609f190182528435818112610d1f57600080fd5b8801868101358a528a8101358a88015260608082013536839003603e19018112610d4857600080fd5b9091018b8101919088013586811115610d6057600080fd5b803603831315610d6f57600080fd5b818d8d0152610d81828d018285610c66565b9b50505094860194506001929092019190850190610d00565b5050505050610daa818b01610a01565b6001600160a01b0381166060890152945086840381880152505050610dd0818688610c66565b979650505050505050565b60405160c0810167ffffffffffffffff81118282101715610dfe57610dfe610b88565b60405290565b604051601f8201601f1916810167ffffffffffffffff81118282101715610e2d57610e2d610b88565b604052919050565b600082601f830112610e4657600080fd5b815167ffffffffffffffff811115610e6057610e60610b88565b610e73601f8201601f1916602001610e04565b818152846020838601011115610e8857600080fd5b610e998260208301602087016108a3565b949350505050565b60006020808385031215610eb457600080fd5b825167ffffffffffffffff80821115610ecc57600080fd5b818501915085601f830112610ee057600080fd5b815181811115610ef257610ef2610b88565b8060051b610f01858201610e04565b9182528381018501918581019089841115610f1b57600080fd5b86860192505b83831015610fea57825185811115610f395760008081fd5b860160c0818c03601f1901811315610f515760008081fd5b610f59610ddb565b898301518152604080840151610f6e816109e9565b828c0152606084810151610f81816109e9565b8083850152506080915081850151818401525060a08085015163ffffffff81168114610fad5760008081fd5b83830152928401519289841115610fc657600091508182fd5b610fd48f8d86880101610e35565b9083015250845250509186019190860190610f21565b9998505050505050505050565b60006020828403121561100957600080fd5b81518015158114610bf157600080fdfea2646970667358221220d9a1c7aad810ed99a78caa532fde55f566630b5c54222acef1c8f3ed994787b364736f6c634300080e0033",
+  "devdoc": {
+    "author": "Sismo",
+    "kind": "dev",
+    "methods": {
+      "batchBuildAttestations(address[],((uint256,uint256,bytes)[],address)[],bytes[])": {
+        "details": "build the attestations from multiple user requests. Forwards to the build function of targeted attester",
+        "params": {
+          "attesters": "Targeted attesters",
+          "proofDataArray": "Data sent along the request to prove its validity",
+          "requests": "User requests"
+        },
+        "returns": {
+          "_0": "attestations Attestations that will be recorded"
+        }
+      },
+      "batchGenerateAttestations(address[],((uint256,uint256,bytes)[],address)[],bytes[])": {
+        "details": "generate multiple attestations at once, to the same destination, generates an early user attestation",
+        "params": {
+          "attesters": "Attesters targeted by the attesters",
+          "proofDataArray": "Data sent with each request",
+          "requests": "Requests sent to attester"
+        }
+      },
+      "buildAttestations(address,((uint256,uint256,bytes)[],address),bytes)": {
+        "details": "build the attestations from a user request targeting a specific attester. Forwards to the build function of targeted attester",
+        "params": {
+          "attester": "Targeted attester",
+          "proofData": "Data sent along the request to prove its validity",
+          "request": "User request"
+        },
+        "returns": {
+          "_0": "attestations Attestations that will be recorded"
+        }
+      },
+      "constructor": {
+        "details": "Constructor",
+        "params": {
+          "attestationsRegistryAddress": "Attestations registry contract address"
+        }
+      },
+      "generateAttestations(address,((uint256,uint256,bytes)[],address),bytes)": {
+        "details": "Forward a request to an attester and generates an early user attestation",
+        "params": {
+          "attester": "Attester targeted by the request",
+          "proofData": "Data provided to the attester to back the request",
+          "request": "Request sent to the attester"
+        }
+      }
+    },
+    "title": "Front",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "notice": "This is the Front contract of the Sismo protocol Behind a proxy, it routes attestations request to the targeted attester and can perform some actions This specific implementation rewards early users with a early user attestation if they used sismo before ethcc conference For more information: https://front.docs.sismo.io",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
