@@ -303,6 +303,7 @@ describe('Test Badges contract', () => {
       const { badges: newBadges } = await hre.run('deploy-badges', {
         uri: 'https://token_cdn.domain/',
         owner: secondDeployer.address,
+        options: { behindProxy: false },
       });
       const badgesProxy = TransparentUpgradeableProxy__factory.connect(
         badges.address,

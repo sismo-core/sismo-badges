@@ -181,6 +181,7 @@ describe('Test CommitmentMapperRegistry contract', () => {
         {
           commitmentMapperPubKeyX: BigNumber.from(0).toHexString(),
           commitmentMapperPubKeyY: BigNumber.from(0).toHexString(),
+          options: { behindProxy: false },
         }
       );
 

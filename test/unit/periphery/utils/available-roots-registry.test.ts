@@ -306,7 +306,7 @@ describe('Test AvailableRootsRegistry contract', () => {
 
       const { availableRootsRegistry: newAvailableRootsRegistry } = await hre.run(
         'deploy-available-roots-registry',
-        { owner: secondDeployer.address }
+        { owner: secondDeployer.address, options: { behindProxy: false } }
       );
 
       const availableRootsRegistryProxy = TransparentUpgradeableProxy__factory.connect(
