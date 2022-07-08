@@ -75,6 +75,9 @@ describe('Test Front contract', () => {
     };
   });
 
+  /*************************************************************************************/
+  /********************************** DEPLOYMENTS **************************************/
+  /*************************************************************************************/
   describe('Deployments', () => {
     it('Should deploy, setup and test the constructed values of the contract', async () => {
       ({
@@ -132,6 +135,9 @@ describe('Test Front contract', () => {
     });
   });
 
+  /*************************************************************************************/
+  /***************************** GENERATE ATTESTATIONS *********************************/
+  /*************************************************************************************/
   describe('Generate attestations', () => {
     let evmPreOperationSnapshot;
 
@@ -256,6 +262,9 @@ describe('Test Front contract', () => {
     });
   });
 
+  /*************************************************************************************/
+  /************************** BATCH GENERATE ATTESTATIONS ******************************/
+  /*************************************************************************************/
   describe('Batch generate attestations', () => {
     let evmPostOperationSnapshot;
 
@@ -452,6 +461,9 @@ describe('Test Front contract', () => {
     });
   });
 
+  /*************************************************************************************/
+  /****************************** BUILD ATTESTATIONS ***********************************/
+  /*************************************************************************************/
   describe('Build attestations', async () => {
     it('Should forward buildAttestations call to the attester', async () => {
       const buildAttestationsTransaction = await front.buildAttestations(
@@ -473,6 +485,9 @@ describe('Test Front contract', () => {
     });
   });
 
+  /*************************************************************************************/
+  /*************************** BATCH BUILD ATTESTATIONS ********************************/
+  /*************************************************************************************/
   describe('Batch build attestations', async () => {
     it('Should forward buildAttestations to the attesters', async () => {
       const buildAttestationsTransaction = await front.batchBuildAttestations(
