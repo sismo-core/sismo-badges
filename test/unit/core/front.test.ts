@@ -7,8 +7,8 @@ import { AttestationStruct, RequestStruct } from 'types/HydraS1SimpleAttester';
 import { evmRevert, evmSnapshot, increaseTime } from '../../../test/utils';
 
 type IssuerRange = {
-  min: number;
-  max: number;
+  first: number;
+  last: number;
 };
 
 type Requests = {
@@ -40,13 +40,13 @@ describe('Test Front contract', () => {
     [userDestination, secondUserDestination] = await ethers.getSigners();
 
     frontAuthorizedRange = {
-      min: 0,
-      max: 1,
+      first: 0,
+      last: 1,
     };
 
     mockAttesterAuthorizedRange = {
-      min: 2,
-      max: 3,
+      first: 2,
+      last: 3,
     };
 
     generationTimestamp = Math.floor(Date.now() / 1000);
@@ -83,10 +83,10 @@ describe('Test Front contract', () => {
         attestationsRegistry,
       } = await hre.run('deploy-mock-attester-and-core', {
         uri: 'https://token_cdn.domain/',
-        frontFirstCollectionId: frontAuthorizedRange.min.toString(),
-        frontLastCollectionId: frontAuthorizedRange.max.toString(),
-        collectionIdFirst: mockAttesterAuthorizedRange.min.toString(),
-        collectionIdLast: mockAttesterAuthorizedRange.max.toString(),
+        frontFirstCollectionId: frontAuthorizedRange.first.toString(),
+        frontLastCollectionId: frontAuthorizedRange.last.toString(),
+        collectionIdFirst: mockAttesterAuthorizedRange.first.toString(),
+        collectionIdLast: mockAttesterAuthorizedRange.last.toString(),
         options: {
           behindProxy: false,
         },
@@ -94,7 +94,7 @@ describe('Test Front contract', () => {
 
       attestations = {
         first: {
-          collectionId: mockAttesterAuthorizedRange.min,
+          collectionId: mockAttesterAuthorizedRange.first,
           owner: userDestination.address,
           issuer: mockAttester.address,
           value: 1,
@@ -102,7 +102,7 @@ describe('Test Front contract', () => {
           extraData: ethers.utils.toUtf8Bytes('Mock Attester v0'),
         },
         second: {
-          collectionId: mockAttesterAuthorizedRange.max,
+          collectionId: mockAttesterAuthorizedRange.last,
           owner: userDestination.address,
           issuer: mockAttester.address,
           value: 1,
@@ -133,14 +133,14 @@ describe('Test Front contract', () => {
   });
 
   describe('Generate attestations', () => {
-    let evmPostOperationSnapshot;
+    let evmPreOperationSnapshot;
 
     beforeEach(async () => {
-      evmPostOperationSnapshot = await evmSnapshot(hre);
+      evmPreOperationSnapshot = await evmSnapshot(hre);
     });
 
     afterEach(async () => {
-      evmRevert(hre, evmPostOperationSnapshot);
+      evmRevert(hre, evmPreOperationSnapshot);
     });
 
     it('Should forward generateAttestations call to the attester', async () => {
@@ -150,6 +150,7 @@ describe('Test Front contract', () => {
         '0x'
       );
 
+      // 1 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
         .to.emit(attestationsRegistry, 'AttestationRecorded')
         .withArgs([
@@ -161,6 +162,7 @@ describe('Test Front contract', () => {
           ethers.utils.hexlify(attestations.first.extraData),
         ]);
 
+      // 2 - Checks that forwarded attestations was recorded on the user
       expect(
         await attestationsRegistry.hasAttestation(
           await mockAttester.ATTESTATION_ID_MIN(),
@@ -189,11 +191,13 @@ describe('Test Front contract', () => {
         '0x'
       );
 
+      // 1 - Checks that the transaction didn't emitted the event
       expect(generateAttestationsTransaction).to.not.emit(front, 'EarlyUserAttestationGenerated');
 
+      // 2 - Checks that early user attestation was not recorded on the user
       expect(
         await attestationsRegistry.hasAttestation(
-          await front.ATTESTATIONS_REGISTRY(),
+          await front.EARLY_USER_COLLECTION(),
           userDestination.address
         )
       ).to.be.false;
@@ -214,6 +218,7 @@ describe('Test Front contract', () => {
         await ethers.provider.getBlock('latest')
       ).timestamp;
 
+      // 1 - Checks that the transaction emitted the events
       await expect(generateAttestationsTransaction)
         .to.emit(attestationsRegistry, 'AttestationRecorded')
         .withArgs([
@@ -229,6 +234,7 @@ describe('Test Front contract', () => {
         .to.emit(front, 'EarlyUserAttestationGenerated')
         .withArgs(earlyUserGeneratedAttesations.first.owner);
 
+      // 2 - Checks that early user attestation was recorded on the user
       expect(
         await attestationsRegistry.hasAttestation(
           await front.EARLY_USER_COLLECTION(),
@@ -278,6 +284,7 @@ describe('Test Front contract', () => {
         ['0x', '0x']
       );
 
+      // 1 - Checks that the transaction emitted the events
       await expect(generateAttestationsTransaction)
         .to.emit(attestationsRegistry, 'AttestationRecorded')
         .withArgs([
@@ -300,6 +307,7 @@ describe('Test Front contract', () => {
           ethers.utils.hexlify(attestations.second.extraData),
         ]);
 
+      // 2 - Checks that batch forwarded attestations was recorded on the user
       expect(
         await attestationsRegistry.hasAttestation(
           await mockAttester.ATTESTATION_ID_MIN(),
@@ -325,6 +333,18 @@ describe('Test Front contract', () => {
         attestations.first.timestamp,
         ethers.utils.hexlify(attestations.first.extraData),
       ]);
+
+      expect(
+        await attestationsRegistry.getAttestationData(
+          await mockAttester.ATTESTATION_ID_MAX(),
+          userDestination.address
+        )
+      ).to.eql([
+        attestations.second.issuer,
+        BigNumber.from(attestations.second.value),
+        attestations.second.timestamp,
+        ethers.utils.hexlify(attestations.second.extraData),
+      ]);
     });
 
     it('Should not generate early user attestation if the date is > to Sept 15 2022', async () => {
@@ -336,11 +356,13 @@ describe('Test Front contract', () => {
         ['0x', '0x']
       );
 
+      // 1 - Checks that the transaction didn't emitted the event
       expect(generateAttestationsTransaction).to.not.emit(front, 'EarlyUserAttestationGenerated');
 
+      // 2 - Checks that early user attestation was not recorded on the user
       expect(
         await attestationsRegistry.hasAttestation(
-          await front.ATTESTATIONS_REGISTRY(),
+          await front.EARLY_USER_COLLECTION(),
           userDestination.address
         )
       ).to.be.false;
@@ -362,6 +384,7 @@ describe('Test Front contract', () => {
           await ethers.provider.getBlock('latest')
         ).timestamp);
 
+      // 1 - Checks that the transaction emitted the events
       await expect(batchGenerateAttestationsTransaction)
         .to.emit(attestationsRegistry, 'AttestationRecorded')
         .withArgs([
@@ -384,13 +407,21 @@ describe('Test Front contract', () => {
           ethers.utils.hexlify(earlyUserGeneratedAttesations.second.extraData),
         ]);
 
+      // 2 - Checks that early user attestation was recorded on the user
       await expect(batchGenerateAttestationsTransaction)
         .to.emit(front, 'EarlyUserAttestationGenerated')
-        .withArgs(earlyUserGeneratedAttesations.first.owner);
+        .withArgs(userDestination.address);
 
       expect(
         await attestationsRegistry.hasAttestation(
           earlyUserGeneratedAttesations.first.collectionId,
+          userDestination.address
+        )
+      ).to.be.true;
+
+      expect(
+        await attestationsRegistry.hasAttestation(
+          earlyUserGeneratedAttesations.second.collectionId,
           userDestination.address
         )
       ).to.be.true;
