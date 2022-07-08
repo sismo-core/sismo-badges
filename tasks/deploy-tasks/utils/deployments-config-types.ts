@@ -33,7 +33,6 @@ export type DeploymentsConfigTypes = {
       owner: string;
       EdDSAPubKeyX: string;
       EdDSAPubKeyY: string;
-      commitmentMapperAddress: string;
     };
     badges: {
       owner: string;

@@ -18,17 +18,15 @@ const COMMITMENT_MAPPER_TESTER = [
 
 const THREE_DAYS = '295200';
 // Rinkeby
-const ALPHA_RINKEBY_OWNER = '0x8ec328d8297E5DfAe229F3bC3052B88DEc85f384';
+const ALPHA_RINKEBY_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
 const ALPHA_RINKEBY_ROOTS_OWNER_RELAYER = '0x5de4009c77d51782014bb16238ec32971ae9f8d0';
 const ALPHA_RINKEBY_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
 // Polygon
-const ALPHA_POLYGON_OWNER = '0x8ec328d8297E5DfAe229F3bC3052B88DEc85f384';
+const ALPHA_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const ALPHA_POLYGON_ROOTS_OWNER_RELAYER = '0xf0a0b692e1c764281c211948d03edeef5fb57111';
-const ALPHA_POLYGON_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
+const ALPHA_POLYGON_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
 
 export const deploymentsConfig: DeploymentsConfigTypes = {
-  // deployer: 0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC is the signer1
-  // of the "dev-prod-polygon-mnemonic"
   polygon: {
     deployOptions: {
       manualConfirm: true,
@@ -66,7 +64,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_POLYGON_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
-      commitmentMapperAddress: ethers.constants.AddressZero,
     },
   },
   // owners: 0xb8b85903f5c2f5506abb7ad2bcbd646b89e308a4 is the signer1
@@ -85,18 +82,18 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     front: {
       collectionIdFirst: '0',
-      collectionIdLast: '100000',
+      collectionIdLast: '10000000',
     },
     hydraS1SimpleAttester: {
-      collectionIdFirst: '100001',
-      collectionIdLast: '200000',
-      initialRoot: '0',
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
     },
     hydraS1SoulboundAttester: {
-      collectionIdFirst: '200001',
-      collectionIdLast: '300000',
-      initialRoot: '0',
+      collectionIdFirst: '20000001',
+      collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
+      initialRoot: '0',
     },
     attestationsRegistry: {
       owner: ALPHA_RINKEBY_OWNER,
@@ -108,7 +105,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_RINKEBY_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
-      commitmentMapperAddress: ethers.constants.AddressZero,
     },
   },
   local: {
@@ -131,12 +127,12 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1SimpleAttester: {
       collectionIdFirst: '100001',
       collectionIdLast: '200000',
-      initialRoot: '0x29c161c3ff1113059a064605aa9ddcfe636110a659037ef048f02a2e0233a79b',
+      initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
     },
     hydraS1SoulboundAttester: {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
-      initialRoot: '0x29c161c3ff1113059a064605aa9ddcfe636110a659037ef048f02a2e0233a79b',
+      initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
     attestationsRegistry: {
@@ -149,7 +145,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
       EdDSAPubKeyX: '0x1e468ad0fcde4edec429cd41eb28a0e78d4f31fa2c25172ef677468b2b38a9dc',
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
-      commitmentMapperAddress: ethers.constants.AddressZero,
     },
   },
   hardhat: {
@@ -172,12 +167,12 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1SimpleAttester: {
       collectionIdFirst: '100001',
       collectionIdLast: '200000',
-      initialRoot: '0x2bf49366e553a2fd3bfcbb6ce6ff51bab6f5a68408ac1beda1901b10b08bf26c',
+      initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
     },
     hydraS1SoulboundAttester: {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
-      initialRoot: '0x2bf49366e553a2fd3bfcbb6ce6ff51bab6f5a68408ac1beda1901b10b08bf26c',
+      initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
     attestationsRegistry: {
@@ -190,7 +185,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
       EdDSAPubKeyX: COMMITMENT_MAPPER_TESTER[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_TESTER[1],
-      commitmentMapperAddress: ethers.constants.AddressZero,
     },
   },
 };
