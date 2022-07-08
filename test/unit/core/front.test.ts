@@ -1,6 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import hre, { ethers } from 'hardhat';
 import { AttestationsRegistry, Front, MockAttester } from 'types';
 import { AttestationStruct, RequestStruct } from 'types/HydraS1SimpleAttester';
@@ -21,6 +21,40 @@ type Attestations = {
   second: AttestationStruct;
 };
 
+type AttestationArray = [BigNumber, string, string, BigNumber, BigNumberish, string];
+
+async function assertAttestationRecordedEventEmitted(
+  transaction: ContractTransaction,
+  attestationsRegistry: AttestationsRegistry,
+  attesation: AttestationStruct
+) {
+  await expect(transaction)
+    .to.emit(attestationsRegistry, 'AttestationRecorded')
+    .withArgs([
+      BigNumber.from(attesation.collectionId),
+      attesation.owner,
+      attesation.issuer,
+      BigNumber.from(attesation.value),
+      attesation.timestamp,
+      ethers.utils.hexlify(attesation.extraData),
+    ]);
+}
+
+async function assertAttestationDataIsValid(
+  attestationsRegistry: AttestationsRegistry,
+  attestation: AttestationStruct,
+  destination: SignerWithAddress
+) {
+  expect(
+    await attestationsRegistry.getAttestationData(attestation.collectionId, destination.address)
+  ).to.eql([
+    attestation.issuer,
+    BigNumber.from(attestation.value),
+    attestation.timestamp,
+    ethers.utils.hexlify(attestation.extraData),
+  ]);
+}
+
 describe('Test Front contract', () => {
   let userDestination: SignerWithAddress;
   let secondUserDestination: SignerWithAddress;
@@ -34,7 +68,8 @@ describe('Test Front contract', () => {
   let generationTimestamp: number;
   let requests: Requests;
   let attestations: Attestations;
-  let earlyUserGeneratedAttesations: Attestations;
+  let attestationsArray: AttestationArray[][];
+  let earlyUserGeneratedAttesation: AttestationStruct;
 
   before(async () => {
     [userDestination, secondUserDestination] = await ethers.getSigners();
@@ -114,24 +149,37 @@ describe('Test Front contract', () => {
         },
       };
 
-      earlyUserGeneratedAttesations = {
-        first: {
-          collectionId: await front.EARLY_USER_COLLECTION(),
-          owner: userDestination.address,
-          issuer: front.address,
-          value: 1,
-          timestamp: 0,
-          extraData: ethers.utils.toUtf8Bytes('With strong love from Sismo'),
-        },
-        second: {
-          collectionId: await front.EARLY_USER_COLLECTION(),
-          owner: userDestination.address,
-          issuer: front.address,
-          value: 1,
-          timestamp: 0,
-          extraData: ethers.utils.toUtf8Bytes('With strong love from Sismo'),
-        },
+      earlyUserGeneratedAttesation = {
+        collectionId: await front.EARLY_USER_COLLECTION(),
+        owner: userDestination.address,
+        issuer: front.address,
+        value: 1,
+        timestamp: 0,
+        extraData: ethers.utils.toUtf8Bytes('With strong love from Sismo'),
       };
+
+      attestationsArray = [
+        [
+          [
+            BigNumber.from(attestations.first.collectionId),
+            attestations.first.owner,
+            attestations.first.issuer,
+            BigNumber.from(attestations.first.value),
+            attestations.first.timestamp,
+            ethers.utils.hexlify(attestations.first.extraData),
+          ],
+        ],
+        [
+          [
+            BigNumber.from(attestations.second.collectionId),
+            attestations.second.owner,
+            attestations.second.issuer,
+            BigNumber.from(attestations.second.value),
+            attestations.second.timestamp,
+            ethers.utils.hexlify(attestations.second.extraData),
+          ],
+        ],
+      ];
     });
   });
 
@@ -157,16 +205,11 @@ describe('Test Front contract', () => {
       );
 
       // 1 - Checks that the transaction emitted the event
-      await expect(generateAttestationsTransaction)
-        .to.emit(attestationsRegistry, 'AttestationRecorded')
-        .withArgs([
-          BigNumber.from(attestations.first.collectionId),
-          attestations.first.owner,
-          attestations.first.issuer,
-          BigNumber.from(attestations.first.value),
-          attestations.first.timestamp,
-          ethers.utils.hexlify(attestations.first.extraData),
-        ]);
+      await assertAttestationRecordedEventEmitted(
+        generateAttestationsTransaction,
+        attestationsRegistry,
+        attestations.first
+      );
 
       // 2 - Checks that forwarded attestations was recorded on the user
       expect(
@@ -176,17 +219,7 @@ describe('Test Front contract', () => {
         )
       ).to.be.true;
 
-      expect(
-        await attestationsRegistry.getAttestationData(
-          await mockAttester.ATTESTATION_ID_MIN(),
-          userDestination.address
-        )
-      ).to.eql([
-        attestations.first.issuer,
-        BigNumber.from(attestations.first.value),
-        attestations.first.timestamp,
-        ethers.utils.hexlify(attestations.first.extraData),
-      ]);
+      await assertAttestationDataIsValid(attestationsRegistry, attestations.first, userDestination);
     });
     it('Should not generate early user attestation if the date is > to Sept 15 2022', async () => {
       await increaseTime(hre, Date.parse('16 Sept 20222 00:00:00 GMT') - Date.now());
@@ -220,25 +253,20 @@ describe('Test Front contract', () => {
         '0x'
       );
 
-      earlyUserGeneratedAttesations.first.timestamp = await (
+      earlyUserGeneratedAttesation.timestamp = await (
         await ethers.provider.getBlock('latest')
       ).timestamp;
 
       // 1 - Checks that the transaction emitted the events
-      await expect(generateAttestationsTransaction)
-        .to.emit(attestationsRegistry, 'AttestationRecorded')
-        .withArgs([
-          BigNumber.from(earlyUserGeneratedAttesations.first.collectionId),
-          earlyUserGeneratedAttesations.first.owner,
-          earlyUserGeneratedAttesations.first.issuer,
-          BigNumber.from(earlyUserGeneratedAttesations.first.value),
-          earlyUserGeneratedAttesations.first.timestamp,
-          ethers.utils.hexlify(earlyUserGeneratedAttesations.first.extraData),
-        ]);
+      await assertAttestationRecordedEventEmitted(
+        generateAttestationsTransaction,
+        attestationsRegistry,
+        earlyUserGeneratedAttesation
+      );
 
       await expect(generateAttestationsTransaction)
         .to.emit(front, 'EarlyUserAttestationGenerated')
-        .withArgs(earlyUserGeneratedAttesations.first.owner);
+        .withArgs(earlyUserGeneratedAttesation.owner);
 
       // 2 - Checks that early user attestation was recorded on the user
       expect(
@@ -248,17 +276,23 @@ describe('Test Front contract', () => {
         )
       ).to.be.true;
 
+      await assertAttestationDataIsValid(
+        attestationsRegistry,
+        earlyUserGeneratedAttesation,
+        userDestination
+      );
+    });
+
+    it('Should return the builded attestations', async () => {
       expect(
-        await attestationsRegistry.getAttestationData(
-          await front.EARLY_USER_COLLECTION(),
-          userDestination.address
-        )
-      ).to.eql([
-        earlyUserGeneratedAttesations.first.issuer,
-        BigNumber.from(earlyUserGeneratedAttesations.first.value),
-        earlyUserGeneratedAttesations.first.timestamp,
-        ethers.utils.hexlify(earlyUserGeneratedAttesations.first.extraData),
-      ]);
+        await front.callStatic.generateAttestations(mockAttester.address, requests.first, '0x')
+      ).to.eql(attestationsArray[0]);
+
+      expect(
+        await front.callStatic.generateAttestations(mockAttester.address, requests.first, '0x')
+      ).to.eql(
+        await front.callStatic.buildAttestations(mockAttester.address, requests.first, '0x')
+      );
     });
   });
 
@@ -294,27 +328,16 @@ describe('Test Front contract', () => {
       );
 
       // 1 - Checks that the transaction emitted the events
-      await expect(generateAttestationsTransaction)
-        .to.emit(attestationsRegistry, 'AttestationRecorded')
-        .withArgs([
-          BigNumber.from(attestations.first.collectionId),
-          attestations.first.owner,
-          attestations.first.issuer,
-          BigNumber.from(attestations.first.value),
-          attestations.first.timestamp,
-          ethers.utils.hexlify(attestations.first.extraData),
-        ]);
-
-      await expect(generateAttestationsTransaction)
-        .to.emit(attestationsRegistry, 'AttestationRecorded')
-        .withArgs([
-          BigNumber.from(attestations.second.collectionId),
-          attestations.second.owner,
-          attestations.second.issuer,
-          BigNumber.from(attestations.second.value),
-          attestations.second.timestamp,
-          ethers.utils.hexlify(attestations.second.extraData),
-        ]);
+      await assertAttestationRecordedEventEmitted(
+        generateAttestationsTransaction,
+        attestationsRegistry,
+        attestations.first
+      );
+      await assertAttestationRecordedEventEmitted(
+        generateAttestationsTransaction,
+        attestationsRegistry,
+        attestations.second
+      );
 
       // 2 - Checks that batch forwarded attestations was recorded on the user
       expect(
@@ -331,33 +354,18 @@ describe('Test Front contract', () => {
         )
       ).to.be.true;
 
-      expect(
-        await attestationsRegistry.getAttestationData(
-          await mockAttester.ATTESTATION_ID_MIN(),
-          userDestination.address
-        )
-      ).to.eql([
-        attestations.first.issuer,
-        BigNumber.from(attestations.first.value),
-        attestations.first.timestamp,
-        ethers.utils.hexlify(attestations.first.extraData),
-      ]);
-
-      expect(
-        await attestationsRegistry.getAttestationData(
-          await mockAttester.ATTESTATION_ID_MAX(),
-          userDestination.address
-        )
-      ).to.eql([
-        attestations.second.issuer,
-        BigNumber.from(attestations.second.value),
-        attestations.second.timestamp,
-        ethers.utils.hexlify(attestations.second.extraData),
-      ]);
+      await assertAttestationDataIsValid(attestationsRegistry, attestations.first, userDestination);
+      await assertAttestationDataIsValid(
+        attestationsRegistry,
+        attestations.second,
+        userDestination
+      );
     });
 
     it('Should not generate early user attestation if the date is > to Sept 15 2022', async () => {
-      await increaseTime(hre, Date.parse('16 Sept 20222 00:00:00 GMT') - Date.now());
+      if (Date.now() < Date.parse('15 Sept 2022 00:00:00 GMT')) {
+        await increaseTime(hre, Date.parse('15 Sept 20222 00:00:00 GMT') - Date.now());
+      }
 
       const generateAttestationsTransaction = await front.batchGenerateAttestations(
         [mockAttester.address, mockAttester.address],
@@ -388,76 +396,58 @@ describe('Test Front contract', () => {
         ['0x', '0x']
       );
 
-      earlyUserGeneratedAttesations.first.timestamp,
-        (earlyUserGeneratedAttesations.second.timestamp = await (
-          await ethers.provider.getBlock('latest')
-        ).timestamp);
+      earlyUserGeneratedAttesation.timestamp = await (
+        await ethers.provider.getBlock('latest')
+      ).timestamp;
 
       // 1 - Checks that the transaction emitted the events
-      await expect(batchGenerateAttestationsTransaction)
-        .to.emit(attestationsRegistry, 'AttestationRecorded')
-        .withArgs([
-          BigNumber.from(earlyUserGeneratedAttesations.first.collectionId),
-          earlyUserGeneratedAttesations.first.owner,
-          earlyUserGeneratedAttesations.first.issuer,
-          BigNumber.from(earlyUserGeneratedAttesations.first.value),
-          earlyUserGeneratedAttesations.first.timestamp,
-          ethers.utils.hexlify(earlyUserGeneratedAttesations.first.extraData),
-        ]);
+      await assertAttestationRecordedEventEmitted(
+        batchGenerateAttestationsTransaction,
+        attestationsRegistry,
+        earlyUserGeneratedAttesation
+      );
 
-      await expect(batchGenerateAttestationsTransaction)
-        .to.emit(attestationsRegistry, 'AttestationRecorded')
-        .withArgs([
-          BigNumber.from(earlyUserGeneratedAttesations.second.collectionId),
-          earlyUserGeneratedAttesations.second.owner,
-          earlyUserGeneratedAttesations.second.issuer,
-          BigNumber.from(earlyUserGeneratedAttesations.second.value),
-          earlyUserGeneratedAttesations.second.timestamp,
-          ethers.utils.hexlify(earlyUserGeneratedAttesations.second.extraData),
-        ]);
-
-      // 2 - Checks that early user attestation was recorded on the user
       await expect(batchGenerateAttestationsTransaction)
         .to.emit(front, 'EarlyUserAttestationGenerated')
         .withArgs(userDestination.address);
 
+      // 2 - Checks that early user attestation was recorded on the user
       expect(
         await attestationsRegistry.hasAttestation(
-          earlyUserGeneratedAttesations.first.collectionId,
+          await front.EARLY_USER_COLLECTION(),
           userDestination.address
         )
       ).to.be.true;
 
+      await assertAttestationDataIsValid(
+        attestationsRegistry,
+        earlyUserGeneratedAttesation,
+        userDestination
+      );
+    });
+
+    it('Should return the batch builded attestations', async () => {
       expect(
-        await attestationsRegistry.hasAttestation(
-          earlyUserGeneratedAttesations.second.collectionId,
-          userDestination.address
+        await front.callStatic.batchGenerateAttestations(
+          [mockAttester.address, mockAttester.address],
+          [requests.first, requests.second],
+          ['0x', '0x']
         )
-      ).to.be.true;
+      ).to.eql(attestationsArray);
 
       expect(
-        await attestationsRegistry.getAttestationData(
-          earlyUserGeneratedAttesations.first.collectionId,
-          userDestination.address
+        await front.callStatic.batchGenerateAttestations(
+          [mockAttester.address, mockAttester.address],
+          [requests.first, requests.second],
+          ['0x', '0x']
         )
-      ).to.eql([
-        earlyUserGeneratedAttesations.first.issuer,
-        BigNumber.from(earlyUserGeneratedAttesations.first.value),
-        earlyUserGeneratedAttesations.first.timestamp,
-        ethers.utils.hexlify(earlyUserGeneratedAttesations.first.extraData),
-      ]);
-
-      expect(
-        await attestationsRegistry.getAttestationData(
-          earlyUserGeneratedAttesations.second.collectionId,
-          userDestination.address
+      ).to.eql(
+        await front.callStatic.batchBuildAttestations(
+          [mockAttester.address, mockAttester.address],
+          [requests.first, requests.second],
+          ['0x', '0x']
         )
-      ).to.eql([
-        earlyUserGeneratedAttesations.second.issuer,
-        BigNumber.from(earlyUserGeneratedAttesations.second.value),
-        earlyUserGeneratedAttesations.second.timestamp,
-        ethers.utils.hexlify(earlyUserGeneratedAttesations.second.extraData),
-      ]);
+      );
     });
   });
 
@@ -472,16 +462,7 @@ describe('Test Front contract', () => {
         ethers.utils.toUtf8Bytes('')
       );
 
-      expect(buildAttestationsTransaction).to.eql([
-        [
-          BigNumber.from(attestations.first.collectionId),
-          attestations.first.owner,
-          attestations.first.issuer,
-          BigNumber.from(attestations.first.value),
-          attestations.first.timestamp,
-          ethers.utils.hexlify(attestations.first.extraData),
-        ],
-      ]);
+      expect(buildAttestationsTransaction).to.eql(attestationsArray[0]);
     });
   });
 
@@ -496,28 +477,7 @@ describe('Test Front contract', () => {
         ['0x', '0x']
       );
 
-      expect(buildAttestationsTransaction).to.eql([
-        [
-          [
-            BigNumber.from(attestations.first.collectionId),
-            attestations.first.owner,
-            attestations.first.issuer,
-            BigNumber.from(attestations.first.value),
-            attestations.first.timestamp,
-            ethers.utils.hexlify(attestations.first.extraData),
-          ],
-        ],
-        [
-          [
-            BigNumber.from(attestations.second.collectionId),
-            attestations.second.owner,
-            attestations.second.issuer,
-            BigNumber.from(attestations.second.value),
-            attestations.second.timestamp,
-            ethers.utils.hexlify(attestations.second.extraData),
-          ],
-        ],
-      ]);
+      expect(buildAttestationsTransaction).to.eql(attestationsArray);
     });
   });
 });
