@@ -4,6 +4,7 @@ import { getDeployer } from '../deploy-tasks/utils';
 import { DefenderRelaySigner, DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 
 import { AvailableRootsRegistry, AvailableRootsRegistry__factory } from '../../types';
+import { confirm } from '../utils/confirm';
 import { BigNumber, Signer } from 'ethers';
 
 let { RELAYER_API_KEY, RELAYER_API_SECRET } = process.env;
@@ -52,7 +53,6 @@ async function deploymentAction(
   `);
   }
   if (options?.manualConfirm) {
-    console.log();
     await confirm();
   }
   await availableRootsRegistry.registerRootForAttester(attester, BigNumber.from(root));
