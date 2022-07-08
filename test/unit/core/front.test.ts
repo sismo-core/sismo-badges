@@ -34,6 +34,7 @@ describe('Test Front contract', () => {
   let generationTimestamp: number;
   let requests: Requests;
   let attestations: Attestations;
+  let earlyUserGeneratedAttesations: Attestations;
 
   before(async () => {
     [userDestination, secondUserDestination] = await ethers.getSigners();
@@ -107,6 +108,25 @@ describe('Test Front contract', () => {
           value: 1,
           timestamp: generationTimestamp,
           extraData: ethers.utils.toUtf8Bytes('Mock Attester v0'),
+        },
+      };
+
+      earlyUserGeneratedAttesations = {
+        first: {
+          collectionId: await front.EARLY_USER_COLLECTION(),
+          owner: userDestination.address,
+          issuer: front.address,
+          value: 1,
+          timestamp: 0,
+          extraData: ethers.utils.toUtf8Bytes('With strong love from Sismo'),
+        },
+        second: {
+          collectionId: await front.EARLY_USER_COLLECTION(),
+          owner: userDestination.address,
+          issuer: front.address,
+          value: 1,
+          timestamp: 0,
+          extraData: ethers.utils.toUtf8Bytes('With strong love from Sismo'),
         },
       };
     });
@@ -190,29 +210,24 @@ describe('Test Front contract', () => {
         '0x'
       );
 
-      const earlyUserGeneratedAttesation = {
-        collectionId: await front.EARLY_USER_COLLECTION(),
-        owner: userDestination.address,
-        issuer: front.address,
-        value: 1,
-        timestamp: await (await ethers.provider.getBlock('latest')).timestamp,
-        extraData: ethers.utils.toUtf8Bytes('With strong love from Sismo'),
-      };
+      earlyUserGeneratedAttesations.first.timestamp = await (
+        await ethers.provider.getBlock('latest')
+      ).timestamp;
 
       await expect(generateAttestationsTransaction)
         .to.emit(attestationsRegistry, 'AttestationRecorded')
         .withArgs([
-          BigNumber.from(earlyUserGeneratedAttesation.collectionId),
-          earlyUserGeneratedAttesation.owner,
-          earlyUserGeneratedAttesation.issuer,
-          BigNumber.from(earlyUserGeneratedAttesation.value),
-          earlyUserGeneratedAttesation.timestamp,
-          ethers.utils.hexlify(earlyUserGeneratedAttesation.extraData),
+          BigNumber.from(earlyUserGeneratedAttesations.first.collectionId),
+          earlyUserGeneratedAttesations.first.owner,
+          earlyUserGeneratedAttesations.first.issuer,
+          BigNumber.from(earlyUserGeneratedAttesations.first.value),
+          earlyUserGeneratedAttesations.first.timestamp,
+          ethers.utils.hexlify(earlyUserGeneratedAttesations.first.extraData),
         ]);
 
       await expect(generateAttestationsTransaction)
         .to.emit(front, 'EarlyUserAttestationGenerated')
-        .withArgs(earlyUserGeneratedAttesation.owner);
+        .withArgs(earlyUserGeneratedAttesations.first.owner);
 
       expect(
         await attestationsRegistry.hasAttestation(
@@ -227,10 +242,10 @@ describe('Test Front contract', () => {
           userDestination.address
         )
       ).to.eql([
-        earlyUserGeneratedAttesation.issuer,
-        BigNumber.from(earlyUserGeneratedAttesation.value),
-        earlyUserGeneratedAttesation.timestamp,
-        ethers.utils.hexlify(earlyUserGeneratedAttesation.extraData),
+        earlyUserGeneratedAttesations.first.issuer,
+        BigNumber.from(earlyUserGeneratedAttesations.first.value),
+        earlyUserGeneratedAttesations.first.timestamp,
+        ethers.utils.hexlify(earlyUserGeneratedAttesations.first.extraData),
       ]);
     });
   });
@@ -342,24 +357,10 @@ describe('Test Front contract', () => {
         ['0x', '0x']
       );
 
-      const earlyUserGeneratedAttesations = {
-        first: {
-          collectionId: await front.EARLY_USER_COLLECTION(),
-          owner: userDestination.address,
-          issuer: front.address,
-          value: 1,
-          timestamp: await (await ethers.provider.getBlock('latest')).timestamp,
-          extraData: ethers.utils.toUtf8Bytes('With strong love from Sismo'),
-        },
-        second: {
-          collectionId: await front.EARLY_USER_COLLECTION(),
-          owner: userDestination.address,
-          issuer: front.address,
-          value: 1,
-          timestamp: await (await ethers.provider.getBlock('latest')).timestamp,
-          extraData: ethers.utils.toUtf8Bytes('With strong love from Sismo'),
-        },
-      };
+      earlyUserGeneratedAttesations.first.timestamp,
+        (earlyUserGeneratedAttesations.second.timestamp = await (
+          await ethers.provider.getBlock('latest')
+        ).timestamp);
 
       await expect(batchGenerateAttestationsTransaction)
         .to.emit(attestationsRegistry, 'AttestationRecorded')
