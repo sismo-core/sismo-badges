@@ -8,16 +8,18 @@ import {
   Front,
   HydraS1SimpleAttester,
   HydraS1SoulboundAttester,
-} from 'types';
-import { RequestStruct } from 'types/Attester';
+  TransparentUpgradeableProxy__factory,
+} from '../../types';
+import { RequestStruct } from '../../types/Attester';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
 import { HydraS1Account, HydraS1Prover, KVMerkleTree } from '@sismo-core/hydra-s1';
 import { BigNumber } from 'ethers';
-import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
 import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
 import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
+import { Deployed0 } from '../../tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
+import { getImplementation } from '../../utils';
 import {
   encodeGroupProperties,
   evmRevert,
@@ -26,9 +28,9 @@ import {
   generateHydraS1Accounts,
   generateLists,
   generateTicketIdentifier,
+  getEventArgs,
   Group,
 } from '../utils';
-import { getEventArgs } from '../utils/expectEvent';
 
 const config = deploymentsConfig[hre.network.name];
 describe('Test E2E Protocol', () => {
@@ -329,6 +331,59 @@ describe('Test E2E Protocol', () => {
       const expectedBalances = expectedAttestationsValues;
 
       expect(balances).to.be.eql(expectedBalances);
+    });
+  });
+
+  describe('Update Implementation', () => {
+    it('Should update Hydra S1 Simple implementation', async () => {
+      const { hydraS1SimpleAttester: newHydraS1SimpleAttester } = await hre.run(
+        'deploy-hydra-s1-simple-attester',
+        {
+          collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
+          collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
+          commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
+          availableRootsRegistryAddress: availableRootsRegistry.address,
+          attestationsRegistryAddress: attestationsRegistry.address,
+          options: { behindProxy: false },
+        }
+      );
+
+      const hydraS1SimpleAttesterProxy = TransparentUpgradeableProxy__factory.connect(
+        hydraS1SimpleAttester.address,
+        proxyAdminSigner
+      );
+
+      await (await hydraS1SimpleAttesterProxy.upgradeTo(newHydraS1SimpleAttester.address)).wait();
+
+      const implementationAddress = await getImplementation(hydraS1SimpleAttesterProxy);
+      expect(implementationAddress).to.eql(newHydraS1SimpleAttester.address);
+    });
+
+    it('Should update Hydra S1 Soulbound implementation', async () => {
+      const { hydraS1SoulboundAttester: newHydraS1SoulboundAttester } = await hre.run(
+        'deploy-hydra-s1-soulbound-attester',
+        {
+          collectionIdFirst: config.hydraS1SoulboundAttester.collectionIdFirst,
+          collectionIdLast: config.hydraS1SoulboundAttester.collectionIdLast,
+          commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
+          availableRootsRegistryAddress: availableRootsRegistry.address,
+          attestationsRegistryAddress: attestationsRegistry.address,
+          cooldownDuration: config.hydraS1SoulboundAttester.soulboundCooldownDuration,
+          options: { behindProxy: false },
+        }
+      );
+
+      const hydraS1SoulboundAttesterProxy = TransparentUpgradeableProxy__factory.connect(
+        hydraS1SoulboundAttester.address,
+        proxyAdminSigner
+      );
+
+      await (
+        await hydraS1SoulboundAttesterProxy.upgradeTo(newHydraS1SoulboundAttester.address)
+      ).wait();
+
+      const implementationAddress = await getImplementation(hydraS1SoulboundAttesterProxy);
+      expect(implementationAddress).to.eql(newHydraS1SoulboundAttester.address);
     });
   });
 });
