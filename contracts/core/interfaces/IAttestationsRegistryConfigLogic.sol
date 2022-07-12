@@ -8,6 +8,7 @@ import {Range, RangeUtils} from '../libs/utils/RangeLib.sol';
 
 interface IAttestationsRegistryConfigLogic {
   error IssuerNotAuthorized(address issuer, uint256 collectionId);
+  error OwnersAndCollectionIdsLengthMismatch(address[] owners, uint256[] collectionIds);
   error AttesterNotFound(address issuer);
   error RangeIndexOutOfBounds(address issuer, uint256 expectedArrayLength, uint256 rangeIndex);
   error IdsMismatch(
