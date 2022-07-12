@@ -1,8 +1,10 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import hre, { ethers } from 'hardhat';
-import { AvailableRootsRegistry } from 'types';
+import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
 import { DeployedAvailableRootsRegistry } from '../../../../tasks/deploy-tasks/unit/periphery/deploy-available-roots-registry.task';
+import { AvailableRootsRegistry, TransparentUpgradeableProxy__factory } from '../../../../types';
+import { getImplementation } from '../../../../utils';
 
 describe('Test AvailableRootsRegistry contract', () => {
   let deployer: SignerWithAddress;
@@ -290,6 +292,32 @@ describe('Test AvailableRootsRegistry contract', () => {
       await expect(availableRootsRegistry.renounceOwnership())
         .to.emit(availableRootsRegistry, 'OwnershipTransferred')
         .withArgs(deployer.address, ethers.constants.AddressZero);
+    });
+  });
+
+  /*************************************************************************************/
+  /******************************* UPDATE IMPLEMENTATION *******************************/
+  /*************************************************************************************/
+  describe('Update implementation', () => {
+    it('Should update the implementation', async () => {
+      const proxyAdminSigner = await ethers.getSigner(
+        deploymentsConfig[hre.network.name].deployOptions.proxyAdmin as string
+      );
+
+      const { availableRootsRegistry: newAvailableRootsRegistry } = await hre.run(
+        'deploy-available-roots-registry',
+        { owner: secondDeployer.address, options: { behindProxy: false } }
+      );
+
+      const availableRootsRegistryProxy = TransparentUpgradeableProxy__factory.connect(
+        availableRootsRegistry.address,
+        proxyAdminSigner
+      );
+
+      await (await availableRootsRegistryProxy.upgradeTo(newAvailableRootsRegistry.address)).wait();
+
+      const implementationAddress = await getImplementation(availableRootsRegistryProxy);
+      expect(implementationAddress).to.eql(newAvailableRootsRegistry.address);
     });
   });
 });
