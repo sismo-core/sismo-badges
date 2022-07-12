@@ -1,5 +1,5 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 export async function increaseTime(
   hre: HardhatRuntimeEnvironment,
@@ -7,6 +7,10 @@ export async function increaseTime(
 ): Promise<void> {
   await hre.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
   await hre.ethers.provider.send('evm_mine', []);
+}
+
+export async function setTime(hre: HardhatRuntimeEnvironment, timestamp: number): Promise<void> {
+  await hre.ethers.provider.send('evm_setNextBlockTimestamp', [timestamp]);
 }
 
 export async function evmSnapshot(hre: HardhatRuntimeEnvironment): Promise<string> {

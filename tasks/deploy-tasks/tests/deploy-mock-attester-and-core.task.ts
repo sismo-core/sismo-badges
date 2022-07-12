@@ -5,33 +5,40 @@ import {
   getDeployer,
   wrapCommonDeployOptions,
 } from '../../../tasks/deploy-tasks/utils';
-import { DeployedMockAttester, DeployMockAttesterArgs } from './deploy-mock-attester.task';
 import { DeployCoreArgs, DeployedCore } from '../batch/deploy-core.task';
-import { deploymentsConfig } from '../../../tasks/deploy-tasks/deployments-config';
+import { DeployedMockAttester, DeployMockAttesterArgs } from './deploy-mock-attester.task';
+
+export type DeployMockAttesterAndCoreArgs = Omit<
+  DeployMockAttesterArgs & DeployCoreArgs & DeployOptions,
+  'attestationsRegistryAddress' | ''
+>;
+
+export interface DeployedMockAttesterAndCore extends DeployedMockAttester, DeployedCore {}
 
 async function deploymentAction(
-  options: DeployOptions,
+  options: DeployMockAttesterAndCoreArgs,
   hre: HardhatRuntimeEnvironment
-): Promise<void> {
-  console.log('Deploying ALL on network: ', hre.network.name);
+): Promise<DeployedMockAttesterAndCore> {
+  if (options?.log) {
+    console.log('Deploying ALL on network: ', hre.network.name);
+  }
 
   const deployer = await getDeployer(hre);
-  const config = deploymentsConfig[hre.network.name];
 
-  const { attestationsRegistry, badges, front } = (await hre.run('deploy-core', {
-    uri: config.badges.uri,
-    badgeOwner: config.badges.owner,
-    registryOwner: config.attestationsRegistry.owner,
-    frontFirstCollectionId: config.front.collectionIdFirst,
-    frontLastCollectionId: config.front.collectionIdLast,
-    options,
+  const deployedCore = (await hre.run('deploy-core', {
+    uri: options.uri,
+    badgeOwner: options.badgeOwner,
+    registryOwner: options.registryOwner,
+    frontFirstCollectionId: options.frontLastCollectionId,
+    frontLastCollectionId: options.frontLastCollectionId,
+    options: options.options,
   } as DeployCoreArgs)) as DeployedCore;
 
-  const { mockAttester } = (await hre.run('deploy-mock-attester', {
-    attestationsRegistryAddress: attestationsRegistry.address,
-    collectionIdFirst: config.hydraS1SoulboundAttester.collectionIdFirst,
-    collectionIdLast: config.hydraS1SoulboundAttester.collectionIdLast,
-    options,
+  const deployedMockAttester = (await hre.run('deploy-mock-attester', {
+    attestationsRegistryAddress: deployedCore.attestationsRegistry.address,
+    collectionIdFirst: options.collectionIdFirst,
+    collectionIdLast: options.collectionIdLast,
+    options: options.options,
   } as DeployMockAttesterArgs)) as DeployedMockAttester;
 
   // Authorize Mock attester to record attestation on the attestationsRegistry
@@ -39,13 +46,24 @@ async function deploymentAction(
   if (options?.log) {
     console.log('Authorize Mock on the attestationsRegistry');
   }
-  await attestationsRegistry
+
+  await deployedCore.attestationsRegistry
     .connect(deployer)
     .authorizeRange(
-      mockAttester.address,
-      await mockAttester.ATTESTATION_ID_MIN(),
-      await mockAttester.ATTESTATION_ID_MAX()
+      deployedCore.front.address,
+      await deployedCore.front.EARLY_USER_COLLECTION(),
+      await deployedCore.front.EARLY_USER_COLLECTION()
     );
+
+  await deployedCore.attestationsRegistry
+    .connect(deployer)
+    .authorizeRange(
+      deployedMockAttester.mockAttester.address,
+      await deployedMockAttester.mockAttester.ATTESTATION_ID_MIN(),
+      await deployedMockAttester.mockAttester.ATTESTATION_ID_MAX()
+    );
+
+  return { ...deployedCore, ...deployedMockAttester };
 }
 
 task('deploy-mock-attester-and-core').setAction(wrapCommonDeployOptions(deploymentAction));
