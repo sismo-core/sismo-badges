@@ -1,7 +1,14 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import hre, { ethers } from 'hardhat';
-import { AttestationsRegistry, Badges, MockAttestationsRegistry } from 'types';
+import { deploymentsConfig } from '../../../tasks/deploy-tasks/deployments-config';
+import {
+  AttestationsRegistry,
+  Badges,
+  MockAttestationsRegistry,
+  TransparentUpgradeableProxy__factory,
+} from '../../../types';
+import { getImplementation } from '../../../utils';
 
 describe('Test Badges contract', () => {
   let deployer: SignerWithAddress;
@@ -280,6 +287,32 @@ describe('Test Badges contract', () => {
         .withArgs(roles.admin, admin.address, admin.address);
 
       await expect(await badges.hasRole(roles.admin, admin.address)).to.be.false;
+    });
+  });
+
+  /*************************************************************************************/
+  /******************************* UPDATE IMPLEMENTATION *******************************/
+  /*************************************************************************************/
+  describe('Update implementation', () => {
+    it('Should update the implementation', async () => {
+      const proxyAdminSigner = await ethers.getSigner(
+        deploymentsConfig[hre.network.name].deployOptions.proxyAdmin as string
+      );
+
+      const { badges: newBadges } = await hre.run('deploy-badges', {
+        uri: 'https://token_cdn.domain/',
+        owner: secondDeployer.address,
+        options: { behindProxy: false },
+      });
+      const badgesProxy = TransparentUpgradeableProxy__factory.connect(
+        badges.address,
+        proxyAdminSigner
+      );
+
+      await (await badgesProxy.upgradeTo(newBadges.address)).wait();
+
+      const implementationAddress = await getImplementation(badgesProxy);
+      expect(implementationAddress).to.eql(newBadges.address);
     });
   });
 });

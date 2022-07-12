@@ -4,8 +4,10 @@ import { EddsaPublicKey } from '@sismo-core/hydra-s1';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import hre, { ethers } from 'hardhat';
-import { DeployedCommitmentMapper } from 'tasks/deploy-tasks/unit/periphery/deploy-commitment-mapper-registry.task';
-import { CommitmentMapperRegistry } from 'types';
+import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
+import { DeployedCommitmentMapper } from '../../../../tasks/deploy-tasks/unit/periphery/deploy-commitment-mapper-registry.task';
+import { CommitmentMapperRegistry, TransparentUpgradeableProxy__factory } from '../../../../types';
+import { getImplementation } from '../../../../utils';
 
 describe('Test CommitmentMapperRegistry contract', () => {
   let deployer: SignerWithAddress;
@@ -46,7 +48,6 @@ describe('Test CommitmentMapperRegistry contract', () => {
           owner: secondDeployer.address,
         }
       )) as DeployedCommitmentMapper);
-
       // 0 - Checks that the owner is set to the deployer address
       expect(await commitmentMapperRegistry.owner()).to.equal(deployer.address);
       expect(await secondCommitmentMapperRegistry.owner()).to.equal(secondDeployer.address);
@@ -58,6 +59,7 @@ describe('Test CommitmentMapperRegistry contract', () => {
       );
 
       // 2 - Checks that the eddsa public key is initialized on [0x0, 0x0]
+
       expect(await commitmentMapperRegistry.getEdDSAPubKey()).to.be.eql([
         BigNumber.from(0),
         BigNumber.from(0),
@@ -162,6 +164,38 @@ describe('Test CommitmentMapperRegistry contract', () => {
       await expect(commitmentMapperRegistry.renounceOwnership())
         .to.emit(commitmentMapperRegistry, 'OwnershipTransferred')
         .withArgs(deployer.address, ethers.constants.AddressZero);
+    });
+  });
+
+  /*************************************************************************************/
+  /******************************* UPDATE IMPLEMENTATION *******************************/
+  /*************************************************************************************/
+  describe('Update implementation', () => {
+    it('Should update the implementation', async () => {
+      const proxyAdminSigner = await ethers.getSigner(
+        deploymentsConfig[hre.network.name].deployOptions.proxyAdmin as string
+      );
+
+      const { commitmentMapperRegistry: newCommitmentMapperRegistry } = await hre.run(
+        'deploy-commitment-mapper-registry',
+        {
+          commitmentMapperPubKeyX: BigNumber.from(0).toHexString(),
+          commitmentMapperPubKeyY: BigNumber.from(0).toHexString(),
+          options: { behindProxy: false },
+        }
+      );
+
+      const commitmentMapperRegistryProxy = TransparentUpgradeableProxy__factory.connect(
+        commitmentMapperRegistry.address,
+        proxyAdminSigner
+      );
+
+      await (
+        await commitmentMapperRegistryProxy.upgradeTo(newCommitmentMapperRegistry.address)
+      ).wait();
+
+      const implementationAddress = await getImplementation(commitmentMapperRegistryProxy);
+      expect(implementationAddress).to.eql(newCommitmentMapperRegistry.address);
     });
   });
 });
