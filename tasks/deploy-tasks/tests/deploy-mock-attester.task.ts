@@ -1,16 +1,16 @@
+import { BigNumber, BigNumberish } from 'ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import {
-  getDeployer,
-  beforeDeployment,
   afterDeployment,
+  beforeDeployment,
   buildDeploymentName,
   customDeployContract,
-  wrapCommonDeployOptions,
   DeployOptions,
+  getDeployer,
+  wrapCommonDeployOptions,
 } from '../../../tasks/deploy-tasks/utils';
 import { MockAttester, MockAttester__factory } from '../../../types';
-import { BigNumber, BigNumberish } from 'ethers';
 
 export interface DeployMockAttesterArgs {
   // address of the attestations Registry contract
