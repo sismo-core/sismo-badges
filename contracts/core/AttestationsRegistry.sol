@@ -80,34 +80,35 @@ contract AttestationsRegistry is
 
   /**
    * @dev Delete function to be called by authorized issuers
-   * @param attestations Attestations to be deleted
+   * @param owners The owners of the attestations to be deleted
+   * @param collectionIds The collection ids of the attestations to be deleted
    */
-  function deleteAttestations(Attestation[] memory attestations) external override whenNotPaused {
+  function deleteAttestations(address[] calldata owners, uint256[] calldata collectionIds)
+    external
+    override
+    whenNotPaused
+  {
+    if (owners.length != collectionIds.length)
+      revert OwnersAndCollectionIdsLengthMismatch(owners, collectionIds);
+
     address issuer = _msgSender();
-    for (uint256 i = 0; i < attestations.length; i++) {
-      uint256 previousAttestationValue = _attestationsData[attestations[i].collectionId][
-        attestations[i].owner
-      ].value;
+    for (uint256 i = 0; i < owners.length; i++) {
+      AttestationData memory attestationData = _attestationsData[collectionIds[i]][owners[i]];
 
-      if (!_isAuthorized(issuer, attestations[i].collectionId))
-        revert IssuerNotAuthorized(issuer, attestations[i].collectionId);
-      delete _attestationsData[attestations[i].collectionId][attestations[i].owner];
+      if (!_isAuthorized(issuer, collectionIds[i]))
+        revert IssuerNotAuthorized(issuer, collectionIds[i]);
+      delete _attestationsData[collectionIds[i]][owners[i]];
 
-      _triggerBadgeTransferEvent(
-        attestations[i].collectionId,
-        attestations[i].owner,
-        previousAttestationValue,
-        0
-      );
+      _triggerBadgeTransferEvent(collectionIds[i], owners[i], attestationData.value, 0);
 
       emit AttestationDeleted(
         Attestation(
-          attestations[i].collectionId,
-          attestations[i].owner,
-          attestations[i].issuer,
-          attestations[i].value,
-          attestations[i].timestamp,
-          attestations[i].extraData
+          collectionIds[i],
+          owners[i],
+          attestationData.issuer,
+          attestationData.value,
+          attestationData.timestamp,
+          attestationData.extraData
         )
       );
     }

@@ -83,6 +83,8 @@ abstract contract Attester is IAttester {
     bytes calldata proofData
   ) external override returns (Attestation[] memory) {
     // fetch attestations from the registry
+    address[] memory attestationOwners;
+    uint256[] memory attestationCollectionIds;
     Attestation[] memory attestationsToDelete;
     for (uint256 i = 0; i < collectionIds.length; i++) {
       (
@@ -91,6 +93,9 @@ abstract contract Attester is IAttester {
         uint32 timestamp,
         bytes memory extraData
       ) = ATTESTATIONS_REGISTRY.getAttestationDataTuple(collectionIds[i], attestationsOwner);
+
+      attestationOwners[i] = attestationsOwner;
+      attestationCollectionIds[i] = collectionIds[i];
 
       attestationsToDelete[i] = (
         Attestation(
@@ -108,7 +113,7 @@ abstract contract Attester is IAttester {
 
     _beforeDeleteAttestations(attestationsToDelete, proofData);
 
-    ATTESTATIONS_REGISTRY.deleteAttestations(attestationsToDelete);
+    ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
 
     _afterDeleteAttestations(attestationsToDelete, proofData);
 
