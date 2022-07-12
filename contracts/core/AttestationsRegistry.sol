@@ -93,24 +93,22 @@ contract AttestationsRegistry is
 
     address issuer = _msgSender();
     for (uint256 i = 0; i < owners.length; i++) {
-      AttestationData memory previousAttestationData = _attestationsData[collectionIds[i]][
-        owners[i]
-      ];
+      AttestationData memory attestationData = _attestationsData[collectionIds[i]][owners[i]];
 
       if (!_isAuthorized(issuer, collectionIds[i]))
         revert IssuerNotAuthorized(issuer, collectionIds[i]);
       delete _attestationsData[collectionIds[i]][owners[i]];
 
-      _triggerBadgeTransferEvent(collectionIds[i], owners[i], previousAttestationData.value, 0);
+      _triggerBadgeTransferEvent(collectionIds[i], owners[i], attestationData.value, 0);
 
       emit AttestationDeleted(
         Attestation(
           collectionIds[i],
           owners[i],
-          previousAttestationData.issuer,
-          previousAttestationData.value,
-          previousAttestationData.timestamp,
-          previousAttestationData.extraData
+          attestationData.issuer,
+          attestationData.value,
+          attestationData.timestamp,
+          attestationData.extraData
         )
       );
     }

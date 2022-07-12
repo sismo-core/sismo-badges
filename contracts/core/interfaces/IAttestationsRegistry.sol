@@ -9,6 +9,8 @@ import {Attestation, AttestationData} from '../libs/Structs.sol';
  * @notice This is the interface of the AttestationRegistry
  */
 interface IAttestationsRegistry {
+  error IssuerNotAuthorized(address issuer, uint256 collectionId);
+  error OwnersAndCollectionIdsLengthMismatch(address[] owners, uint256[] collectionIds);
   event AttestationRecorded(Attestation attestation);
   event AttestationDeleted(Attestation attestation);
 
