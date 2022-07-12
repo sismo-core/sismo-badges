@@ -9,6 +9,8 @@ import {Attestation, AttestationData} from '../libs/Structs.sol';
  * @notice This is the interface of the AttestationRegistry
  */
 interface IAttestationsRegistry {
+  error IssuerNotAuthorized(address issuer, uint256 collectionId);
+  error OwnersAndCollectionIdsLengthMismatch(address[] owners, uint256[] collectionIds);
   event AttestationRecorded(Attestation attestation);
   event AttestationDeleted(Attestation attestation);
 
@@ -20,9 +22,10 @@ interface IAttestationsRegistry {
 
   /**
    * @dev Delete function to be called by authorized issuers
-   * @param attestations Attestations to be deleted
+   * @param owners The owners of the attestations to be deleted
+   * @param collectionIds The collection ids of the attestations to be deleted
    */
-  function deleteAttestations(Attestation[] calldata attestations) external;
+  function deleteAttestations(address[] calldata owners, uint256[] calldata collectionIds) external;
 
   /**
    * @dev Returns whether a user has an attestation from a collection
