@@ -289,7 +289,10 @@ describe('Test Attestations Registry contract', () => {
     before(async () => {
       await attestationsRegistry
         .connect(issuer)
-        .deleteAttestations([attestations.first, attestations.second]);
+        .deleteAttestations(
+          [attestations.first.owner, attestations.second.owner],
+          [attestations.first.collectionId, attestations.second.collectionId]
+        );
     });
 
     it('Should return the right data', async () => {
@@ -327,7 +330,10 @@ describe('Test Attestations Registry contract', () => {
     before(async () => {
       await attestationsRegistry
         .connect(issuer)
-        .deleteAttestations([attestations.first, attestations.second]);
+        .deleteAttestations(
+          [attestations.first.owner, attestations.second.owner],
+          [attestations.first.collectionId, attestations.second.collectionId]
+        );
     });
 
     it('Should return the right data', async () => {
@@ -368,7 +374,10 @@ describe('Test Attestations Registry contract', () => {
     before(async () => {
       await attestationsRegistry
         .connect(issuer)
-        .deleteAttestations([attestations.first, attestations.second]);
+        .deleteAttestations(
+          [attestations.first.owner, attestations.second.owner],
+          [attestations.first.collectionId, attestations.second.collectionId]
+        );
     });
 
     it('Should return the right data', async () => {
@@ -393,7 +402,10 @@ describe('Test Attestations Registry contract', () => {
     before(async () => {
       await attestationsRegistry
         .connect(issuer)
-        .deleteAttestations([attestations.first, attestations.second]);
+        .deleteAttestations(
+          [attestations.first.owner, attestations.second.owner],
+          [attestations.first.collectionId, attestations.second.collectionId]
+        );
     });
 
     it('Should return the right data', async () => {
@@ -418,7 +430,10 @@ describe('Test Attestations Registry contract', () => {
     before(async () => {
       await attestationsRegistry
         .connect(issuer)
-        .deleteAttestations([attestations.first, attestations.second]);
+        .deleteAttestations(
+          [attestations.first.owner, attestations.second.owner],
+          [attestations.first.collectionId, attestations.second.collectionId]
+        );
     });
 
     it('Should return the right data', async () => {
@@ -443,7 +458,10 @@ describe('Test Attestations Registry contract', () => {
     before(async () => {
       await attestationsRegistry
         .connect(issuer)
-        .deleteAttestations([attestations.first, attestations.second]);
+        .deleteAttestations(
+          [attestations.first.owner, attestations.second.owner],
+          [attestations.first.collectionId, attestations.second.collectionId]
+        );
     });
 
     it('Should return the right data', async () => {
@@ -513,7 +531,10 @@ describe('Test Attestations Registry contract', () => {
       await attestationsRegistry.pause();
 
       await expect(
-        attestationsRegistry.deleteAttestations([attestations.first])
+        attestationsRegistry.deleteAttestations(
+          [attestations.first.owner],
+          [attestations.first.collectionId]
+        )
       ).to.be.revertedWith('Pausable: paused');
 
       await attestationsRegistry.unpause();
@@ -529,10 +550,10 @@ describe('Test Attestations Registry contract', () => {
       await expect(
         attestationsRegistry
           .connect(issuer)
-          .deleteAttestations([
-            { ...attestations.first, collectionId: firstAuthorizedRange.min - 1 },
-            attestations.second,
-          ])
+          .deleteAttestations(
+            [attestations.first.owner, attestations.second.owner],
+            [firstAuthorizedRange.min - 1, attestations.second.collectionId]
+          )
       ).to.be.revertedWith(
         `IssuerNotAuthorized("${issuer.address}", ${firstAuthorizedRange.min - 1})`
       );
@@ -546,10 +567,10 @@ describe('Test Attestations Registry contract', () => {
       await expect(
         attestationsRegistry
           .connect(issuer)
-          .deleteAttestations([
-            attestations.first,
-            { ...attestations.second, collectionId: secondAuthorizedRange.min - 1 },
-          ])
+          .deleteAttestations(
+            [attestations.first.owner, attestations.second.owner],
+            [attestations.first.collectionId, secondAuthorizedRange.min - 1]
+          )
       ).to.be.revertedWith(
         `IssuerNotAuthorized("${issuer.address}", ${secondAuthorizedRange.min - 1})`
       );
@@ -563,7 +584,10 @@ describe('Test Attestations Registry contract', () => {
 
       const deleteAttestationsTransaction = await attestationsRegistry
         .connect(issuer)
-        .deleteAttestations([attestations.first, attestations.second]);
+        .deleteAttestations(
+          [attestations.first.owner, attestations.second.owner],
+          [attestations.first.collectionId, attestations.second.collectionId]
+        );
 
       // 1 - Checks that the transaction emitted the event
       // 1.1 - Checks that the events related to the attestations registry are emitted
