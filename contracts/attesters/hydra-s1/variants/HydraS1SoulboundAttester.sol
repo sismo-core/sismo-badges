@@ -287,7 +287,7 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
   }
 
   function _isOnCooldown(TicketData memory userTicketData) internal view returns (bool) {
-    return userTicketData.cooldownStart + SOULBOUND_COOLDOWN_DURATION < block.timestamp;
+    return userTicketData.cooldownStart + SOULBOUND_COOLDOWN_DURATION > block.timestamp;
   }
 
   function _getTicketData(uint256 userTicket) internal view returns (TicketData memory) {
