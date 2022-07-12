@@ -22,8 +22,8 @@ interface IAttestationsRegistry {
 
   /**
    * @dev Delete function to be called by authorized issuers
-   * @param owners x
-   * @param collectionIds x
+   * @param owners The owners of the attestations to be deleted
+   * @param collectionIds The collection ids of the attestations to be deleted
    */
   function deleteAttestations(address[] calldata owners, uint256[] calldata collectionIds) external;
 
