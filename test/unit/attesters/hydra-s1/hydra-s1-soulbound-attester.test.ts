@@ -20,11 +20,14 @@ import {
 import { RequestStruct } from 'types/HydraS1SimpleAttester';
 import {
   encodeGroupProperties,
+  evmRevert,
+  evmSnapshot,
   generateAttesterGroups,
   generateHydraS1Accounts,
   generateLists,
   generateTicketIdentifier,
   Group,
+  increaseTime,
 } from '../../../utils';
 
 const SNARK_FIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
@@ -382,6 +385,16 @@ describe('Test HydraS1 Soulbound contract', () => {
           BigNumber.from(inputs.publicInputs.userTicket)
         )
       ).to.equal(request.destination);
+
+      expect(
+        await hydraS1SoulboundAttester.getTicketData(BigNumber.from(inputs.publicInputs.userTicket))
+      ).to.be.eql([BigNumber.from(destination.identifier).toHexString(), 0]);
+
+      expect(
+        await hydraS1SoulboundAttester.isTicketOnCooldown(
+          BigNumber.from(inputs.publicInputs.userTicket)
+        )
+      ).to.be.false;
     });
 
     it('Should change the destination if the ticket is reused one time', async () => {
@@ -407,63 +420,80 @@ describe('Test HydraS1 Soulbound contract', () => {
             await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
         ]);
-    });
-
-    it('Should revert if the ticket is reused too many times in cooldown', async () => {});
-
-    it('Should reset the cooldown if the ticket is reused many times', async () => {});
-
-    /**
-     * it('Should reset the cooldown if the destination is not the initial one', async () => {
-      const evmSnapshotId = await evmSnapshot(hre);
-
-      await increaseTime(hre, 3000000);
-
-      const newProof = await prover.generateSnarkProof({
-        ...userParams,
-        destination: destination2,
-      });
-
-      const newRequest = {
-        ...request,
-        destination: BigNumber.from(destination2.identifier).toHexString(),
-      };
-
-      console.log(
-        await hydraS1SoulboundAttester.getTicketData(
-          BigNumber.from(inputs.publicInputs.userTicket)
-        ),
-        await (
-          await ethers.provider.getBlock(await ethers.provider.getBlockNumber())
-        ).timestamp,
-        deploymentsConfig[hre.network.name].hydraS1SoulboundAttester.soulboundCooldownDuration,
-        await hydraS1SoulboundAttester.SOULBOUND_COOLDOWN_DURATION()
-      );
-
-      const generateAttestationsTransaction = await hydraS1SoulboundAttester.generateAttestations(
-        newRequest,
-        newProof.toBytes()
-      );
-
-      await expect(generateAttestationsTransaction)
-        .to.emit(hydraS1SoulboundAttester, 'TicketDestinationUpdated')
-        .withArgs(BigNumber.from(inputs.publicInputs.userTicket), destination2.identifier);
-
-      console.log(
-        'Hello',
-        await (
-          await ethers.provider.getBlock(await ethers.provider.getBlockNumber())
-        ).timestamp
-      );
 
       expect(
         await hydraS1SoulboundAttester.getDestinationOfTicket(
           BigNumber.from(inputs.publicInputs.userTicket)
         )
-      ).to.equal(destination2.identifier);
+      ).to.be.equal(BigNumber.from(destination2.identifier));
 
-      await evmRevert(hre, evmSnapshotId);
+      expect(
+        await hydraS1SoulboundAttester.getTicketData(BigNumber.from(inputs.publicInputs.userTicket))
+      ).to.be.eql([
+        BigNumber.from(destination2.identifier).toHexString(),
+        await (await ethers.provider.getBlock('latest')).timestamp,
+      ]);
+
+      expect(
+        await hydraS1SoulboundAttester.isTicketOnCooldown(
+          BigNumber.from(inputs.publicInputs.userTicket)
+        )
+      ).to.be.true;
+      // TODO: Check if the last attestation was deleted from the registry
     });
-     */
+
+    it('Should revert if the ticket is reused too many times in cooldown', async () => {
+      const ticketData = await hydraS1SoulboundAttester.getTicketData(
+        BigNumber.from(inputs.publicInputs.userTicket)
+      );
+
+      await expect(
+        hydraS1SoulboundAttester.generateAttestations(request, proof.toBytes())
+      ).to.be.revertedWith(`TicketUsedAndOnCooldown(["${ticketData[0]}", ${ticketData[1]}])`);
+    });
+
+    it('Should reset the cooldown if the ticket is reused many times after the first cooldown period', async () => {
+      const evmSnapshotId = await evmSnapshot(hre);
+
+      await increaseTime(hre, 300000);
+
+      const generateAttestationsTransaction = hydraS1SoulboundAttester.generateAttestations(
+        request,
+        proof.toBytes()
+      );
+
+      await expect(generateAttestationsTransaction).to.not.be.reverted;
+
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1SoulboundAttester, 'AttestationGenerated')
+        .withArgs([
+          await (
+            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+        ]);
+
+      expect(
+        await hydraS1SoulboundAttester.getDestinationOfTicket(
+          BigNumber.from(inputs.publicInputs.userTicket)
+        )
+      ).to.be.equal(destination.identifier);
+
+      expect(
+        await hydraS1SoulboundAttester.getTicketData(BigNumber.from(inputs.publicInputs.userTicket))
+      ).to.be.eql([
+        BigNumber.from(destination.identifier).toHexString(),
+        await (await ethers.provider.getBlock('latest')).timestamp,
+      ]);
+
+      expect(
+        await hydraS1SoulboundAttester.isTicketOnCooldown(
+          BigNumber.from(inputs.publicInputs.userTicket)
+        )
+      ).to.be.true;
+
+      // TODO: Check if the last attestation was deleted from the registry
+
+      evmRevert(hre, evmSnapshotId);
+    });
   });
 });
