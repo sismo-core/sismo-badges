@@ -218,6 +218,24 @@ describe('Test Badges contract', () => {
     });
   });
 
+  describe('Approvals', () => {
+    describe('isApprovedForAll', () => {
+      it('Should revert because the operation is not allowed', async () => {
+        await expect(
+          badges.connect(user).isApprovedForAll(user.address, admin.address)
+        ).to.be.revertedWith('BadgesNonTransferrable()');
+      });
+    });
+
+    describe('setApprovalForAll', () => {
+      it('Should revert because the operation is not allowed', async () => {
+        await expect(badges.connect(user).setApprovalForAll(user.address, true)).to.be.revertedWith(
+          'BadgesNonTransferrable()'
+        );
+      });
+    });
+  });
+
   /*************************************************************************************/
   /************************************ REVOKE ROLE ************************************/
   /*************************************************************************************/

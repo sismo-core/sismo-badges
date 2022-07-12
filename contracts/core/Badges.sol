@@ -61,6 +61,26 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
   }
 
   /**
+   * @dev Reverts, this is a non transferable ERC115 contract
+   */
+  function setApprovalForAll(address operator, bool approved) public virtual override {
+    revert BadgesNonTransferrable();
+  }
+
+  /**
+   * @dev Reverts, this is a non transferable ERC115 contract
+   */
+  function isApprovedForAll(address account, address operator)
+    public
+    view
+    virtual
+    override
+    returns (bool)
+  {
+    revert BadgesNonTransferrable();
+  }
+
+  /**
    * @dev Emits a TransferSingle event, so subgraphs and other off-chain apps relying on events can see badge minting/burning
    * can only be called by address having the EVENT_TRIGGERER_ROLE (attestations registry address)
    * @param operator who is calling the TransferEvent
