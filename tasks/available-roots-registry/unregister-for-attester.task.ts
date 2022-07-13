@@ -8,7 +8,7 @@ import { BigNumber, Signer } from 'ethers';
 import { CommonTaskOptions, wrapCommonOptions } from '../utils';
 import { getRelayerSigner } from '../utils/relayer';
 
-export type RegisterForAttesterArgs = {
+export type UnregisterForAttesterArgs = {
   root: string;
   attester: string;
   availableRootsRegistryAddress?: string;
@@ -17,7 +17,7 @@ export type RegisterForAttesterArgs = {
 };
 
 async function action(
-  { root, attester, relayed, options, availableRootsRegistryAddress }: RegisterForAttesterArgs,
+  { root, attester, relayed, options, availableRootsRegistryAddress }: UnregisterForAttesterArgs,
   hre: HardhatRuntimeEnvironment
 ): Promise<void> {
   if (root === '0') {
@@ -40,28 +40,28 @@ async function action(
     attester,
     BigNumber.from(root)
   );
-  if (isRootAlreadyRegistered) {
+  if (!isRootAlreadyRegistered) {
     if (options?.log) {
       console.log(`
-      Root: ${root} already registered for attester ${availableRootsRegistry.address}`);
+      Root: ${root} already unregistered for attester ${availableRootsRegistry.address}`);
     }
     return;
   }
 
-  const actionRegisterRootForAttesterArgs = {
+  const actionUnregisterRootForAttesterArgs = {
     availableRootsRegistry: availableRootsRegistry.address,
     root: root,
     attester,
   };
-  await manualConfirmValidity(actionRegisterRootForAttesterArgs, options);
-  const tx = await availableRootsRegistry.registerRootForAttester(
-    actionRegisterRootForAttesterArgs.attester,
-    BigNumber.from(actionRegisterRootForAttesterArgs.root)
+  await manualConfirmValidity(actionUnregisterRootForAttesterArgs, options);
+  const tx = await availableRootsRegistry.unregisterRootForAttester(
+    actionUnregisterRootForAttesterArgs.attester,
+    BigNumber.from(actionUnregisterRootForAttesterArgs.root)
   );
   await tx.wait();
 }
 
-task('register-for-attester')
+task('unregister-for-attester')
   .addParam('root', 'Root to update')
   .addParam('attester', 'Register for this Attester')
   .addOptionalParam('availableRootsRegistryAddress', 'Root to update')
