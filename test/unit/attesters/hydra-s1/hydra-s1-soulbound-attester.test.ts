@@ -99,7 +99,9 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
         hydraS1Verifier,
         commitmentMapperRegistry,
         availableRootsRegistry,
-      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-soulbound', {}));
+      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-soulbound', {
+        options: { deploymentNamePrefix: 'soulbound' },
+      }));
 
       // 0 - Checks that the verifier, available roots registry, commitment mapper registry and attestations registry are set
       expect(await hydraS1SoulboundAttester.getVerifier()).to.equal(hydraS1Verifier.address);
