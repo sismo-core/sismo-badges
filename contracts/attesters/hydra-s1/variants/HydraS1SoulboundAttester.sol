@@ -189,20 +189,26 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
     ) {
       if (_isOnCooldown(userTicketData)) revert TicketUsedAndOnCooldown(userTicketData);
       HydraS1Claim memory claim = request._claim();
-      Attestation[] memory attestations = new Attestation[](1);
+      address[] memory attestationOwners = new address[](1);
+      uint256[] memory attestationCollectionIds = new uint256[](1);
 
-      attestations[0] = Attestation(
-        AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex,
-        request.destination,
-        address(this),
-        claim.claimedValue,
-        claim.groupProperties.generationTimestamp,
-        abi.encode(userTicket)
+      attestationOwners[0] = userTicketData.destination;
+      attestationCollectionIds[0] =
+        AUTHORIZED_COLLECTION_ID_FIRST +
+        claim.groupProperties.groupIndex;
+
+      ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
+
+      emit AttestationDeleted(
+        Attestation(
+          AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex,
+          userTicketData.destination,
+          address(this),
+          claim.claimedValue,
+          claim.groupProperties.generationTimestamp,
+          abi.encode(userTicket)
+        )
       );
-
-      ATTESTATIONS_REGISTRY.deleteAttestations(attestations);
-
-      emit AttestationDeleted(attestations[0]);
 
       _setTicketOnCooldown(userTicket);
     }
