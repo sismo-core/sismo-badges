@@ -173,7 +173,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
       expect(args.attestation.collectionId).to.equal(
         collectionIdFirst.add(group1.properties.groupIndex)
       );
-      expect(args.attestation.value).to.equal(0);
+      expect(args.attestation.value).to.equal(1);
       expect(args.attestation.timestamp).to.equal(group1.properties.generationTimestamp);
     });
   });
