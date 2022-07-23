@@ -25,8 +25,51 @@ const ALPHA_RINKEBY_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
 const ALPHA_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const ALPHA_POLYGON_ROOTS_OWNER_RELAYER = '0xf0a0b692e1c764281c211948d03edeef5fb57111';
 const ALPHA_POLYGON_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
+// Polygon Sandbox
+const SANDBOX_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
+const SANDBOX_POLYGON_ROOTS_OWNER_RELAYER = '0x7e2305312099748bbd6a31bff27a8218edd4cbd2';
+const SANDBOX_POLYGON_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
 
 export const deploymentsConfig: DeploymentsConfigTypes = {
+  sandboxPolygon: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: SANDBOX_POLYGON_PROXY_ADMIN,
+    },
+    badges: {
+      owner: SANDBOX_POLYGON_OWNER,
+      // Badges Metadata URI for the Badges contract
+      uri: 'https://metadata.badges.sismo.io/badges/polygon-sandbox/{id}.json',
+    },
+    front: {
+      collectionIdFirst: '0',
+      collectionIdLast: '10000000',
+    },
+    hydraS1SimpleAttester: {
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0x0b9340f0d31232adaec900fbaefc0f6fa3f00bda449dd677fa111b58bc754cc9',
+    },
+    hydraS1SoulboundAttester: {
+      collectionIdFirst: '20000001',
+      collectionIdLast: '30000000',
+      soulboundCooldownDuration: THREE_DAYS, // 3 days
+      initialRoot: '0',
+    },
+    attestationsRegistry: {
+      owner: SANDBOX_POLYGON_OWNER,
+    },
+    availableRootsRegistry: {
+      owner: SANDBOX_POLYGON_ROOTS_OWNER_RELAYER,
+    },
+    commitmentMapper: {
+      owner: SANDBOX_POLYGON_OWNER,
+      EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
+      EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+  },
   polygon: {
     deployOptions: {
       manualConfirm: true,

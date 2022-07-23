@@ -95,6 +95,7 @@ const config: HardhatUserConfig = {
     kovan: getCommonNetworkConfig(EthereumNetwork.kovan, 42),
     main: getCommonNetworkConfig(EthereumNetwork.main, 1),
     polygon: getCommonNetworkConfig(PolygonNetwork.main, 137),
+    sandboxPolygon: getCommonNetworkConfig(PolygonNetwork.main, 137),
     rinkeby: getCommonNetworkConfig(EthereumNetwork.rinkeby, 4),
     mumbai: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
     xdai: getCommonNetworkConfig(XDaiNetwork.xdai, 100),
