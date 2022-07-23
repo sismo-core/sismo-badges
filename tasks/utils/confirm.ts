@@ -1,4 +1,5 @@
 import readline from 'readline';
+import { CommonTaskOptions } from './types';
 
 export function confirm(): Promise<void> {
   return new Promise((resolve) => {
@@ -19,3 +20,17 @@ export function confirm(): Promise<void> {
     });
   });
 }
+
+export const manualConfirmValidity = async (object: any, options?: CommonTaskOptions) => {
+  if (options?.log || options?.manualConfirm) {
+    console.log(`    
+    ${Object.keys(object as Object).map(
+      (key) => `
+    ${key}: ${object?.[key]}`
+    )}`);
+  }
+  if (options?.manualConfirm) {
+    console.log();
+    await confirm();
+  }
+};

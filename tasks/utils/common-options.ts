@@ -1,16 +1,27 @@
-import { ConfigurableTaskDefinition, HardhatRuntimeEnvironment } from 'hardhat/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { CommonTaskOptions } from './types';
 import { DeployOptions } from '../deploy-tasks/utils';
-
-export const addCommonParams = (task: ConfigurableTaskDefinition): ConfigurableTaskDefinition => {
-  return task
-    .addFlag('log', 'Log deployment steps')
-    .addFlag('manualConfirm', 'Manually confirm the deployment');
-};
+import { deploymentsConfig } from '../deploy-tasks/deployments-config';
 
 export const getCommonOptions = (options: DeployOptions | CommonTaskOptions): CommonTaskOptions => {
   return {
     manualConfirm: options.manualConfirm,
     log: options.log,
+  };
+};
+
+export const wrapCommonOptions = (action: Function) => {
+  return (args: any, hre: HardhatRuntimeEnvironment) => {
+    const config = deploymentsConfig[hre.network.name];
+    return action(
+      {
+        ...args,
+        options: {
+          ...getCommonOptions(config.deployOptions),
+          ...args.options,
+        },
+      },
+      hre
+    );
   };
 };
