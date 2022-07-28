@@ -188,6 +188,8 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
       userTicketData.destination != address(0) && userTicketData.destination != request.destination
     ) {
       if (_isOnCooldown(userTicketData)) revert TicketUsedAndOnCooldown(userTicketData);
+
+      // Delete the old Attestation on the account before recording the new onez
       HydraS1Claim memory claim = request._claim();
       address[] memory attestationOwners = new address[](1);
       uint256[] memory attestationCollectionIds = new uint256[](1);
