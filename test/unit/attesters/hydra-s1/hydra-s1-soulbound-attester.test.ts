@@ -91,6 +91,9 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
     prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
   });
 
+  /*************************************************************************************/
+  /********************************** DEPLOYMENTS **************************************/
+  /*************************************************************************************/
   describe('Deployments', () => {
     it('Should deploy, setup and test and test the constructed values of the contract', async () => {
       ({
@@ -149,6 +152,9 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
     });
   });
 
+  /*************************************************************************************/
+  /******************************* BUILD ATTESTATIONS **********************************/
+  /*************************************************************************************/
   describe('Build attestations', () => {
     it('Should revert when the collectionId is out of attester bounds', async () => {
       const wrongGroupProperties = {
@@ -192,6 +198,9 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
     });
   });
 
+  /*************************************************************************************/
+  /******************************* GENERATE ATTESTATIONS *******************************/
+  /*************************************************************************************/
   describe('Generate Attestations', () => {
     it('Should revert if the user provided wrong group generation datas', async () => {
       const wrongExtraData = {
@@ -674,6 +683,9 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
     });
   });
 
+  /*************************************************************************************/
+  /******************************** DELETE ATTESTATIONS ********************************/
+  /*************************************************************************************/
   describe('Delete attestations', () => {
     it('Should revert if the caller is not the owner of the ticket', async () => {
       await expect(
