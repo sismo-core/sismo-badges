@@ -71,7 +71,9 @@ const accounts = Array.from(Array(20), (_, index) => {
   };
 });
 
-const LOCAL_CHAIN_ID = 31337;
+const LOCAL_CHAIN_ID = process.env.LOCAL_CHAIN_ID ? parseInt(process.env.LOCAL_CHAIN_ID) : 31337;
+const LOCAL_HOSTNAME = process.env.LOCAL_HOSTNAME ?? 'localhost';
+const LOCAL_PORT = process.env.LOCAL_PORT ? parseInt(process.env.LOCAL_PORT) : 8545;
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -100,7 +102,7 @@ const config: HardhatUserConfig = {
     mumbai: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
     xdai: getCommonNetworkConfig(XDaiNetwork.xdai, 100),
     local: {
-      url: 'http://localhost:8545',
+      url: `http://${LOCAL_HOSTNAME}:${LOCAL_PORT}`,
       accounts: accounts.map((account) => account.privateKey),
       hardfork: HARDFORK,
       chainId: LOCAL_CHAIN_ID,
