@@ -4,11 +4,11 @@ WORKDIR /usr/src/build
 # Install dependencies
 COPY package.json yarn.lock ./
 
-RUN yarn install --frozen-lockfile --production
+RUN yarn install --frozen-lockfile
+COPY . .
+RUN yarn compile
 
 FROM node:16-slim AS run
 RUN apt-get -y update && apt-get -y install netcat
 WORKDIR /usr/src/app
-COPY . .
-COPY --from=build /usr/src/build/node_modules .
-
+COPY --from=build /usr/src/build/ .
