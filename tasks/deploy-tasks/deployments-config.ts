@@ -112,8 +112,8 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       manualConfirm: false,
       log: true,
       behindProxy: true,
-      // account 3 of shared mnemonic
-      proxyAdmin: '0xc11d0d9e1e6c16ea5e5395e0129ca34262ca2315',
+      // account 18 of shared mnemonic
+      proxyAdmin: '0x41EA85211c08227BD62B03f3EFc65FaAa6CBd1C3',
     },
     badges: {
       // account 0 of shared mneomonic
