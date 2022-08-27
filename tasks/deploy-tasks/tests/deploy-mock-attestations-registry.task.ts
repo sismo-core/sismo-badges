@@ -13,7 +13,6 @@ import {
 } from '../utils';
 
 export interface DeployMockAttestationsRegistryArgs {
-  badges: string;
   attestationValue: BigNumberish;
   options?: DeployOptions;
 }
@@ -25,12 +24,12 @@ export interface DeployedMockAttestationsRegistry {
 const CONTRACT_NAME = 'MockAttestationsRegistry';
 
 async function deploymentAction(
-  { badges, attestationValue, options }: DeployMockAttestationsRegistryArgs,
+  { attestationValue, options }: DeployMockAttestationsRegistryArgs,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [badges || deployer.address, attestationValue || 0];
+  const deploymentArgs = [attestationValue || 0];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
@@ -51,6 +50,4 @@ async function deploymentAction(
   return { mockAttestationsRegistry };
 }
 
-task('deploy-mock-attestations-registry')
-  .addParam('badges', 'Address of the badges contract')
-  .setAction(wrapCommonDeployOptions(deploymentAction));
+task('deploy-mock-attestations-registry').setAction(wrapCommonDeployOptions(deploymentAction));

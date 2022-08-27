@@ -47,7 +47,6 @@ describe('Test Badges contract', () => {
       }));
 
       ({ mockAttestationsRegistry } = await hre.run('deploy-mock-attestations-registry', {
-        badges: badges.address,
         attestationValue: 1,
         options: {
           behindProxy: false,
