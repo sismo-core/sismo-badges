@@ -16,6 +16,13 @@ const COMMITMENT_MAPPER_TESTER = [
   '15390691699624678165709040191639591743681460873292995904381058558679154201615',
 ];
 
+const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING = [
+  '0x0eeeffe58d278552cc06d9ffada205dbfef1da11288345fed10c916fdd8c6f13',
+  '0x2d18d49c9e8045d34b6e8ae4262b1dbf73bc47a7fbe4b6748eafa6b5b28d0fa3',
+];
+
+const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD = ['TO FILL', 'TO FILL'];
+
 const THREE_DAYS = '295200';
 // Rinkeby
 const ALPHA_RINKEBY_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
@@ -57,6 +64,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     pythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     attestationsRegistry: {
       owner: ALPHA_POLYGON_OWNER,
@@ -102,6 +112,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     pythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[1],
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     attestationsRegistry: {
       owner: ALPHA_RINKEBY_OWNER,
@@ -146,6 +159,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     pythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[1],
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     attestationsRegistry: {
       owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
@@ -190,6 +206,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     pythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: '0x0eeeffe58d278552cc06d9ffada205dbfef1da11288345fed10c916fdd8c6f13',
+      commitmentSignerPubKeyY: '0x2d18d49c9e8045d34b6e8ae4262b1dbf73bc47a7fbe4b6748eafa6b5b28d0fa3',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     attestationsRegistry: {
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',

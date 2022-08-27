@@ -30,6 +30,9 @@ export type DeploymentsConfigTypes = {
     pythia1SimpleAttester: {
       collectionIdFirst: string;
       collectionIdLast: string;
+      commitmentSignerPubKeyX: string;
+      commitmentSignerPubKeyY: string;
+      owner: string;
     };
     // Conf related to the commitment mapper
     // https://github.com/sismo-core/sismo-commitment-mapper

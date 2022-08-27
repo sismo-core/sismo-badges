@@ -22,6 +22,10 @@ import {
   DeployCommitmentMapperArgs,
   DeployedCommitmentMapper,
 } from 'tasks/deploy-tasks/unit/periphery/deploy-commitment-mapper-registry.task';
+import {
+  DeployedPythia1SimpleAttester,
+  DeployPythia1SimpleAttesterArgs,
+} from 'tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
 
 async function deploymentAction(
   { options }: { options: DeployOptions },
@@ -74,6 +78,15 @@ async function deploymentAction(
     options,
   } as DeployHydraS1SoulboundAttesterArgs)) as DeployedHydraS1SoulboundAttester;
 
+  const { pythia1SimpleAttester } = (await hre.run('deploy-pythia-1-simple-attester', {
+    collectionIdFirst: config.pythia1SimpleAttester.collectionIdFirst,
+    collectionIdLast: config.pythia1SimpleAttester.collectionIdLast,
+    attestationsRegistryAddress: attestationsRegistry.address,
+    commitmentSignerPubKeyX: config.pythia1SimpleAttester.commitmentSignerPubKeyX,
+    commitmentSignerPubKeyY: config.pythia1SimpleAttester.commitmentSignerPubKeyY,
+    options,
+  } as DeployPythia1SimpleAttesterArgs)) as DeployedPythia1SimpleAttester;
+
   await hre.run('register-for-attester', {
     availableRootsRegistryAddress: availableRootsRegistry.address,
     attester: hydraS1SimpleAttester.address,
@@ -99,6 +112,14 @@ async function deploymentAction(
       hydraS1SimpleAttester.address,
       config.hydraS1SimpleAttester.collectionIdFirst,
       config.hydraS1SimpleAttester.collectionIdLast
+    )
+  ).wait();
+
+  await (
+    await attestationsRegistry.authorizeRange(
+      pythia1SimpleAttester.address,
+      config.pythia1SimpleAttester.collectionIdFirst,
+      config.pythia1SimpleAttester.collectionIdLast
     )
   ).wait();
 }
