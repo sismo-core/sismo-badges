@@ -8,10 +8,10 @@ import {Attestation, AttestationData} from '../core/libs/Structs.sol';
 
 contract MockAttestationsRegistry {
   uint256 immutable ATTESTATION_VALUE;
-  IBadges immutable BADGES;
 
-  constructor(address badgesAddress, uint256 attestationValue) {
-    BADGES = IBadges(badgesAddress);
+  event AttestationRecorded(Attestation attestation);
+
+  constructor(uint256 attestationValue) {
     ATTESTATION_VALUE = attestationValue;
   }
 
@@ -21,5 +21,11 @@ contract MockAttestationsRegistry {
     returns (uint256)
   {
     return ATTESTATION_VALUE;
+  }
+
+  function recordAttestations(Attestation[] calldata attestations) external {
+    for (uint256 i = 0; i < attestations.length; i++) {
+      emit AttestationRecorded(attestations[i]);
+    }
   }
 }
