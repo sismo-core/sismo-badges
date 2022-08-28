@@ -7,6 +7,7 @@ import {Pythia1Verifier, Pythia1Lib, Pythia1ProofData} from '../libs/Pythia1Lib.
 
 interface IPythia1Base {
   error DestinationMismatch(address expectedDestination, address inputDestination);
+  error UserShouldOwnItsDestination(address sender, address inputdestination);
   error CommitmentSignerPubKeyMismatch(
     uint256 expectedX,
     uint256 expectedY,
@@ -18,7 +19,7 @@ interface IPythia1Base {
   error ChainIdMismatch(uint256 expectedChainId, uint256 chainId);
   error ValueMismatch(uint256 expectedValue, uint256 inputValue);
   error GroupIdMismatch(uint256 expectedAccountsTreeValue, uint256 inputAccountsTreeValue);
-  error InvalidPlonkProof(string reason);
+  error InvalidGroth16Proof(string reason);
 
   /**
    * @dev Getter of Pythia-1 Verifier contract

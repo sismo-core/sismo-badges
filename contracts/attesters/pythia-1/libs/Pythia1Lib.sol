@@ -6,7 +6,7 @@ import {Pythia1Verifier} from '@sismo-core/pythia-1/contracts/Pythia1Verifier.so
 
 // user Pythia-1 claim retrieved form his request
 struct Pythia1Claim {
-  uint256 groupId; // user claims to have an account in this group
+  uint256 groupId; // user claims be part of this group
   uint256 claimedValue; // user claims this value for its account in the group
   address destination; // user claims to own this destination[]
   Pythia1GroupProperties groupProperties; // user claims the group has the following properties
@@ -17,9 +17,15 @@ struct Pythia1GroupProperties {
   bool isScore;
 }
 
+struct Pythia1CircomSnarkProof {
+  uint256[2] a;
+  uint256[2][2] b;
+  uint256[2] c;
+}
+
 struct Pythia1ProofData {
-  bytes proof;
-  uint256[] input;
+  Pythia1CircomSnarkProof proof;
+  uint256[9] input;
   // destination;
   // chainId;
   // commitmentSignerPubKey.x;
@@ -75,9 +81,14 @@ library Pythia1Lib {
   function _toCircomFormat(Pythia1ProofData memory self)
     internal
     pure
-    returns (bytes memory, uint256[] memory)
+    returns (
+      uint256[2] memory,
+      uint256[2][2] memory,
+      uint256[2] memory,
+      uint256[9] memory
+    )
   {
-    return (self.proof, self.input);
+    return (self.proof.a, self.proof.b, self.proof.c, self.input);
   }
 
   function _getDestination(Pythia1ProofData memory self) internal pure returns (address) {

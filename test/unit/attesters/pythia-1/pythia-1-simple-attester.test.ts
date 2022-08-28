@@ -14,12 +14,11 @@ import {
   generatePythia1Group,
   Pythia1Group,
 } from '../../../utils/pythia-1';
-import { EddsaSignature, buildPoseidon } from '@sismo-core/crypto';
 import {
   DeployedPythia1SimpleAttester,
   DeployPythia1SimpleAttesterArgs,
 } from '../../../../tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
-import { Pythia1Prover, SnarkProof } from '@sismo-core/pythia-1';
+import { Pythia1Prover, SnarkProof, EddsaSignature, buildPoseidon } from '@sismo-core/pythia-1';
 
 const collectionIdFirst = BigNumber.from(100);
 const collectionIdLast = BigNumber.from(1000);
@@ -141,7 +140,9 @@ describe('Test pythia 1 standard attester contract, not strict', () => {
         isStrict: !group1.properties.isScore,
       })) as SnarkProof;
 
-      const tx = await pythia1SimpleAttester.generateAttestations(request, await proof.toBytes());
+      const tx = await pythia1SimpleAttester
+        .connect(destination1)
+        .generateAttestations(request, await proof.toBytes());
       const { events } = await tx.wait();
       const args = getEventArgs(events, 'AttestationGenerated');
       expect(args.attestation.issuer).to.equal(pythia1SimpleAttester.address);
@@ -151,6 +152,6 @@ describe('Test pythia 1 standard attester contract, not strict', () => {
       );
       expect(args.attestation.value).to.equal(source1Value);
       // expect(args.attestation.timestamp).to.equal(tx.timestamp);
-    });
+    }).timeout(60000);
   });
 });
