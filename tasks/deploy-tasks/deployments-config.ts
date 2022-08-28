@@ -186,8 +186,8 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       manualConfirm: false,
       log: true,
       behindProxy: true,
-      // account 3 of shared mnemonic
-      proxyAdmin: '0xc11d0d9e1e6c16ea5e5395e0129ca34262ca2315',
+      // account 18 of shared mnemonic
+      proxyAdmin: '0x41EA85211c08227BD62B03f3EFc65FaAa6CBd1C3',
     },
     badges: {
       // account 0 of shared mneomonic
@@ -196,16 +196,16 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     front: {
       collectionIdFirst: '0',
-      collectionIdLast: '100000',
+      collectionIdLast: '10000000',
     },
     hydraS1SimpleAttester: {
-      collectionIdFirst: '100001',
-      collectionIdLast: '200000',
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
     },
     hydraS1SoulboundAttester: {
-      collectionIdFirst: '200001',
-      collectionIdLast: '300000',
+      collectionIdFirst: '20000001',
+      collectionIdLast: '30000000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
