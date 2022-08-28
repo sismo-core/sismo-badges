@@ -4,7 +4,7 @@ import { AttestationsRegistry, Badges, Pythia1SimpleAttester } from 'types';
 import { RequestStruct } from 'types/Attester';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber } from 'ethers';
 import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
 import { generateTicketIdentifier } from '../../../utils';
 import { getEventArgs } from '../../../utils/expectEvent';
@@ -14,20 +14,17 @@ import {
   generatePythia1Group,
   Pythia1Group,
 } from '../../../utils/pythia-1';
-import { EddsaSignature } from '@sismo-core/crypto';
-import { buildPoseidon } from '@sismo-core/commitment-mapper-tester-js';
+import { EddsaSignature, buildPoseidon } from '@sismo-core/crypto';
 import {
   DeployedPythia1SimpleAttester,
   DeployPythia1SimpleAttesterArgs,
 } from '../../../../tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
-import { DeployCoreArgs, DeployedCore } from 'tasks/deploy-tasks/batch/deploy-core.task';
 import { Pythia1Prover, SnarkProof } from '@sismo-core/pythia-1';
 
-const config = deploymentsConfig[hre.network.name];
 const collectionIdFirst = BigNumber.from(100);
 const collectionIdLast = BigNumber.from(1000);
 
-describe('Test pythia S1 standard attester contract, not strict', () => {
+describe('Test pythia 1 standard attester contract, not strict', () => {
   let chainId: number;
   let poseidon;
 
@@ -63,14 +60,16 @@ describe('Test pythia S1 standard attester contract, not strict', () => {
 
     poseidon = await buildPoseidon();
 
-    // 1 - Init commitment mapper
+    // 1 - Init commitment signer
     commitmentSigner = new CommitmentSignerTester();
 
+    // 2 - Generate the group with its properties
     group1 = generatePythia1Group({
       internalCollectionId: 0,
       isScore: false,
     });
 
+    // 3 - Get the commitmentReceipt by passing through the commitment signer
     secret = BigNumber.from('0x123');
     commitment = poseidon([secret]);
     source1Value = BigNumber.from('0x9');
@@ -112,7 +111,7 @@ describe('Test pythia S1 standard attester contract, not strict', () => {
   /*************************************************************************************/
 
   describe('Generate valid attestation', () => {
-    it('Should generate a proof with a pythia S1 prover and verify it onchain using the attester', async () => {
+    it('Should generate a proof with a pythia 1 prover and verify it onchain using the attester', async () => {
       ticketIdentifier = await generateTicketIdentifier(
         pythia1SimpleAttester.address,
         group1.properties.internalCollectionId

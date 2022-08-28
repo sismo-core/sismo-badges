@@ -9,21 +9,20 @@ import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.s
 // Protocol imports
 import {Request, Attestation, Claim} from '../../../core/libs/Structs.sol';
 
-// Imports related to Hydra S1 ZK Proving Scheme
+// Imports related to Pythia 1 ZK Proving Scheme
 import {Pythia1Verifier, Pythia1Lib, Pythia1Claim, Pythia1ProofData, Pythia1ProofInput, Pythia1GroupProperties} from '../libs/Pythia1Lib.sol';
-import {ICommitmentMapperRegistry} from '../../../periphery/utils/CommitmentMapperRegistry.sol';
-import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRegistry.sol';
 
 /**
- * @title Hydra-S1 Base Attester
+ * @title Pythia-1 Base Attester
  * @author Sismo
- * @notice Abstract contract that facilitates the use of the Hydra-S1 ZK Proving Scheme.
- * Hydra-S1 is single source, single group: it allows users to verify they are part of one and only one group at a time
- * It is inherited by the family of Hydra-S1 attesters.
+ * @notice Abstract contract that facilitates the use of the Pythia-1 ZK Proving Scheme.
+ * Pythia-1: it allows issuing attestations from an offchain service and send it onchain 
+ * without anyone being able to make the link between the offchain service and the onchain service.
+ * It is inherited by the family of Pythia-1 attesters.
  * It contains the user input checking and the ZK-SNARK proof verification.
  * We invite readers to refer to:
- *    - https://pythia-1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
- *    - https://pythia-1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
+ *    - https://pythia-1.docs.sismo.io for a full guide through the Pythia-1 ZK Attestations
+ *    - https://pythia-1-circuits.docs.sismo.io for circuits, prover and verifiers of Pythia-1
  
  
  **/
@@ -45,7 +44,7 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
   }
 
   /**
-   * @dev Getter of Hydra-S1 Verifier contract
+   * @dev Getter of Pythia-1 Verifier contract
    */
   function getVerifier() external view returns (Pythia1Verifier) {
     return VERIFIER;
@@ -59,23 +58,24 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
   }
 
   /*******************************************************
-    Hydra-S1 SPECIFIC FUNCTIONS
+    Pythia-1 SPECIFIC FUNCTIONS
   *******************************************************/
 
   /**
    * @dev MANDATORY: must be implemented to return the ticket identifier from a user request
    * so it can be checked against snark input
-   * ticket = hash(sourceSecretHash, ticketIdentifier), which is verified inside the snark
-   * users bring sourceSecretHash as private input which guarantees privacy
+   * ticket = hash(secretHash, ticketIdentifier), which is verified inside the snark
+   * the secretHash is a number only known by the user and is used in 
+   * the zero knowledge as a private input which guarantees privacy
 
-   * This function MUST be implemented by Hydra-S1 attesters.
+   * This function MUST be implemented by Pythia-1 attesters.
    * This is the core function that implements the logic of tickets
 
    * Do they get one ticket per claim?
    * Do they get 2 tickets per claim?
    * Do they get 1 ticket per claim, every month?
-   * Take a look at Hydra-S1 Simple Attester for an example
-   * @param claim user claim: part of a group of accounts, with a claimedValue for their account
+   * Take a look at Pythia-1 Simple Attester for an example
+   * @param claim user claim: a particular claim that a user have that he can prove s right.
    */
   function _getTicketIdentifierOfClaim(Pythia1Claim memory claim)
     internal
@@ -83,6 +83,10 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
     virtual
     returns (uint256);
 
+  /**
+   * @dev MANDATORY: must be implemented to return the commitment signer that allows to
+   * prove the claim was correctly issued for the user.
+   */
   function _getCommitmentSignerPubKey() internal view virtual returns (uint256[2] memory);
 
   /**
@@ -126,7 +130,7 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
   }
 
   /**
-   * @dev verify the groth16 mathematical proof
+   * @dev verify the plonk mathematical proof using the circom verifier contract
    * @param proofData snark public input
    */
   function _verifyProof(Pythia1ProofData memory proofData) internal view virtual {
