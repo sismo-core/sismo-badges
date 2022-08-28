@@ -14,32 +14,30 @@ import {Pythia1Base, Pythia1Lib, Pythia1ProofData, Pythia1ProofInput, Pythia1Cla
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
 /**
- * @title  Hydra-S1 Simple Attester
+ * @title  Pythia-1 Simple Attester
  * @author Sismo
- * @notice This attester is part of the family of the Hydra-S1 Attesters.
- * Hydra-S1 attesters enable users to prove they have an account in a group in a privacy preserving way.
- * The Hydra-S1 Base abstract contract is inherited and holds the complex Hydra S1 verification logic.
+ * @notice This attester is part of the family of the Pythia-1 Attesters.
+ * Pythia-1 attesters enable users to prove they have an attestation issued by an offchain service
+ * in a privacy preserving way. That means no-one can make the link between the account used in the offchain service
+ * and the onchain account where the attestation is stored.
+ * The Pythia-1 Base abstract contract is inherited and holds the complex Pythia 1 verification logic.
  * We invite readers to refer to:
- *    - https://pythia-1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
- *    - https://pythia-1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
+ *    - https://pythia-1.docs.sismo.io for a full guide through the Pythia-1 ZK Attestations
+ *    - https://pythia-1-circuits.docs.sismo.io for circuits, prover and verifiers of Pythia-1
 
  * This specific attester has the following characteristics:
 
  * - Zero Knowledge
- *   One cannot deduct from an attestation what source account was used to generate the underlying proof
+ *   One cannot deduct from an attestation what offchain issuer's account was used to generate the underlying proof
 
  * - Non Strict (scores)
  *   If a user can generate an attestation of max value 100, they can also generate any attestation with value < 100.
  *   This attester generate attestations of scores
 
  * - Ticketed
- *   Each source account gets one userTicket per claim (i.e only one attestation per source account per claim)
+ *   Each account gets one userTicket per claim (i.e only one attestation per source account per claim)
  *   For people used to semaphore/ tornado cash people:
  *   userTicket = hash(sourceSecret, ticketIdentifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
- 
- * - Renewable
- *   A userTicket can actually be reused as long as the destination of the attestation remains the same
- *   It enables users to renew their attestations
  **/
 
 contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester, Ownable {
@@ -63,7 +61,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @param attestationsRegistryAddress Attestations Registry contract on which the attester will write attestations
    * @param collectionIdFirst Id of the first collection in which the attester is supposed to record
    * @param collectionIdLast Id of the last collection in which the attester is supposed to record
-   * @param pythia1VerifierAddress ZK Snark Hydra-S1 Verifier contract
+   * @param pythia1VerifierAddress ZK Snark Pythia-1 Verifier contract
    * @param commitmentSignerPubKey The EdDSA public key of the commitment signer for the Pythia 1 Proving Scheme
    * @param owner The owner of the contract that can update the commitment signer pub key
    */
@@ -93,9 +91,6 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   /*******************************************************
     MANDATORY FUNCTIONS TO OVERRIDE FROM ATTESTER.SOL
   *******************************************************/
-
-  function test(Pythia1ProofData calldata bonjour) public {}
-
   /**
    * @dev Throws if user request is invalid when verified against
    * Look into Pythia1Base for more details
@@ -133,7 +128,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
     Attestation[] memory attestations = new Attestation[](1);
 
     uint256 attestationCollectionId = AUTHORIZED_COLLECTION_ID_FIRST +
-      claim.groupProperties.groupIndex;
+      claim.groupProperties.internalCollectionId;
 
     if (attestationCollectionId > AUTHORIZED_COLLECTION_ID_LAST)
       revert CollectionIdOutOfBound(attestationCollectionId);
@@ -158,7 +153,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   /**
    * @dev Hook run before recording the attestation.
    * Throws if ticket already used
-   * @param request users request. Claim of having an account part of a group of accounts
+   * @param request users request. Claim of beiing part of a group.
    * @param proofData provided to back the request. snark input and snark proof
    */
   function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
@@ -178,14 +173,15 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   }
 
   /*******************************************************
-    Hydra-S1 MANDATORY FUNCTIONS FROM Hydra-S1 Base Attester
+    Pythia-1 MANDATORY FUNCTIONS FROM Pythia-1 Base Attester
   *******************************************************/
 
   /**
    * @dev Returns the ticket identifier from a user claim
-   * @param claim user Hydra-S1 claim = have an account with a specific value in a specific group
-   * ticket = hash(sourceSecretHash, ticketIdentifier), which is verified inside the snark
-   * users bring sourceSecretHash as private input in snark which guarantees privacy
+   * @param claim user Pythia-1 claim = have an account with a specific value in a specific group
+   * ticket = hash(secretHash, ticketIdentifier), which is verified inside the snark
+   * users bring secretHash as private input in snark which guarantees privacy
+   * the secretHash is only known by the user and never escape the user's browser
    
    * Here we chose ticketIdentifier = hash(attesterAddress, claim.GroupId)
    * Creates one ticket per group, per user and makes sure no collision with other attester's tickets
@@ -196,7 +192,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
     override
     returns (uint256)
   {
-    uint256 ticketIdentifier = _encodeInSnarkField(address(this), claim.groupProperties.groupIndex);
+    uint256 ticketIdentifier = _encodeInSnarkField(
+      address(this),
+      claim.groupProperties.internalCollectionId
+    );
     return ticketIdentifier;
   }
 
@@ -205,7 +204,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   }
 
   /*******************************************************
-    Hydra-S1 Attester Specific Functions
+    Pythia-1 Attester Specific Functions
   *******************************************************/
 
   function _updateCommitmentSignerPubKey(uint256[2] memory commitmentSignerPubKey) internal {

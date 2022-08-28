@@ -5,8 +5,6 @@ pragma experimental ABIEncoderV2;
 
 import {Attestation} from '../../../core/libs/Structs.sol';
 import {IAttester} from '../../../core/interfaces/IAttester.sol';
-import {CommitmentMapperRegistry} from '../../../periphery/utils/CommitmentMapperRegistry.sol';
-import {AvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRegistry.sol';
 import {Pythia1Lib, Pythia1ProofData, Pythia1ProofInput} from './../libs/Pythia1Lib.sol';
 import {IPythia1Base} from './../base/IPythia1Base.sol';
 

@@ -4,9 +4,7 @@ pragma solidity ^0.8.14;
 import {Claim, Request} from '../../../core/libs/Structs.sol';
 import {Pythia1Verifier} from '@sismo-core/pythia-1/contracts/Pythia1Verifier.sol';
 
-import 'hardhat/console.sol';
-
-// user Hydra-S1 claim retrieved form his request
+// user Pythia-1 claim retrieved form his request
 struct Pythia1Claim {
   uint256 groupId; // user claims to have an account in this group
   uint256 claimedValue; // user claims this value for its account in the group
@@ -15,7 +13,7 @@ struct Pythia1Claim {
 }
 
 struct Pythia1GroupProperties {
-  uint128 groupIndex;
+  uint128 internalCollectionId;
   bool isScore;
 }
 
@@ -128,12 +126,13 @@ library Pythia1Lib {
     return userTicket;
   }
 
-  function _generateGroupIdFromProperties(uint128 groupIndex, bool isScore)
+  function _generateGroupIdFromProperties(uint128 internalCollectionId, bool isScore)
     internal
     pure
     returns (uint256)
   {
-    return _generateGroupIdFromEncodedProperties(_encodeGroupProperties(groupIndex, isScore));
+    return
+      _generateGroupIdFromEncodedProperties(_encodeGroupProperties(internalCollectionId, isScore));
   }
 
   function _generateGroupIdFromEncodedProperties(bytes memory encodedProperties)
@@ -144,12 +143,12 @@ library Pythia1Lib {
     return uint256(keccak256(encodedProperties)) % Pythia1Lib.SNARK_FIELD;
   }
 
-  function _encodeGroupProperties(uint128 groupIndex, bool isScore)
+  function _encodeGroupProperties(uint128 internalCollectionId, bool isScore)
     internal
     pure
     returns (bytes memory)
   {
-    return abi.encode(groupIndex, isScore);
+    return abi.encode(internalCollectionId, isScore);
   }
 
   function _validateClaim(Claim memory claim) internal pure {
