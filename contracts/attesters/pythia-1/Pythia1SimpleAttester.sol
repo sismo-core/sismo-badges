@@ -3,6 +3,7 @@
 pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IPythia1SimpleAttester} from './interfaces/IPythia1SimpleAttester.sol';
 
 // Core protocol Protocol imports
@@ -11,14 +12,14 @@ import {Attester, IAttester, IAttestationsRegistry} from './../../core/Attester.
 
 // Imports related to Pythia1 Proving Scheme
 import {Pythia1Base, Pythia1Lib, Pythia1ProofData, Pythia1ProofInput, Pythia1Claim} from './base/Pythia1Base.sol';
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
 /**
  * @title  Pythia-1 Simple Attester
  * @author Sismo
  * @notice This attester is part of the family of the Pythia-1 Attesters.
- * Pythia-1 attesters enable users to prove they have an attestation issued by an offchain service
- * in a privacy preserving way. That means no-one can make the link between the account used in the offchain service
+ * Pythia-1 attesters enable users to prove they have a claim and its proof issued by an 
+ * offchain service in a privacy preserving way. 
+ * That means no-one can make the link between the account used in the offchain service
  * and the onchain account where the attestation is stored.
  * The Pythia-1 Base abstract contract is inherited and holds the complex Pythia 1 verification logic.
  * We invite readers to refer to:
@@ -35,9 +36,9 @@ import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
  *   This attester generate attestations of scores
 
  * - Ticketed
- *   Each account gets one userTicket per claim (i.e only one attestation per source account per claim)
+ *   Each users gets one userTicket per claim
  *   For people used to semaphore/ tornado cash people:
- *   userTicket = hash(sourceSecret, ticketIdentifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
+ *   userTicket = hash(secret, ticketIdentifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
  **/
 
 contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester, Ownable {
@@ -178,7 +179,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
 
   /**
    * @dev Returns the ticket identifier from a user claim
-   * @param claim user Pythia-1 claim = have an account with a specific value in a specific group
+   * @param claim user Pythia-1 claim = have an offchain account with a specific value in a specific group
    * ticket = hash(secretHash, ticketIdentifier), which is verified inside the snark
    * users bring secretHash as private input in snark which guarantees privacy
    * the secretHash is only known by the user and never escape the user's browser
@@ -206,6 +207,13 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   /*******************************************************
     Pythia-1 Attester Specific Functions
   *******************************************************/
+
+  function updateCommitmentSignerPubKey(uint256[2] memory commitmentSignerPubKey)
+    external
+    onlyOwner
+  {
+    _updateCommitmentSignerPubKey(commitmentSignerPubKey);
+  }
 
   function _updateCommitmentSignerPubKey(uint256[2] memory commitmentSignerPubKey) internal {
     _commitmentSignerPubKey = commitmentSignerPubKey;

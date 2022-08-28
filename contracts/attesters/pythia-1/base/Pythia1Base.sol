@@ -107,6 +107,9 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
     if (input.destination != claim.destination)
       revert DestinationMismatch(claim.destination, input.destination);
 
+    if (claim.destination != msg.sender)
+      revert UserShouldOwnItsDestination(msg.sender, claim.destination);
+
     if (input.chainId != block.chainid) revert ChainIdMismatch(block.chainid, input.chainId);
 
     if (input.value != claim.claimedValue) revert ValueMismatch(claim.claimedValue, input.value);
@@ -134,18 +137,20 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
    * @param proofData snark public input
    */
   function _verifyProof(Pythia1ProofData memory proofData) internal view virtual {
-    try VERIFIER.verifyProof(proofData.proof, proofData.input) returns (bool success) {
-      if (!success) revert InvalidPlonkProof('');
+    try
+      VERIFIER.verifyProof(proofData.proof.a, proofData.proof.b, proofData.proof.c, proofData.input)
+    returns (bool success) {
+      if (!success) revert InvalidGroth16Proof('');
     } catch Error(string memory reason) {
-      revert InvalidPlonkProof(reason);
+      revert InvalidGroth16Proof(reason);
     } catch Panic(
       uint256 /*errorCode*/
     ) {
-      revert InvalidPlonkProof('');
+      revert InvalidGroth16Proof('');
     } catch (
       bytes memory /*lowLevelData*/
     ) {
-      revert InvalidPlonkProof('');
+      revert InvalidGroth16Proof('');
     }
   }
 }
