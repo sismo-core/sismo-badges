@@ -1160,10 +1160,10 @@
     ethers "^5.6.1"
     tslib "^2.4.0"
 
-"@sismo-core/pythia-1@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@sismo-core/pythia-1/-/pythia-1-1.0.5.tgz#2dc974f9d624a4c24390410c8a1ece3292b8bda4"
-  integrity sha512-ynfLN8wdwHaPc1Quh7rsh7KnmmL1IOKnCsyOrcXVzw436fZnvvURbpkVO3RPeIWBRvpjRo1PtWE0Hj/TcMO4RA==
+"@sismo-core/pythia-1@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@sismo-core/pythia-1/-/pythia-1-1.0.6.tgz#4191a3b6d1fd5a74baefe260d7ce3c53190a3f6e"
+  integrity sha512-o5TT99iaW5zB2ainQOW/6XtGcoBCFA2PLW12uSGrQwrecvbpE/FqBtH3ATgerFUz85SLxGAJxp53PIZaGLcvfQ==
   dependencies:
     "@sismo-core/crypto" "^1.1.4"
     ethers "^5.7.0"

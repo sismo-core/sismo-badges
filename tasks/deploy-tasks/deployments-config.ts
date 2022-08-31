@@ -17,11 +17,14 @@ const COMMITMENT_MAPPER_TESTER = [
 ];
 
 const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING = [
-  '0x1f06646b458fca15b14c631dc6f63f2726dc20f66cfe500f60e6fd0497ba77d8',
-  '0x06ea90f0131912f23a10ae4c9e605074909e567bad3e3fff196b93ac1a7de7de',
+  '0x038d3d596875c66eb90608bbe04e4e238607fd32ad61f4278bdaf47aadc28d60',
+  '0x1b46b55a0ce3f35d6025cdd4554aaac1fc7180b14d51b0f15aa51a6929bdb952',
 ];
 
-const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD = ['TO FILL', 'TO FILL'];
+const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD = [
+  '0x2f8eeb980ebc1342070a35514e1f42fa96381de8f080d3713e80fe99c883d4e9',
+  '0x018683c5d2f1f71d7e8b65ab0990635c019de9183359db7e80543c485426e490',
+];
 
 const THREE_DAYS = '295200';
 // Rinkeby
@@ -64,6 +67,13 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
+    },
+    pythia1SimpleAttester: {
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: SANDBOX_POLYGON_OWNER,
     },
     attestationsRegistry: {
       owner: SANDBOX_POLYGON_OWNER,
@@ -109,7 +119,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
       commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
-      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
+      owner: ALPHA_POLYGON_OWNER,
     },
     attestationsRegistry: {
       owner: ALPHA_POLYGON_OWNER,
@@ -157,7 +167,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
       commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[1],
-      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
+      owner: ALPHA_RINKEBY_OWNER,
     },
     attestationsRegistry: {
       owner: ALPHA_RINKEBY_OWNER,
