@@ -137,7 +137,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
   // of the "dev-staging-rinkeby-mnemonic"
   rinkeby: {
     deployOptions: {
-      manualConfirm: false,
+      manualConfirm: true,
       log: true,
       behindProxy: true,
       proxyAdmin: ALPHA_RINKEBY_PROXY_ADMIN,
