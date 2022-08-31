@@ -54,13 +54,7 @@ async function authorizeRange(
     return;
   }
 
-  // Verify if the current signer is the owner of the attestationsRegistry
   const currentOwner = await attestationsRegistry.owner();
-  if (signer.address.toLowerCase() !== currentOwner.toLowerCase()) {
-    throw new Error(
-      `The current signer (${signer.address}) is not owner of the attestations registry contract ${attestationsRegistry.address}. Can't authorize attester.`
-    );
-  }
 
   // Authorizing the collectionIdFirst and collectionIdLast for the attester
   const actionAuthorizeRange = {
@@ -68,30 +62,47 @@ async function authorizeRange(
     collectionIdFirst,
     collectionIdLast,
     attestationsRegistry: attestationsRegistry.address,
+    currentOwner,
   };
   if (options?.log || options?.manualConfirm) {
     console.log(`    
-    ${Object.keys(actionAuthorizeRange as Object).map(
-      (key) => `
-    ${key}: ${actionAuthorizeRange?.[key]}`
-    )}`);
+      ${Object.keys(actionAuthorizeRange as Object).map(
+        (key) => `
+      ${key}: ${actionAuthorizeRange?.[key]}`
+      )}`);
   }
 
-  if (options?.manualConfirm) {
-    console.log();
-    await confirm();
-  }
-  const tx = await attestationsRegistry.authorizeRange(
-    actionAuthorizeRange.attester,
-    actionAuthorizeRange.collectionIdFirst,
-    actionAuthorizeRange.collectionIdLast
-  );
-  await tx.wait();
+  // Verify if the current signer is the owner of the attestationsRegistry
+  if (
+    signer.address.toLowerCase() !== currentOwner.toLowerCase() &&
+    process.env.OWNER_MANUAL_OPERATION !== 'true'
+  ) {
+    throw new Error(
+      `The current signer (${signer.address}) is not owner of the attestations registry contract ${attestationsRegistry.address}. Can't authorize attester.`
+    );
+  } else if (process.env.OWNER_MANUAL_OPERATION === 'true') {
+    if (options?.manualConfirm) {
+      console.log('Send the transaction using etherscan !');
+      await confirm();
+    }
+  } else {
+    if (options?.manualConfirm) {
+      console.log();
+      await confirm();
+    }
 
-  if (options?.log || options?.manualConfirm) {
-    console.log(`
-    * Attester well authorized !
-    `);
+    const tx = await attestationsRegistry.authorizeRange(
+      actionAuthorizeRange.attester,
+      actionAuthorizeRange.collectionIdFirst,
+      actionAuthorizeRange.collectionIdLast
+    );
+    await tx.wait();
+
+    if (options?.log || options?.manualConfirm) {
+      console.log(`
+      * Attester well authorized !
+      `);
+    }
   }
 }
 

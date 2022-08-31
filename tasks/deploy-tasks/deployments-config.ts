@@ -249,8 +249,8 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     pythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
-      commitmentSignerPubKeyX: '0x0eeeffe58d278552cc06d9ffada205dbfef1da11288345fed10c916fdd8c6f13',
-      commitmentSignerPubKeyY: '0x2d18d49c9e8045d34b6e8ae4262b1dbf73bc47a7fbe4b6748eafa6b5b28d0fa3',
+      commitmentSignerPubKeyX: '0x2a7c304da200c5ee9488d35c604e0384e123a716f7399df22fc2ec9074301dae',
+      commitmentSignerPubKeyY: '0x1cf4be3d4c5f0b3eac19493ca98a05490a06623c7937f6d83fe121756a132242',
       owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     attestationsRegistry: {
