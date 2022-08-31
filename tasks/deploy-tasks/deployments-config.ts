@@ -16,6 +16,16 @@ const COMMITMENT_MAPPER_TESTER = [
   '15390691699624678165709040191639591743681460873292995904381058558679154201615',
 ];
 
+const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING = [
+  '0x038d3d596875c66eb90608bbe04e4e238607fd32ad61f4278bdaf47aadc28d60',
+  '0x1b46b55a0ce3f35d6025cdd4554aaac1fc7180b14d51b0f15aa51a6929bdb952',
+];
+
+const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD = [
+  '0x2f8eeb980ebc1342070a35514e1f42fa96381de8f080d3713e80fe99c883d4e9',
+  '0x018683c5d2f1f71d7e8b65ab0990635c019de9183359db7e80543c485426e490',
+];
+
 const THREE_DAYS = '295200';
 // Rinkeby
 const ALPHA_RINKEBY_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
@@ -58,6 +68,13 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
+    synapsPythia1SimpleAttester: {
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: SANDBOX_POLYGON_OWNER,
+    },
     attestationsRegistry: {
       owner: SANDBOX_POLYGON_OWNER,
     },
@@ -96,6 +113,13 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
+    },
+    synapsPythia1SimpleAttester: {
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: ALPHA_POLYGON_OWNER,
     },
     attestationsRegistry: {
       owner: ALPHA_POLYGON_OWNER,
@@ -138,6 +162,13 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
+    synapsPythia1SimpleAttester: {
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[1],
+      owner: ALPHA_RINKEBY_OWNER,
+    },
     attestationsRegistry: {
       owner: ALPHA_RINKEBY_OWNER,
     },
@@ -178,6 +209,13 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
+    synapsPythia1SimpleAttester: {
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[1],
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
+    },
     attestationsRegistry: {
       owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
@@ -217,6 +255,13 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '300000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
+    },
+    synapsPythia1SimpleAttester: {
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: '0x2a7c304da200c5ee9488d35c604e0384e123a716f7399df22fc2ec9074301dae',
+      commitmentSignerPubKeyY: '0x1cf4be3d4c5f0b3eac19493ca98a05490a06623c7937f6d83fe121756a132242',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     attestationsRegistry: {
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',

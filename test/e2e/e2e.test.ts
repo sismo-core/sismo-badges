@@ -8,11 +8,16 @@ import {
   Front,
   HydraS1SimpleAttester,
   HydraS1SoulboundAttester,
+  Pythia1SimpleAttester,
 } from 'types';
 import { RequestStruct } from 'types/Attester';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
+import {
+  buildPoseidon,
+  CommitmentMapperTester,
+  EddsaPublicKey,
+} from '@sismo-core/commitment-mapper-tester-js';
 import { HydraS1Account, HydraS1Prover, KVMerkleTree } from '@sismo-core/hydra-s1';
 import { BigNumber } from 'ethers';
 import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
@@ -29,6 +34,13 @@ import {
   Group,
 } from '../utils';
 import { getEventArgs } from '../utils/expectEvent';
+import { Deployed1 } from 'tasks/deploy-tasks/full/1-deploy-pythia-1-simple.task';
+import {
+  CommitmentSignerTester,
+  encodePythia1GroupProperties,
+  generatePythia1Group,
+} from '../utils/pythia-1';
+import { Pythia1Prover, SnarkProof } from '@sismo-core/pythia-1';
 
 const config = deploymentsConfig[hre.network.name];
 describe('Test E2E Protocol', () => {
@@ -39,6 +51,7 @@ describe('Test E2E Protocol', () => {
   let attestationsRegistry: AttestationsRegistry;
   let hydraS1SoulboundAttester: HydraS1SoulboundAttester;
   let hydraS1SimpleAttester: HydraS1SimpleAttester;
+  let pythia1SimpleAttester: Pythia1SimpleAttester;
   let availableRootsRegistry: AvailableRootsRegistry;
   let commitmentMapperRegistry: CommitmentMapperRegistry;
   let front: Front;
@@ -46,15 +59,19 @@ describe('Test E2E Protocol', () => {
   let earlyUserCollectionId;
 
   // hydra s1 prover
-  let prover: HydraS1Prover;
+  let hydraS1Prover: HydraS1Prover;
   let commitmentMapper: CommitmentMapperTester;
   let commitmentMapperPubKey: EddsaPublicKey;
   let registryTree: KVMerkleTree;
 
+  // pythia 1 prover
+  let pythia1Prover: Pythia1Prover;
+  let commitmentSigner: CommitmentSignerTester;
+
   // Test Signers
   let deployer: SignerWithAddress;
-  let randomSigner: SignerWithAddress;
   let proxyAdminSigner: SignerWithAddress;
+  let pythia1destinationSigner: SignerWithAddress;
 
   // Test accounts
   let source1: HydraS1Account;
@@ -79,15 +96,19 @@ describe('Test E2E Protocol', () => {
   let ticketIdentifier2: BigNumber;
   let attestationsRequested1: AttestationStructOutput[];
   let attestationsRequested2: AttestationStructOutput[];
+  let poseidon;
 
   before(async () => {
     const signers = await hre.ethers.getSigners();
-    [deployer, randomSigner, proxyAdminSigner] = signers;
+    [deployer, , proxyAdminSigner, pythia1destinationSigner] = signers;
     chainId = parseInt(await hre.getChainId());
+    poseidon = await buildPoseidon();
 
-    // 1 - Init commitment mapper
+    // 1 - Init commitment mapper and commitment signer
     commitmentMapper = await CommitmentMapperTester.generate();
     commitmentMapperPubKey = await commitmentMapper.getPubKey();
+    commitmentSigner = new CommitmentSignerTester();
+
     // 2 - Generate Hydra S1 Accounts with the commitment mapper
     let hydraS1Accounts: HydraS1Account[] = await generateHydraS1Accounts(
       signers,
@@ -112,7 +133,8 @@ describe('Test E2E Protocol', () => {
     source2Value = accountsTree1.getValue(BigNumber.from(source2.identifier).toHexString());
 
     // 4 - Init Proving scheme
-    prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
+    hydraS1Prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
+    pythia1Prover = new Pythia1Prover();
   });
 
   /*************************************************************************************/
@@ -136,6 +158,13 @@ describe('Test E2E Protocol', () => {
           proxyAdmin: proxyAdminSigner.address,
         },
       })) as Deployed0);
+
+      ({ pythia1SimpleAttester } = (await hre.run('1-deploy-pythia-1-simple', {
+        options: {
+          proxyAdmin: proxyAdminSigner.address,
+        },
+      })) as Deployed1);
+
       const root = registryTree.getRoot();
       await (
         await availableRootsRegistry.registerRootForAttester(hydraS1SimpleAttester.address, root)
@@ -169,7 +198,7 @@ describe('Test E2E Protocol', () => {
       };
 
       proofRequest1 = (
-        await prover.generateSnarkProof({
+        await hydraS1Prover.generateSnarkProof({
           source: source1,
           destination: destination1,
           claimedValue: source1Value,
@@ -192,7 +221,7 @@ describe('Test E2E Protocol', () => {
       };
 
       proofRequest2 = (
-        await prover.generateSnarkProof({
+        await hydraS1Prover.generateSnarkProof({
           source: source2,
           destination: destination1,
           claimedValue: source2Value,
@@ -329,6 +358,65 @@ describe('Test E2E Protocol', () => {
       const expectedBalances = expectedAttestationsValues;
 
       expect(balances).to.be.eql(expectedBalances);
+    });
+    it('Should generate an attestation from pythia 1 simple', async () => {
+      const secret = BigNumber.from('0x123');
+      const commitment = poseidon([secret]);
+      const commitmentValue = BigNumber.from('0x9');
+      const pythia1group1 = generatePythia1Group({
+        internalCollectionId: 0,
+        isScore: false,
+      });
+      const commitmentReceipt = await commitmentSigner.getCommitmentReceipt(
+        commitment,
+        commitmentValue,
+        pythia1group1.id
+      );
+
+      const ticketIdentifier = await generateTicketIdentifier(
+        pythia1SimpleAttester.address,
+        pythia1group1.properties.internalCollectionId
+      );
+
+      const request = {
+        claims: [
+          {
+            groupId: pythia1group1.id,
+            claimedValue: commitmentValue,
+            extraData: encodePythia1GroupProperties(pythia1group1.properties),
+          },
+        ],
+        destination: BigNumber.from(pythia1destinationSigner.address).toHexString(),
+      };
+
+      const proof = (await pythia1Prover.generateSnarkProof({
+        secret: secret,
+        value: commitmentValue,
+        commitmentReceipt: commitmentReceipt,
+        commitmentSignerPubKey: await commitmentSigner.getPublicKey(),
+        destinationIdentifier: pythia1destinationSigner.address,
+        claimedValue: commitmentValue,
+        chainId: chainId,
+        groupId: pythia1group1.id,
+        ticketIdentifier: ticketIdentifier,
+        isStrict: !pythia1group1.properties.isScore,
+      })) as SnarkProof;
+
+      const tx = await pythia1SimpleAttester
+        .connect(pythia1destinationSigner)
+        .generateAttestations(request, proof.toBytes());
+      await tx.wait();
+
+      const balances = await badges.balanceOfBatch(
+        [pythia1destinationSigner.address],
+        [
+          BigNumber.from(config.synapsPythia1SimpleAttester.collectionIdFirst).add(
+            pythia1group1.properties.internalCollectionId
+          ),
+        ]
+      );
+
+      expect(balances).to.be.eql([commitmentValue]);
     });
   });
 });
