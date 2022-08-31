@@ -27,7 +27,7 @@ export type DeploymentsConfigTypes = {
       collectionIdLast: string;
       initialRoot: string;
     };
-    pythia1SimpleAttester: {
+    synapsPythia1SimpleAttester: {
       collectionIdFirst: string;
       collectionIdLast: string;
       commitmentSignerPubKeyX: string;

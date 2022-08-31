@@ -68,7 +68,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
-    pythia1SimpleAttester: {
+    synapsPythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
@@ -114,7 +114,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
-    pythia1SimpleAttester: {
+    synapsPythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
@@ -162,7 +162,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
-    pythia1SimpleAttester: {
+    synapsPythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
@@ -209,7 +209,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
-    pythia1SimpleAttester: {
+    synapsPythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
@@ -256,7 +256,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
-    pythia1SimpleAttester: {
+    synapsPythia1SimpleAttester: {
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: '0x2a7c304da200c5ee9488d35c604e0384e123a716f7399df22fc2ec9074301dae',

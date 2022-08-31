@@ -79,11 +79,11 @@ async function deploymentAction(
   } as DeployHydraS1SoulboundAttesterArgs)) as DeployedHydraS1SoulboundAttester;
 
   const { pythia1SimpleAttester } = (await hre.run('deploy-pythia-1-simple-attester', {
-    collectionIdFirst: config.pythia1SimpleAttester.collectionIdFirst,
-    collectionIdLast: config.pythia1SimpleAttester.collectionIdLast,
+    collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
+    collectionIdLast: config.synapsPythia1SimpleAttester.collectionIdLast,
     attestationsRegistryAddress: attestationsRegistry.address,
-    commitmentSignerPubKeyX: config.pythia1SimpleAttester.commitmentSignerPubKeyX,
-    commitmentSignerPubKeyY: config.pythia1SimpleAttester.commitmentSignerPubKeyY,
+    commitmentSignerPubKeyX: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX,
+    commitmentSignerPubKeyY: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY,
     options,
   } as DeployPythia1SimpleAttesterArgs)) as DeployedPythia1SimpleAttester;
 
@@ -118,8 +118,8 @@ async function deploymentAction(
   await (
     await attestationsRegistry.authorizeRange(
       pythia1SimpleAttester.address,
-      config.pythia1SimpleAttester.collectionIdFirst,
-      config.pythia1SimpleAttester.collectionIdLast
+      config.synapsPythia1SimpleAttester.collectionIdFirst,
+      config.synapsPythia1SimpleAttester.collectionIdLast
     )
   ).wait();
 }

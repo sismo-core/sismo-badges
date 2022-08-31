@@ -31,11 +31,11 @@ async function deploymentAction(
   // Only deploy contracts without giving final ownership.
   // Owners of the different contract are the deployer
   const pythia1SimpleAttesterArgs: DeployPythia1SimpleAttesterArgs = {
-    collectionIdFirst: config.pythia1SimpleAttester.collectionIdFirst,
-    collectionIdLast: config.pythia1SimpleAttester.collectionIdLast,
+    collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
+    collectionIdLast: config.synapsPythia1SimpleAttester.collectionIdLast,
     attestationsRegistryAddress: attestationsRegistry.address,
-    commitmentSignerPubKeyX: config.pythia1SimpleAttester.commitmentSignerPubKeyX,
-    commitmentSignerPubKeyY: config.pythia1SimpleAttester.commitmentSignerPubKeyY,
+    commitmentSignerPubKeyX: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX,
+    commitmentSignerPubKeyY: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY,
     options,
   };
 
@@ -53,8 +53,8 @@ async function deploymentAction(
   await hre.run('attestations-registry-authorize-range', {
     attestationsRegistryAddress: attestationsRegistry.address,
     attesterAddress: pythia1SimpleAttester.address,
-    collectionIdFirst: config.pythia1SimpleAttester.collectionIdFirst,
-    collectionIdLast: config.pythia1SimpleAttester.collectionIdLast,
+    collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
+    collectionIdLast: config.synapsPythia1SimpleAttester.collectionIdLast,
     options: getCommonOptions(options),
   } as AuthorizeRangeArgs);
 
@@ -72,10 +72,10 @@ async function deploymentAction(
     * Pythia1SimpleAttester:
       -> proxy: ${(await hre.deployments.all()).Pythia1SimpleAttester.address}
       -> implem: ${(await hre.deployments.all()).Pythia1SimpleAttesterImplem.address}
-      collectionIdFirst: ${config.pythia1SimpleAttester.collectionIdFirst}
-      collectionIdLast: ${config.pythia1SimpleAttester.collectionIdLast}
-      commitmentSignerPubKeyX: ${config.pythia1SimpleAttester.commitmentSignerPubKeyX}
-      commitmentSignerPubKeyY: ${config.pythia1SimpleAttester.commitmentSignerPubKeyY}
+      collectionIdFirst: ${config.synapsPythia1SimpleAttester.collectionIdFirst}
+      collectionIdLast: ${config.synapsPythia1SimpleAttester.collectionIdLast}
+      commitmentSignerPubKeyX: ${config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX}
+      commitmentSignerPubKeyY: ${config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY}
 
   `);
   }

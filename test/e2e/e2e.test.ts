@@ -410,7 +410,7 @@ describe('Test E2E Protocol', () => {
       const balances = await badges.balanceOfBatch(
         [pythia1destinationSigner.address],
         [
-          BigNumber.from(config.pythia1SimpleAttester.collectionIdFirst).add(
+          BigNumber.from(config.synapsPythia1SimpleAttester.collectionIdFirst).add(
             pythia1group1.properties.internalCollectionId
           ),
         ]
