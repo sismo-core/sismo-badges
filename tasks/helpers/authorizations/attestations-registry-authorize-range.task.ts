@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { AttestationsRegistry__factory } from '../../../types';
@@ -82,6 +83,17 @@ async function authorizeRange(
     );
   } else if (process.env.OWNER_MANUAL_OPERATION === 'true') {
     if (options?.manualConfirm) {
+      const iface = new ethers.utils.Interface(AttestationsRegistry__factory.abi);
+      const data = iface.encodeFunctionData('authorizeRange', [
+        actionAuthorizeRange.attester,
+        actionAuthorizeRange.collectionIdFirst,
+        actionAuthorizeRange.collectionIdLast,
+      ]);
+      console.log({
+        from: currentOwner,
+        to: attestationsRegistry.address,
+        data: data,
+      });
       console.log('Send the transaction using etherscan !');
       await confirm();
     }

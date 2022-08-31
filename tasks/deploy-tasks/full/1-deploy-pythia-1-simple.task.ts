@@ -77,6 +77,8 @@ async function deploymentAction(
       commitmentSignerPubKeyX: ${config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX}
       commitmentSignerPubKeyY: ${config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY}
 
+    * Pythia1Verifier:
+      -> address: ${(await hre.deployments.all()).Pythia1Verifier.address}
   `);
   }
 
