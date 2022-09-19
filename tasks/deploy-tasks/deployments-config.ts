@@ -51,7 +51,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     badges: {
       owner: SANDBOX_POLYGON_OWNER,
       // Badges Metadata URI for the Badges contract
-      uri: 'https://metadata.badges.sismo.io/badges/polygon-sandbox/{id}.json',
+      uri: 'https://hub.playground.sismo.io/badges/polygon/{id}.json',
     },
     front: {
       collectionIdFirst: '0',
@@ -97,7 +97,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     badges: {
       owner: ALPHA_POLYGON_OWNER,
       // Badges Metadata URI for the Badges contract
-      uri: 'https://metadata.badges.sismo.io/badges/polygon/{id}.json',
+      uri: 'https://hub.sismo.io/badges/polygon/{id}.json',
     },
     front: {
       collectionIdFirst: '0',
@@ -145,7 +145,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     badges: {
       owner: ALPHA_RINKEBY_OWNER,
       // Badges Metadata URI for the Badges contract
-      uri: 'https://metadata.badges.zikies.io/badges/rinkeby/{id}.json',
+      uri: 'https://hub.staging.zikies.io/badges/rinkeby/{id}.json',
     },
     front: {
       collectionIdFirst: '0',
