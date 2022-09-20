@@ -7,3 +7,4 @@ types/**
 .vscode
 deployments/local
 save
+build
