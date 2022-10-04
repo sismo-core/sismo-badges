@@ -31,6 +31,10 @@ const THREE_DAYS = '295200';
 const ALPHA_RINKEBY_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
 const ALPHA_RINKEBY_ROOTS_OWNER_RELAYER = '0x5de4009c77d51782014bb16238ec32971ae9f8d0';
 const ALPHA_RINKEBY_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
+// Goerli
+const ALPHA_GOERLI_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
+const ALPHA_GOERLI_ROOTS_OWNER_RELAYER = '0x7f2e6e158643bcaf85f30c57ae8625f623d82659';
+const ALPHA_GOERLI_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
 // Polygon
 const ALPHA_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const ALPHA_POLYGON_ROOTS_OWNER_RELAYER = '0xf0a0b692e1c764281c211948d03edeef5fb57111';
@@ -131,6 +135,53 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_POLYGON_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+  },
+  // deployer "alpha-testnets-goerli-mnemonic-deployer-october-4-2022"
+  goerli: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: ALPHA_GOERLI_PROXY_ADMIN,
+    },
+    badges: {
+      owner: ALPHA_GOERLI_OWNER,
+      // Badges Metadata URI for the Badges contract
+      uri: 'https://hub.staging.zikies.io/badges/goerli/{id}.json',
+    },
+    front: {
+      collectionIdFirst: '0',
+      collectionIdLast: '10000000',
+    },
+    hydraS1SimpleAttester: {
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0',
+    },
+    hydraS1SoulboundAttester: {
+      collectionIdFirst: '20000001',
+      collectionIdLast: '30000000',
+      soulboundCooldownDuration: THREE_DAYS, // 3 days
+      initialRoot: '0',
+    },
+    synapsPythia1SimpleAttester: {
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[1],
+      owner: ALPHA_GOERLI_OWNER,
+    },
+    attestationsRegistry: {
+      owner: ALPHA_GOERLI_OWNER,
+    },
+    availableRootsRegistry: {
+      owner: ALPHA_GOERLI_ROOTS_OWNER_RELAYER,
+    },
+    commitmentMapper: {
+      owner: ALPHA_GOERLI_OWNER,
+      EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
+      EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
     },
   },
   // owners: 0xb8b85903f5c2f5506abb7ad2bcbd646b89e308a4 is the signer1

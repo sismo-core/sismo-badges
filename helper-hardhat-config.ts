@@ -5,6 +5,7 @@ export type Network = EthereumNetwork | PolygonNetwork | XDaiNetwork;
 
 export enum EthereumNetwork {
   kovan = 'kovan',
+  goerli = 'goerli',
   rinkeby = 'rinkeby',
   main = 'main',
   hardhat = 'hardhat',
@@ -32,6 +33,7 @@ export interface EthereumParamsPerNetwork<Network> {
   [EthereumNetwork.main]: Network;
   [EthereumNetwork.hardhat]: Network;
   [EthereumNetwork.tenderlyMain]: Network;
+  [EthereumNetwork.goerli]: Network;
 }
 
 export interface PolygonParamsPerNetwork<T> {
@@ -58,6 +60,10 @@ export const NETWORKS_RPC_URL: ParamsPerNetwork<string> = {
   ),
   [EthereumNetwork.main]: alchemyUrlOrEnvVar(
     'https://eth-mainnet.alchemyapi.io/v2',
+    process.env.MAINNET_RPC_URL
+  ),
+  [EthereumNetwork.goerli]: alchemyUrlOrEnvVar(
+    'https://eth-goerli.g.alchemy.com/v2',
     process.env.MAINNET_RPC_URL
   ),
   [EthereumNetwork.hardhat]: 'http://localhost:8545',
