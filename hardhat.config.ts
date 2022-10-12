@@ -95,6 +95,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   networks: {
     kovan: getCommonNetworkConfig(EthereumNetwork.kovan, 42),
+    goerli: getCommonNetworkConfig(EthereumNetwork.goerli, 5),
     main: getCommonNetworkConfig(EthereumNetwork.main, 1),
     polygon: getCommonNetworkConfig(PolygonNetwork.main, 137),
     sandboxPolygon: getCommonNetworkConfig(PolygonNetwork.main, 137),

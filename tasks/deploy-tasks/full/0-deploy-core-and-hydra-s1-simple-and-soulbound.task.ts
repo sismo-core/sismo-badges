@@ -168,7 +168,7 @@ async function deploymentAction(
     options: getCommonOptions(options),
   } as OwnableTransferOwnershipArgs);
 
-  // Move ownership commitmentMapper ownership
+  // Move commitmentMapper ownership
   if (options.manualConfirm || options.log) {
     console.log(`
     ----------------------------------------------------------------
@@ -180,7 +180,7 @@ async function deploymentAction(
     options: getCommonOptions(options),
   } as OwnableTransferOwnershipArgs);
 
-  // Move ownership commitmentMapper ownership
+  // Move AvailableRootsRegistry ownership
   if (options.manualConfirm || options.log) {
     console.log(`
     ----------------------------------------------------------------
@@ -192,7 +192,7 @@ async function deploymentAction(
     options: getCommonOptions(options),
   } as OwnableTransferOwnershipArgs);
 
-  // Move admin ownership of the access control contract the "owner".
+  // Move admin ownership of the access control contract to the "owner".
   if (options.manualConfirm || options.log) {
     console.log(`
     ----------------------------------------------------------------
@@ -207,7 +207,7 @@ async function deploymentAction(
   if (options.manualConfirm || options.log) {
     console.log(`
     ----------------------------------------------------------------
-    * Revoking role DEFAULT_ADMIN_ROLE of the deployer to th Badges contract`);
+    * Revoking role DEFAULT_ADMIN_ROLE of the deployer to the Badges contract`);
   }
   await hre.run('access-control-revoke-role', {
     contractAddress: badges.address,
