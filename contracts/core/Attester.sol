@@ -82,11 +82,14 @@ abstract contract Attester is IAttester {
     address attestationsOwner,
     bytes calldata proofData
   ) external override returns (Attestation[] memory) {
-    // fetch attestations from the registry
-    address[] memory attestationOwners;
-    uint256[] memory attestationCollectionIds;
-    Attestation[] memory attestationsToDelete;
+    address[] memory attestationOwners = new address[](collectionIds.length);
+
+    uint256[] memory attestationCollectionIds = new uint256[](collectionIds.length);
+
+    Attestation[] memory attestations = new Attestation[](collectionIds.length);
+
     for (uint256 i = 0; i < collectionIds.length; i++) {
+      // fetch attestations from the registry
       (
         address issuer,
         uint256 attestationValue,
@@ -97,7 +100,7 @@ abstract contract Attester is IAttester {
       attestationOwners[i] = attestationsOwner;
       attestationCollectionIds[i] = collectionIds[i];
 
-      attestationsToDelete[i] = (
+      attestations[i] = (
         Attestation(
           collectionIds[i],
           attestationsOwner,
@@ -109,18 +112,18 @@ abstract contract Attester is IAttester {
       );
     }
 
-    _verifyAttestationsDeletionRequest(attestationsToDelete, proofData);
+    _verifyAttestationsDeletionRequest(attestations, proofData);
 
-    _beforeDeleteAttestations(attestationsToDelete, proofData);
+    _beforeDeleteAttestations(attestations, proofData);
 
     ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
 
-    _afterDeleteAttestations(attestationsToDelete, proofData);
+    _afterDeleteAttestations(attestations, proofData);
 
     for (uint256 i = 0; i < collectionIds.length; i++) {
-      emit AttestationDeleted(attestationsToDelete[i]);
+      emit AttestationDeleted(attestations[i]);
     }
-    return attestationsToDelete;
+    return attestations;
   }
 
   /**

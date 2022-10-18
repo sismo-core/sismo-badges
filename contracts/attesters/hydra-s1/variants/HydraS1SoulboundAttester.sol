@@ -188,6 +188,30 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
       userTicketData.destination != address(0) && userTicketData.destination != request.destination
     ) {
       if (_isOnCooldown(userTicketData)) revert TicketUsedAndOnCooldown(userTicketData);
+
+      // Delete the old Attestation on the account before recording the new onez
+      HydraS1Claim memory claim = request._claim();
+      address[] memory attestationOwners = new address[](1);
+      uint256[] memory attestationCollectionIds = new uint256[](1);
+
+      attestationOwners[0] = userTicketData.destination;
+      attestationCollectionIds[0] =
+        AUTHORIZED_COLLECTION_ID_FIRST +
+        claim.groupProperties.groupIndex;
+
+      ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
+
+      emit AttestationDeleted(
+        Attestation(
+          AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex,
+          userTicketData.destination,
+          address(this),
+          claim.claimedValue,
+          claim.groupProperties.generationTimestamp,
+          abi.encode(userTicket)
+        )
+      );
+
       _setTicketOnCooldown(userTicket);
     }
     _setDestinationForTicket(userTicket, request.destination);
@@ -271,7 +295,7 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
   }
 
   function _isOnCooldown(TicketData memory userTicketData) internal view returns (bool) {
-    return userTicketData.cooldownStart + SOULBOUND_COOLDOWN_DURATION < block.timestamp;
+    return userTicketData.cooldownStart + SOULBOUND_COOLDOWN_DURATION > block.timestamp;
   }
 
   function _getTicketData(uint256 userTicket) internal view returns (TicketData memory) {
