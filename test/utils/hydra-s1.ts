@@ -5,8 +5,8 @@ import {
   HydraS1Account,
   KVMerkleTree,
   MerkleTreeData,
-  SNARK_FIELD,
   REGISTRY_TREE_HEIGHT,
+  SNARK_FIELD,
 } from '@sismo-core/hydra-s1';
 import { BigNumber, ethers } from 'ethers';
 
@@ -45,7 +45,7 @@ export const generateLists = (S1Accounts: HydraS1Account[]): List[] => {
   const List1 = {};
   const List2 = {};
   S1Accounts.forEach((account, index) => {
-    Object.assign(List1, { [BigNumber.from(account.identifier).toHexString()]: index });
+    Object.assign(List1, { [BigNumber.from(account.identifier).toHexString()]: index + 1 });
     Object.assign(List2, { [BigNumber.from(account.identifier).toHexString()]: index + 1000 });
   });
   return [List1, List2];
