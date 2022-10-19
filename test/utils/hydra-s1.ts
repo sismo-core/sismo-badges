@@ -39,9 +39,9 @@ export const generateHydraS1Accounts = async (
 /****************    DATA SOURCE     *************/
 /*************************************************/
 
-export type List = { [address: string]: [value: number] };
+export type GroupData = { [address: string]: [value: number] };
 
-export const generateLists = (S1Accounts: HydraS1Account[]): List[] => {
+export const generateGroups = (S1Accounts: HydraS1Account[]): GroupData[] => {
   const List1 = {};
   const List2 = {};
   S1Accounts.forEach((account, index) => {
@@ -51,13 +51,13 @@ export const generateLists = (S1Accounts: HydraS1Account[]): List[] => {
   return [List1, List2];
 };
 
-export type Group = {
+export type HydraS1SimpleGroup = {
   data: MerkleTreeData;
-  properties: GroupProperties;
+  properties: HydraS1SimpleGroupProperties;
   id: string;
 };
 
-export type GroupProperties = {
+export type HydraS1SimpleGroupProperties = {
   groupIndex: number;
   generationTimestamp: number;
   isScore: boolean;
@@ -69,16 +69,16 @@ export type RegistryAccountsMerkle = {
 };
 
 export type AttesterGroups = {
-  groups: Group[];
+  groups: HydraS1SimpleGroup[];
   dataFormat: RegistryAccountsMerkle;
 };
 
-export const generateAttesterGroups = async (allList: List[]): Promise<AttesterGroups> => {
+export const generateAttesterGroups = async (allList: GroupData[]): Promise<AttesterGroups> => {
   let poseidon = await buildPoseidon();
 
   /*********************** GENERATE GROUPS *********************/
 
-  const groups: Group[] = [];
+  const groups: HydraS1SimpleGroup[] = [];
   let generationTimestamp = Math.round(Date.now() / 1000);
 
   for (let i = 0; i < allList.length; i++) {
@@ -118,7 +118,9 @@ export const generateAttesterGroups = async (allList: List[]): Promise<AttesterG
   };
 };
 
-export const generateGroupIdFromProperties = (groupProperties: GroupProperties): BigNumber => {
+export const generateGroupIdFromProperties = (
+  groupProperties: HydraS1SimpleGroupProperties
+): BigNumber => {
   return generateGroupIdFromEncodedProperties(encodeGroupProperties(groupProperties));
 };
 
@@ -126,7 +128,7 @@ export const generateGroupIdFromEncodedProperties = (encodedProperties: string):
   return BigNumber.from(ethers.utils.keccak256(encodedProperties)).mod(SNARK_FIELD);
 };
 
-export const encodeGroupProperties = (groupProperties: GroupProperties): string => {
+export const encodeGroupProperties = (groupProperties: HydraS1SimpleGroupProperties): string => {
   return ethers.utils.defaultAbiCoder.encode(
     ['uint128', 'uint32', 'bool'],
     [groupProperties.groupIndex, groupProperties.generationTimestamp, groupProperties.isScore]

@@ -15,11 +15,10 @@ export type DeploymentsConfigTypes = {
   [chain: string]: {
     // Conf related to the deployment (behind proxy, etc.)
     deployOptions: DeployOptions;
-    // Conf related to the hydraS1SoulboundAttester
-    hydraS1SoulboundAttester: {
+    // Conf related to the hydraS1AccountboundAttester
+    hydraS1AccountboundAttester: {
       collectionIdFirst: string;
       collectionIdLast: string;
-      soulboundCooldownDuration: string;
       initialRoot: string;
     };
     hydraS1SimpleAttester: {

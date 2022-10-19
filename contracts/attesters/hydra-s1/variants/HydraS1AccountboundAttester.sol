@@ -3,7 +3,7 @@
 pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
-import {IHydraS1SoulboundAttester} from '../interfaces/IHydraS1SoulboundAttester.sol';
+import {IHydraS1AccountboundAttester} from '../interfaces/IHydraS1AccountboundAttester.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../../core/libs/Structs.sol';
@@ -11,9 +11,10 @@ import {Attester, IAttester, IAttestationsRegistry} from '../../../core/Attester
 
 // Imports related to HydraS1 Proving Scheme
 import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Claim} from '../base/HydraS1Base.sol';
+import {HydraS1AccountboundLib, HydraS1AccountboundClaim} from '../libs/HydraS1AccountboundLib.sol';
 
 /**
- * @title  Hydra-S1 Soulbound Attester
+ * @title  Hydra-S1 Accountbound Attester
  * @author Sismo
  * @notice This attester is part of the family of the Hydra-S1 Attesters.
  * Hydra-S1 attesters enable users to prove they have an account in a group in a privacy preserving way.
@@ -36,7 +37,7 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   For people used to semaphore/ tornado cash people:
  *   userTicket = hash(sourceSecret, ticketIdentifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
  
- * - SoulBound (with cooldown period)
+ * - Accountbound (with cooldown period)
  *   A user can chose to delete attestations or generate attestation to a new destination.
  *   When deleting/ sending to a new destination, the ticket will enter a cooldown period, so it remains occasional
  *   User will need to wait until the end of the cooldown period before being able to delete or switch destination again
@@ -46,16 +47,15 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   A userTicket can actually be reused as long as the destination of the attestation remains the same
  *   It enables users to renew or update their attestations
  **/
-contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Attester {
+contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Base, Attester {
   using HydraS1Lib for HydraS1ProofData;
   using HydraS1Lib for bytes;
-  using HydraS1Lib for Request;
+  using HydraS1AccountboundLib for Request;
 
   // The deployed contract will need to be authorized to write into the Attestation registry
   // It should get write access on collections from AUTHORIZED_COLLECTION_ID_FIRST to AUTHORIZED_COLLECTION_ID_LAST.
   uint256 public immutable AUTHORIZED_COLLECTION_ID_FIRST;
   uint256 public immutable AUTHORIZED_COLLECTION_ID_LAST;
-  uint256 public immutable SOULBOUND_COOLDOWN_DURATION;
 
   mapping(uint256 => TicketData) internal _userTicketsData;
 
@@ -77,15 +77,13 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
     address availableRootsRegistryAddress,
     address commitmentMapperAddress,
     uint256 collectionIdFirst,
-    uint256 collectionIdLast,
-    uint256 soulboundCooldownDuration
+    uint256 collectionIdLast
   )
     Attester(attestationsRegistryAddress)
     HydraS1Base(hydraS1VerifierAddress, availableRootsRegistryAddress, commitmentMapperAddress)
   {
     AUTHORIZED_COLLECTION_ID_FIRST = collectionIdFirst;
     AUTHORIZED_COLLECTION_ID_LAST = collectionIdLast;
-    SOULBOUND_COOLDOWN_DURATION = soulboundCooldownDuration;
   }
 
   /*******************************************************
@@ -105,28 +103,12 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
   {
     HydraS1ProofData memory snarkProof = abi.decode(proofData, (HydraS1ProofData));
     HydraS1ProofInput memory snarkInput = snarkProof._input();
-    HydraS1Claim memory claim = request._claim();
+    HydraS1Claim memory claim = request._hydraS1claim();
 
     // verifies that the proof corresponds to the claim
     _validateInput(claim, snarkInput);
     // verifies the proof validity
     _verifyProof(snarkProof);
-  }
-
-  /**
-   * @dev Throws if user attestations deletion request is not made by its owner
-   * @param attestations attestations to delete
-   */
-  function _verifyAttestationsDeletionRequest(Attestation[] memory attestations, bytes calldata)
-    internal
-    view
-    override
-  {
-    for (uint256 i = 0; i < attestations.length; i++) {
-      uint256 userTicket = abi.decode(attestations[0].extraData, (uint256));
-      if (_userTicketsData[userTicket].destination != msg.sender)
-        revert NotAttestationOwner(userTicket, msg.sender);
-    }
   }
 
   /**
@@ -141,7 +123,7 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
     override(IAttester, Attester)
     returns (Attestation[] memory)
   {
-    HydraS1Claim memory claim = request._claim();
+    HydraS1AccountboundClaim memory claim = request._hydraS1Accountboundclaim();
 
     Attestation[] memory attestations = new Attestation[](1);
 
@@ -154,6 +136,16 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
     address issuer = address(this);
     // user sends the ticket as input in the data
     uint256 userTicket = proofData._getTicket();
+    TicketData memory userTicketData = _userTicketsData[userTicket];
+
+    uint16 burnCount = userTicketData.burnCount;
+    // If the attestation is minted on a new destination address
+    // the burnCount encoded in the extraData of the Attestation should be incremented
+    if (
+      userTicketData.destination != address(0) && userTicketData.destination != request.destination
+    ) {
+      burnCount+=1;
+    }
 
     attestations[0] = Attestation(
       attestationCollectionId,
@@ -161,7 +153,7 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
       issuer,
       claim.claimedValue,
       claim.groupProperties.generationTimestamp,
-      abi.encode(userTicket)
+      abi.encode(userTicket, burnCount)
     );
 
     return (attestations);
@@ -187,10 +179,11 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
     if (
       userTicketData.destination != address(0) && userTicketData.destination != request.destination
     ) {
-      if (_isOnCooldown(userTicketData)) revert TicketUsedAndOnCooldown(userTicketData);
+      HydraS1AccountboundClaim memory claim = request._hydraS1Accountboundclaim();
+      if (_isOnCooldown(userTicketData, claim.groupProperties.cooldownDuration)) 
+        revert TicketOnCooldown(userTicketData, claim.groupProperties.cooldownDuration);
 
-      // Delete the old Attestation on the account before recording the new onez
-      HydraS1Claim memory claim = request._claim();
+      // Delete the old Attestation on the account before recording the new one
       address[] memory attestationOwners = new address[](1);
       uint256[] memory attestationCollectionIds = new uint256[](1);
 
@@ -208,25 +201,12 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
           address(this),
           claim.claimedValue,
           claim.groupProperties.generationTimestamp,
-          abi.encode(userTicket)
+          abi.encode(userTicket, userTicketData.burnCount)
         )
       );
-
       _setTicketOnCooldown(userTicket);
     }
     _setDestinationForTicket(userTicket, request.destination);
-  }
-
-  function _beforeDeleteAttestations(Attestation[] memory attestations, bytes calldata proofData)
-    internal
-    override
-  {
-    // we retrieve the ticketUsed from attestations extraData
-    for (uint256 i = 0; i < attestations.length; i++) {
-      uint256 userTicket = abi.decode(attestations[i].extraData, (uint256));
-      if (_isOnCooldown(_userTicketsData[userTicket]) == true) revert TicketFrozen(userTicket);
-      _userTicketsData[userTicket].destination = address(0);
-    }
   }
 
   /*******************************************************
@@ -272,14 +252,6 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
     return _getTicketData(userTicket);
   }
 
-  /**
-   * @dev returns whether a ticket is on cooldown or not
-   * @param userTicket ticket used
-   **/
-  function isTicketOnCooldown(uint256 userTicket) external view override returns (bool) {
-    return _isOnCooldown(_getTicketData(userTicket));
-  }
-
   function _setDestinationForTicket(uint256 userTicket, address destination) internal virtual {
     _userTicketsData[userTicket].destination = destination;
     emit TicketDestinationUpdated(userTicket, destination);
@@ -287,15 +259,19 @@ contract HydraS1SoulboundAttester is IHydraS1SoulboundAttester, HydraS1Base, Att
 
   function _setTicketOnCooldown(uint256 userTicket) internal {
     _userTicketsData[userTicket].cooldownStart = uint32(block.timestamp);
-    emit TicketSetOnCooldown(userTicket);
+    _userTicketsData[userTicket].burnCount += 1;
+    emit TicketSetOnCooldown(
+      userTicket,
+      _userTicketsData[userTicket].burnCount
+    );
   }
 
   function _getDestinationOfTicket(uint256 userTicket) internal view returns (address) {
     return _userTicketsData[userTicket].destination;
   }
 
-  function _isOnCooldown(TicketData memory userTicketData) internal view returns (bool) {
-    return userTicketData.cooldownStart + SOULBOUND_COOLDOWN_DURATION > block.timestamp;
+  function _isOnCooldown(TicketData memory userTicketData, uint32 cooldownDuration) internal view returns (bool) {
+    return userTicketData.cooldownStart + cooldownDuration > block.timestamp;
   }
 
   function _getTicketData(uint256 userTicket) internal view returns (TicketData memory) {
