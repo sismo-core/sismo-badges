@@ -70,7 +70,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '20000000',
       initialRoot: '0x0b9340f0d31232adaec900fbaefc0f6fa3f00bda449dd677fa111b58bc754cc9',
     },
-    hydraS1SoulboundAttester: {
+    hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
@@ -116,7 +116,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '20000000',
       initialRoot: '0x163c3224fa82070fbee7692146f505144b0307d668d8e8f803171b6ee7a4cd00',
     },
-    hydraS1SoulboundAttester: {
+    hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
@@ -163,7 +163,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '20000000',
       initialRoot: '0',
     },
-    hydraS1SoulboundAttester: {
+    hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
@@ -210,7 +210,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '20000000',
       initialRoot: '0',
     },
-    hydraS1SoulboundAttester: {
+    hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
@@ -258,7 +258,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '20000000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
     },
-    hydraS1SoulboundAttester: {
+    hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
       soulboundCooldownDuration: THREE_DAYS, // 3 days
@@ -305,7 +305,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '20000000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
     },
-    hydraS1SoulboundAttester: {
+    hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
@@ -352,7 +352,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '200000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
     },
-    hydraS1SoulboundAttester: {
+    hydraS1AccountboundAttester: {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
