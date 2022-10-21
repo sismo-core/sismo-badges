@@ -103,7 +103,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
   /********************************** DEPLOYMENTS **************************************/
   /*************************************************************************************/
   describe('Deployments', () => {
-    it('Should deploy, setup and test and test the constructed values of the contract', async () => {
+    it('Should deploy, setup and test the constructed values of the contract', async () => {
       ({
         attestationsRegistry,
         hydraS1AccountboundAttester,
@@ -181,8 +181,9 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         ],
       };
 
-      await expect(hydraS1AccountboundAttester.buildAttestations(wrongRequest, proof.toBytes())).to
-        .be.reverted;
+      await expect(
+        hydraS1AccountboundAttester.buildAttestations(wrongRequest, proof.toBytes())
+      ).to.be.revertedWith('CollectionIdOutOfBound');
     });
 
     it('Should build the attestations', async () => {
@@ -274,6 +275,28 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
 
       wrongExtraData.generationTimestamp = group.properties.generationTimestamp;
       wrongExtraData.isScore = !group.properties.isScore;
+
+      await expect(
+        hydraS1AccountboundAttester.generateAttestations(
+          {
+            ...request,
+            claims: [
+              {
+                ...request.claims[0],
+                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
+              },
+            ],
+          },
+          proof.toBytes()
+        )
+      ).to.be.revertedWith(
+        `GroupIdAndPropertiesMismatch(${BigNumber.from(
+          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
+        ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
+      );
+
+      wrongExtraData.isScore = group.properties.isScore;
+      wrongExtraData.cooldownDuration = group.properties.cooldownDuration + 1;
 
       await expect(
         hydraS1AccountboundAttester.generateAttestations(
@@ -385,6 +408,24 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       ).to.be.revertedWith(
         `ChainIdMismatch(${BigNumber.from(chainId)}, ${BigNumber.from(chainId - 1)})`
       );
+    });
+
+    it('Should revert if the snark input claimedValue mismatch the claim claimedValue ', async () => {
+      // 0 - Checks that it's reverted if the proof claimedvalue is different from the fake claim claimedValue
+      await expect(
+        hydraS1AccountboundAttester.generateAttestations(
+          {
+            ...request,
+            claims: [
+              {
+                ...request.claims[0],
+                claimedValue: sourceValue.add(1),
+              },
+            ],
+          },
+          proof.toBytes()
+        )
+      ).to.be.revertedWith(`ValueMismatch(${sourceValue.add(1)}, ${sourceValue})`);
     });
 
     it('Should revert if the attester has not access to the registry root', async () => {

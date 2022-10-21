@@ -127,7 +127,7 @@ describe('Test E2E Protocol', () => {
     destination2 = hydraS1Accounts[3];
 
     // 3 - Generate data source
-    const allList = await generateGroups(hydraS1Accounts);
+    const allList = generateGroups(hydraS1Accounts);
     const { dataFormat, groups } = await generateAttesterGroups(allList);
     const { dataFormat: dataFormat2, groups: groups2 } =
       await generateHydraS1AccountboundAttesterGroups(allList, {
