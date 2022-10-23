@@ -1,4 +1,4 @@
-import { ConfigurableTaskDefinition, HardhatRuntimeEnvironment } from 'hardhat/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { confirm } from '../../utils';
 import { DeployResult } from 'hardhat-deploy/dist/types';
@@ -97,8 +97,19 @@ export const customDeployContract = async (
     * Deploying ${options?.behindProxy ? 'behind' : 'without'} proxy ***********
     `);
   }
+  const isImplementationUpgrade =
+    options?.implementationVersion && options?.implementationVersion > 1;
+  let deploymentNameImplem = deploymentName + 'Implem';
+  if (isImplementationUpgrade) {
+    deploymentNameImplem += `V${options?.implementationVersion}`;
+    if (options?.log) {
+      console.log(`
+      * Proxy upgrade to version: ${options?.implementationVersion} ***********
+      `);
+    }
+  }
   const deployed = await hre.deployments.deploy(
-    `${options?.behindProxy ? deploymentName + 'Implem' : deploymentName}`,
+    options?.behindProxy ? deploymentNameImplem : deploymentName,
     {
       contract: contractName,
       from: deployer.address,
@@ -107,6 +118,26 @@ export const customDeployContract = async (
   );
   if (!options?.behindProxy) {
     return deployed;
+  } else if (isImplementationUpgrade) {
+    const proxyAddress = options.proxyAddress;
+    if (!proxyAddress) {
+      throw new Error('proxyAddress should be defined when upgrading a proxy!');
+    }
+    await hre.deployments.save(deploymentName, { ...deployed, address: proxyAddress });
+    if (options?.log) {
+      console.log(`
+      * Implementation deployed with address: ${deployed.address} ***********
+      `);
+    }
+    await hre.run('upgrade-proxy', {
+      proxyAddress,
+      newImplementationAddress: deployed.address,
+      options,
+    });
+    return {
+      ...deployed,
+      address: proxyAddress,
+    };
   } else {
     const proxy = await hre.deployments.deploy(deploymentName + 'Proxy', {
       contract:

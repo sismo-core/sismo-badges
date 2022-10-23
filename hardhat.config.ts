@@ -16,6 +16,7 @@ import 'solidity-coverage';
 import 'hardhat-deploy';
 import { Wallet } from 'ethers';
 import fg from 'fast-glob';
+import { HardhatNetworkForkingUserConfig } from 'hardhat/types';
 
 dotenv.config();
 
@@ -38,18 +39,29 @@ const MNEMONIC = process.env.MNEMONIC || SISMO_SHARED_MNEMONIC;
 const INFURA_KEY = process.env.INFURA_KEY || '';
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 
-const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
-const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '');
+const FORK = process.env.FORK === 'true';
+const FORKING_BLOCK = process.env.FORKING_BLOCK
+  ? parseInt(process.env.FORKING_BLOCK || '')
+  : undefined;
+const FORK_NETWORK = process.env.FORK_NETWORK || '';
 
-const mainnetFork =
-  MAINNET_FORK && FORKING_BLOCK
-    ? {
-        blockNumber: FORKING_BLOCK,
-        url: ALCHEMY_KEY
-          ? `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`
-          : `https://main.infura.io/v3/${INFURA_KEY}`,
-      }
-    : undefined;
+const forkUrl = {
+  kovan: NETWORKS_RPC_URL[EthereumNetwork.kovan],
+  goerli: NETWORKS_RPC_URL[EthereumNetwork.goerli],
+  main: NETWORKS_RPC_URL[EthereumNetwork.main],
+  polygon: NETWORKS_RPC_URL[PolygonNetwork.main],
+  sandboxPolygon: NETWORKS_RPC_URL[PolygonNetwork.main],
+  rinkeby: NETWORKS_RPC_URL[EthereumNetwork.rinkeby],
+  mumbai: NETWORKS_RPC_URL[PolygonNetwork.mumbai],
+  xdai: NETWORKS_RPC_URL[XDaiNetwork.xdai],
+};
+
+const forking = FORK
+  ? {
+      url: forkUrl[FORK_NETWORK],
+      blockNumber: FORKING_BLOCK,
+    }
+  : undefined;
 
 const getCommonNetworkConfig = (networkName: string, networkId: number) => ({
   url: NETWORKS_RPC_URL[networkName] ?? '',
@@ -115,8 +127,12 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,
       accounts,
-      forking: mainnetFork,
+      forking,
       saveDeployments: false,
+    },
+    tenderly: {
+      chainId: 5, // chain you forked
+      url: `https://rpc.tenderly.co/fork/${process.env.TINDERLY_FORK}`,
     },
     ganache: {
       live: false,
