@@ -107,7 +107,7 @@ task('deploy-pythia-1-simple-attester')
   .addParam('collectionIdFirst', '')
   .addParam('collectionIdLast', '')
   .addOptionalParam(
-    'pythia1Verifier',
+    'pythia1VerifierAddress',
     'address of the proving scheme verifier. Deploy verifier if not defined.'
   )
   .addParam('attestationsRegistryAddress', 'Address of the attestations contract')

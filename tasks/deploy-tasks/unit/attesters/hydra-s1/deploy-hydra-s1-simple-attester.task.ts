@@ -101,7 +101,7 @@ task('deploy-hydra-s1-simple-attester')
   .addParam('collectionIdFirst', '')
   .addParam('collectionIdLast', '')
   .addOptionalParam(
-    'hydraS1Verifier',
+    'hydraS1VerifierAddress',
     'address of the proving scheme verifier. Deploy verifier if not defined.'
   )
   .addParam('availableRootsRegistryAddress', 'address of the registryMerkleRoot contract')
