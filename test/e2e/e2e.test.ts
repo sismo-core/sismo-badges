@@ -7,7 +7,7 @@ import {
   CommitmentMapperRegistry,
   Front,
   HydraS1SimpleAttester,
-  HydraS1SoulboundAttester,
+  HydraS1AccountboundAttester,
   Pythia1SimpleAttester,
   TransparentUpgradeableProxy__factory,
 } from '../../types';
@@ -22,7 +22,7 @@ import { HydraS1Account, HydraS1Prover, KVMerkleTree } from '@sismo-core/hydra-s
 import { BigNumber } from 'ethers';
 import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
 import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
-import { Deployed0 } from '../../tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
+import { Deployed0 } from '../../tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound.task';
 import { getImplementation } from '../../utils';
 import {
   encodeGroupProperties,
@@ -30,10 +30,13 @@ import {
   evmSnapshot,
   generateAttesterGroups,
   generateHydraS1Accounts,
-  generateLists,
+  generateGroups,
   generateTicketIdentifier,
   getEventArgs,
-  Group,
+  HydraS1SimpleGroup,
+  encodeHydraS1AccountboundGroupProperties,
+  generateHydraS1AccountboundAttesterGroups,
+  HydraS1AccountboundGroup,
 } from '../utils';
 import { Deployed1 } from 'tasks/deploy-tasks/full/1-deploy-pythia-1-simple.task';
 import {
@@ -50,7 +53,7 @@ describe('Test E2E Protocol', () => {
 
   // contracts
   let attestationsRegistry: AttestationsRegistry;
-  let hydraS1SoulboundAttester: HydraS1SoulboundAttester;
+  let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   let hydraS1SimpleAttester: HydraS1SimpleAttester;
   let pythia1SimpleAttester: Pythia1SimpleAttester;
   let availableRootsRegistry: AvailableRootsRegistry;
@@ -60,10 +63,12 @@ describe('Test E2E Protocol', () => {
   let earlyUserCollectionId;
 
   // hydra s1 prover
-  let hydraS1Prover: HydraS1Prover;
+  let hydraS1Prover1: HydraS1Prover;
+  let hydraS1Prover2: HydraS1Prover;
   let commitmentMapper: CommitmentMapperTester;
   let commitmentMapperPubKey: EddsaPublicKey;
-  let registryTree: KVMerkleTree;
+  let registryTree1: KVMerkleTree;
+  let registryTree2: KVMerkleTree;
 
   // pythia 1 prover
   let pythia1Prover: Pythia1Prover;
@@ -85,8 +90,8 @@ describe('Test E2E Protocol', () => {
   let source2Value: BigNumber;
   let accountsTree1: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
-  let group1: Group;
-  let group2: Group;
+  let group1: HydraS1SimpleGroup;
+  let group2: HydraS1AccountboundGroup;
 
   // Valid request and proof
   let request1: RequestStruct;
@@ -122,19 +127,25 @@ describe('Test E2E Protocol', () => {
     destination2 = hydraS1Accounts[3];
 
     // 3 - Generate data source
-    const allList = await generateLists(hydraS1Accounts);
+    const allList = generateGroups(hydraS1Accounts);
     const { dataFormat, groups } = await generateAttesterGroups(allList);
+    const { dataFormat: dataFormat2, groups: groups2 } =
+      await generateHydraS1AccountboundAttesterGroups(allList, {
+        cooldownDuration: 10,
+      });
 
-    registryTree = dataFormat.registryTree;
+    registryTree1 = dataFormat.registryTree;
+    registryTree2 = dataFormat2.registryTree;
     accountsTree1 = dataFormat.accountsTrees[0];
-    accountsTree2 = dataFormat.accountsTrees[1];
+    accountsTree2 = dataFormat2.accountsTrees[0];
     group1 = groups[0];
-    group2 = groups[1];
+    group2 = groups2[0];
     source1Value = accountsTree1.getValue(BigNumber.from(source1.identifier).toHexString());
     source2Value = accountsTree1.getValue(BigNumber.from(source2.identifier).toHexString());
 
     // 4 - Init Proving scheme
-    hydraS1Prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
+    hydraS1Prover1 = new HydraS1Prover(registryTree1, commitmentMapperPubKey);
+    hydraS1Prover2 = new HydraS1Prover(registryTree2, commitmentMapperPubKey);
     pythia1Prover = new Pythia1Prover();
   });
 
@@ -152,9 +163,9 @@ describe('Test E2E Protocol', () => {
         front,
         commitmentMapperRegistry,
         hydraS1SimpleAttester,
-        hydraS1SoulboundAttester,
+        hydraS1AccountboundAttester,
         availableRootsRegistry,
-      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-soulbound', {
+      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
         options: {
           proxyAdmin: proxyAdminSigner.address,
         },
@@ -166,12 +177,17 @@ describe('Test E2E Protocol', () => {
         },
       })) as Deployed1);
 
-      const root = registryTree.getRoot();
       await (
-        await availableRootsRegistry.registerRootForAttester(hydraS1SimpleAttester.address, root)
+        await availableRootsRegistry.registerRootForAttester(
+          hydraS1SimpleAttester.address,
+          registryTree1.getRoot()
+        )
       ).wait();
       await (
-        await availableRootsRegistry.registerRootForAttester(hydraS1SoulboundAttester.address, root)
+        await availableRootsRegistry.registerRootForAttester(
+          hydraS1AccountboundAttester.address,
+          registryTree2.getRoot()
+        )
       ).wait();
       earlyUserCollectionId = await front.EARLY_USER_COLLECTION();
     });
@@ -183,7 +199,7 @@ describe('Test E2E Protocol', () => {
       );
 
       ticketIdentifier2 = await generateTicketIdentifier(
-        hydraS1SoulboundAttester.address,
+        hydraS1AccountboundAttester.address,
         group2.properties.groupIndex
       );
 
@@ -199,7 +215,7 @@ describe('Test E2E Protocol', () => {
       };
 
       proofRequest1 = (
-        await hydraS1Prover.generateSnarkProof({
+        await hydraS1Prover1.generateSnarkProof({
           source: source1,
           destination: destination1,
           claimedValue: source1Value,
@@ -215,14 +231,14 @@ describe('Test E2E Protocol', () => {
           {
             groupId: group2.id,
             claimedValue: source2Value,
-            extraData: encodeGroupProperties(group2.properties),
+            extraData: encodeHydraS1AccountboundGroupProperties(group2.properties),
           },
         ],
         destination: BigNumber.from(destination1.identifier).toHexString(),
       };
 
       proofRequest2 = (
-        await hydraS1Prover.generateSnarkProof({
+        await hydraS1Prover2.generateSnarkProof({
           source: source2,
           destination: destination1,
           claimedValue: source2Value,
@@ -234,7 +250,7 @@ describe('Test E2E Protocol', () => {
       ).toBytes();
 
       [attestationsRequested1, attestationsRequested2] = await front.batchBuildAttestations(
-        [hydraS1SimpleAttester.address, hydraS1SoulboundAttester.address],
+        [hydraS1SimpleAttester.address, hydraS1AccountboundAttester.address],
         [request1, request2],
         [proofRequest1, proofRequest2]
       );
@@ -248,9 +264,9 @@ describe('Test E2E Protocol', () => {
   /*************************************************************************************/
 
   describe('Test attestations generations', () => {
-    it('Should generate attestations from hydra s1 simple and hydra s1 soulbound via batch', async () => {
+    it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via batch', async () => {
       const tx = await front.batchGenerateAttestations(
-        [hydraS1SimpleAttester.address, hydraS1SoulboundAttester.address],
+        [hydraS1SimpleAttester.address, hydraS1AccountboundAttester.address],
         [request1, request2],
         [proofRequest1, proofRequest2]
       );
@@ -321,13 +337,17 @@ describe('Test E2E Protocol', () => {
 
       expect(balances).to.be.eql(expectedBalances);
     });
-    it('Should generate attestations from hydra s1 simple and hydra s1 soulbound via front and two separate txs', async () => {
+    it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via front and two separate txs', async () => {
       const tx = await front.generateAttestations(
         hydraS1SimpleAttester.address,
         request1,
         proofRequest1
       );
-      await front.generateAttestations(hydraS1SoulboundAttester.address, request2, proofRequest2);
+      await front.generateAttestations(
+        hydraS1AccountboundAttester.address,
+        request2,
+        proofRequest2
+      );
       const { events } = await tx.wait();
       const earlyUserActivated = Date.now() < Date.parse('15 Sept 2022 00:00:00 GMT');
       if (earlyUserActivated) {
@@ -451,31 +471,30 @@ describe('Test E2E Protocol', () => {
       expect(implementationAddress).to.eql(newHydraS1SimpleAttester.address);
     });
 
-    it('Should update Hydra S1 Soulbound implementation', async () => {
-      const { hydraS1SoulboundAttester: newHydraS1SoulboundAttester } = await hre.run(
-        'deploy-hydra-s1-soulbound-attester',
+    it('Should update Hydra S1 Accountbound implementation', async () => {
+      const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = await hre.run(
+        'deploy-hydra-s1-accountbound-attester',
         {
-          collectionIdFirst: config.hydraS1SoulboundAttester.collectionIdFirst,
-          collectionIdLast: config.hydraS1SoulboundAttester.collectionIdLast,
+          collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
+          collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
           commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
           availableRootsRegistryAddress: availableRootsRegistry.address,
           attestationsRegistryAddress: attestationsRegistry.address,
-          cooldownDuration: config.hydraS1SoulboundAttester.soulboundCooldownDuration,
           options: { behindProxy: false },
         }
       );
 
-      const hydraS1SoulboundAttesterProxy = TransparentUpgradeableProxy__factory.connect(
-        hydraS1SoulboundAttester.address,
+      const hydraS1AccountboundAttesterProxy = TransparentUpgradeableProxy__factory.connect(
+        hydraS1AccountboundAttester.address,
         proxyAdminSigner
       );
 
       await (
-        await hydraS1SoulboundAttesterProxy.upgradeTo(newHydraS1SoulboundAttester.address)
+        await hydraS1AccountboundAttesterProxy.upgradeTo(newHydraS1AccountboundAttester.address)
       ).wait();
 
-      const implementationAddress = await getImplementation(hydraS1SoulboundAttesterProxy);
-      expect(implementationAddress).to.eql(newHydraS1SoulboundAttester.address);
+      const implementationAddress = await getImplementation(hydraS1AccountboundAttesterProxy);
+      expect(implementationAddress).to.eql(newHydraS1AccountboundAttester.address);
     });
   });
 });

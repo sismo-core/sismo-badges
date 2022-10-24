@@ -8,16 +8,16 @@ import {
   customDeployContract,
   wrapCommonDeployOptions,
   DeployOptions,
-} from '../../../../../../tasks/deploy-tasks/utils';
+} from '../../../../utils';
 import {
-  HydraS1SoulboundAttester,
-  HydraS1SoulboundAttester__factory,
+  HydraS1AccountboundAttester,
+  HydraS1AccountboundAttester__factory,
   HydraS1Verifier,
   HydraS1Verifier__factory,
 } from '../../../../../../types';
 import { BigNumber, BigNumberish } from 'ethers';
 
-export interface DeployHydraS1SoulboundAttesterArgs {
+export interface DeployHydraS1AccountboundAttesterArgs {
   // address of the proving scheme verifier contract
   hydraS1VerifierAddress?: string;
   // address of the registry MerkleRoot contract
@@ -30,16 +30,15 @@ export interface DeployHydraS1SoulboundAttesterArgs {
   attestationsRegistryAddress: string;
   collectionIdFirst: BigNumberish;
   collectionIdLast: BigNumberish;
-  cooldownDuration: BigNumberish;
   options?: DeployOptions;
 }
 
-export interface DeployedHydraS1SoulboundAttester {
-  hydraS1SoulboundAttester: HydraS1SoulboundAttester;
+export interface DeployedHydraS1AccountboundAttester {
+  hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   hydraS1Verifier: HydraS1Verifier;
 }
 
-const CONTRACT_NAME = 'HydraS1SoulboundAttester';
+const CONTRACT_NAME = 'HydraS1AccountboundAttester';
 
 async function deploymentAction(
   {
@@ -49,11 +48,10 @@ async function deploymentAction(
     attestationsRegistryAddress,
     collectionIdFirst,
     collectionIdLast,
-    cooldownDuration,
     options,
-  }: DeployHydraS1SoulboundAttesterArgs,
+  }: DeployHydraS1AccountboundAttesterArgs,
   hre: HardhatRuntimeEnvironment
-): Promise<DeployedHydraS1SoulboundAttester> {
+): Promise<DeployedHydraS1AccountboundAttester> {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
 
@@ -74,7 +72,6 @@ async function deploymentAction(
     commitmentMapperRegistryAddress,
     BigNumber.from(collectionIdFirst),
     BigNumber.from(collectionIdLast),
-    BigNumber.from(cooldownDuration),
   ];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
@@ -95,17 +92,16 @@ async function deploymentAction(
 
   await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
 
-  const hydraS1SoulboundAttester = HydraS1SoulboundAttester__factory.connect(
+  const hydraS1AccountboundAttester = HydraS1AccountboundAttester__factory.connect(
     deployed.address,
     deployer
   );
-  return { hydraS1SoulboundAttester, hydraS1Verifier };
+  return { hydraS1AccountboundAttester, hydraS1Verifier };
 }
 
-task('deploy-hydra-s1-soulbound-attester')
+task('deploy-hydra-s1-accountbound-attester')
   .addParam('collectionIdFirst', '')
   .addParam('collectionIdLast', '')
-  .addParam('cooldownDuration', '')
   .addOptionalParam(
     'hydraS1Verifier',
     'address of the proving scheme verifier. Deploy verifier if not defined.'

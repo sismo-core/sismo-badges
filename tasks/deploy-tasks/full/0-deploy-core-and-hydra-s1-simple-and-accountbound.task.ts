@@ -13,12 +13,12 @@ import {
   DeployAvailableRootsRegistry,
 } from '../unit/periphery/deploy-available-roots-registry.task';
 import {
-  DeployHydraS1SoulboundAttesterArgs,
-  DeployedHydraS1SoulboundAttester,
-} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-soulbound-attester.task';
+  DeployHydraS1AccountboundAttesterArgs,
+  DeployedHydraS1AccountboundAttester,
+} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
 import { DeployOptions, getDeployer } from '../utils';
 import { DeployCoreArgs, DeployedCore } from '../batch/deploy-core.task';
-import { deploymentsConfig } from '../../deploy-tasks/deployments-config';
+import { deploymentsConfig } from '../deployments-config';
 import { getCommonOptions } from '../../utils/common-options';
 import { OwnableTransferOwnershipArgs } from '../../helpers/authorizations/ownable-transfer-ownership.task';
 import { AuthorizeRangeArgs } from '../../helpers/authorizations/attestations-registry-authorize-range.task';
@@ -30,7 +30,7 @@ import {
   CommitmentMapperRegistry,
   Front,
   HydraS1SimpleAttester,
-  HydraS1SoulboundAttester,
+  HydraS1AccountboundAttester,
   HydraS1Verifier,
 } from 'types';
 
@@ -41,7 +41,7 @@ export interface Deployed0 {
   commitmentMapperRegistry: CommitmentMapperRegistry;
   availableRootsRegistry: AvailableRootsRegistry;
   hydraS1SimpleAttester: HydraS1SimpleAttester;
-  hydraS1SoulboundAttester: HydraS1SoulboundAttester;
+  hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   hydraS1Verifier: HydraS1Verifier;
 }
 
@@ -53,7 +53,7 @@ async function deploymentAction(
   const config = deploymentsConfig[hre.network.name];
   options = { ...config.deployOptions, ...options };
   if (options.manualConfirm || options.log) {
-    console.log('0-deploy-core-and-hydra-s1-simple-and-soulbound: ', hre.network.name);
+    console.log('0-deploy-core-and-hydra-s1-simple-and-accountbound: ', hre.network.name);
   }
   // Only deploy contracts without giving final ownership.
   // Owners of the different contract are the deployer
@@ -90,20 +90,19 @@ async function deploymentAction(
     hydraS1SimpleArgs
   )) as DeployedHydraS1SimpleAttester;
 
-  const soulBoundArgs: DeployHydraS1SoulboundAttesterArgs = {
-    collectionIdFirst: config.hydraS1SoulboundAttester.collectionIdFirst,
-    collectionIdLast: config.hydraS1SoulboundAttester.collectionIdLast,
+  const accountboundArgs: DeployHydraS1AccountboundAttesterArgs = {
+    collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
+    collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
     commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
     availableRootsRegistryAddress: availableRootsRegistry.address,
     attestationsRegistryAddress: attestationsRegistry.address,
-    cooldownDuration: config.hydraS1SoulboundAttester.soulboundCooldownDuration,
     options,
   };
 
-  const { hydraS1SoulboundAttester } = (await hre.run(
-    'deploy-hydra-s1-soulbound-attester',
-    soulBoundArgs
-  )) as DeployedHydraS1SoulboundAttester;
+  const { hydraS1AccountboundAttester } = (await hre.run(
+    'deploy-hydra-s1-accountbound-attester',
+    accountboundArgs
+  )) as DeployedHydraS1AccountboundAttester;
 
   // Register an initial root for attester
   if (options.manualConfirm || options.log) {
@@ -120,12 +119,12 @@ async function deploymentAction(
   if (options.manualConfirm || options.log) {
     console.log(`
     ----------------------------------------------------------------
-    * Register initial root for hydraS1SoulboundAttester attester`);
+    * Register initial root for hydraS1AccountboundAttester attester`);
   }
   await hre.run('register-for-attester', {
     availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1SoulboundAttester.address,
-    root: config.hydraS1SoulboundAttester.initialRoot,
+    attester: hydraS1AccountboundAttester.address,
+    root: config.hydraS1AccountboundAttester.initialRoot,
     options: getCommonOptions(options),
   });
 
@@ -146,13 +145,13 @@ async function deploymentAction(
   if (options.manualConfirm || options.log) {
     console.log(`
     ----------------------------------------------------------------
-    * Authorize HydraS1SoulboundAttester to record on the AttestationsRegistry`);
+    * Authorize HydraS1AccountboundAttester to record on the AttestationsRegistry`);
   }
   await hre.run('attestations-registry-authorize-range', {
     attestationsRegistryAddress: attestationsRegistry.address,
-    attesterAddress: hydraS1SoulboundAttester.address,
-    collectionIdFirst: config.hydraS1SoulboundAttester.collectionIdFirst,
-    collectionIdLast: config.hydraS1SoulboundAttester.collectionIdLast,
+    attesterAddress: hydraS1AccountboundAttester.address,
+    collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
+    collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
     options: getCommonOptions(options),
   } as AuthorizeRangeArgs);
 
@@ -250,11 +249,11 @@ async function deploymentAction(
     * HydraS1Verifier:
       -> address: ${(await hre.deployments.all()).HydraS1Verifier.address}
 
-    * HydraS1SoulboundAttester:
-      -> proxy: ${(await hre.deployments.all()).HydraS1SoulboundAttester.address}
-      -> implem: ${(await hre.deployments.all()).HydraS1SoulboundAttesterImplem.address}
-      collectionIdFirst: ${config.hydraS1SoulboundAttester.collectionIdFirst}
-      collectionIdLast: ${config.hydraS1SoulboundAttester.collectionIdLast}
+    * HydraS1AccountboundAttester:
+      -> proxy: ${(await hre.deployments.all()).HydraS1AccountboundAttester.address}
+      -> implem: ${(await hre.deployments.all()).HydraS1AccountboundAttesterImplem.address}
+      collectionIdFirst: ${config.hydraS1AccountboundAttester.collectionIdFirst}
+      collectionIdLast: ${config.hydraS1AccountboundAttester.collectionIdLast}
     
     * AvailableRootsRegistry: 
       -> proxy: ${(await hre.deployments.all()).AvailableRootsRegistry.address}
@@ -271,7 +270,7 @@ async function deploymentAction(
 
   return {
     hydraS1SimpleAttester,
-    hydraS1SoulboundAttester,
+    hydraS1AccountboundAttester,
     availableRootsRegistry,
     commitmentMapperRegistry,
     front,
@@ -281,4 +280,4 @@ async function deploymentAction(
   };
 }
 
-task('0-deploy-core-and-hydra-s1-simple-and-soulbound').setAction(deploymentAction);
+task('0-deploy-core-and-hydra-s1-simple-and-accountbound').setAction(deploymentAction);

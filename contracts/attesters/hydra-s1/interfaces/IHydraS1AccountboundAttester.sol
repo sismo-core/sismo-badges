@@ -11,24 +11,17 @@ import {HydraS1Lib, HydraS1ProofData, HydraS1ProofInput} from './../libs/HydraS1
 import {IHydraS1Base} from './../base/IHydraS1Base.sol';
 
 // todo: explain well what is specific to this attester
-interface IHydraS1SoulboundAttester is IHydraS1Base, IAttester {
+interface IHydraS1AccountboundAttester is IHydraS1Base, IAttester {
   struct TicketData {
     address destination;
     uint32 cooldownStart;
+    uint16 burnCount;
   }
-  error NotAttestationOwner(uint256 ticket, address sender);
-  error TicketFrozen(uint256 ticketData);
-  error TicketUsedAndOnCooldown(TicketData ticketData);
+  error TicketOnCooldown(TicketData ticketData, uint32 cooldownDuration);
   error CollectionIdOutOfBound(uint256 collectionId);
 
   event TicketDestinationUpdated(uint256 ticket, address newOwner);
-  event TicketSetOnCooldown(uint256 ticket);
-
-  /**
-   * @dev returns whether a ticket is on cooldown or not
-   * @param userTicket ticket used
-   **/
-  function isTicketOnCooldown(uint256 userTicket) external view returns (bool);
+  event TicketSetOnCooldown(uint256 ticket, uint16 burnCount);
 
   /**
    * @dev Getter, returns the data linked to a ticket
@@ -53,10 +46,4 @@ interface IHydraS1SoulboundAttester is IHydraS1Base, IAttester {
    * returns of the last collection in which the attester is supposed to record
    **/
   function AUTHORIZED_COLLECTION_ID_LAST() external view returns (uint256);
-
-  /**
-   * @dev Getter
-   * returns of the duration of the cooldown period after having used a ticket
-   **/
-  function SOULBOUND_COOLDOWN_DURATION() external view returns (uint256);
 }

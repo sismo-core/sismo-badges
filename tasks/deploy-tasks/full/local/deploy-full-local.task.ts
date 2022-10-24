@@ -10,9 +10,9 @@ import {
 } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-simple-attester.task';
 
 import {
-  DeployHydraS1SoulboundAttesterArgs,
-  DeployedHydraS1SoulboundAttester,
-} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-soulbound-attester.task';
+  DeployHydraS1AccountboundAttesterArgs,
+  DeployedHydraS1AccountboundAttester,
+} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
 import { EVENT_TRIGGERER_ROLE } from '../../../../utils';
 import {
   DeployAvailableRootsRegistry,
@@ -68,15 +68,14 @@ async function deploymentAction(
     options,
   } as DeployHydraS1SimpleAttesterArgs)) as DeployedHydraS1SimpleAttester;
 
-  const { hydraS1SoulboundAttester } = (await hre.run('deploy-hydra-s1-soulbound-attester', {
-    collectionIdFirst: config.hydraS1SoulboundAttester.collectionIdFirst,
-    collectionIdLast: config.hydraS1SoulboundAttester.collectionIdLast,
+  const { hydraS1AccountboundAttester } = (await hre.run('deploy-hydra-s1-accountbound-attester', {
+    collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
+    collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
     commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
     availableRootsRegistryAddress: availableRootsRegistry.address,
     attestationsRegistryAddress: attestationsRegistry.address,
-    cooldownDuration: config.hydraS1SoulboundAttester.soulboundCooldownDuration,
     options,
-  } as DeployHydraS1SoulboundAttesterArgs)) as DeployedHydraS1SoulboundAttester;
+  } as DeployHydraS1AccountboundAttesterArgs)) as DeployedHydraS1AccountboundAttester;
 
   const { pythia1SimpleAttester } = (await hre.run('deploy-pythia-1-simple-attester', {
     collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
@@ -94,16 +93,16 @@ async function deploymentAction(
   });
   await hre.run('register-for-attester', {
     availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1SoulboundAttester.address,
-    root: config.hydraS1SoulboundAttester.initialRoot,
+    attester: hydraS1AccountboundAttester.address,
+    root: config.hydraS1AccountboundAttester.initialRoot,
   });
   options?.log && console.log('Contracts deployed on local');
 
   await (
     await attestationsRegistry.authorizeRange(
-      hydraS1SoulboundAttester.address,
-      config.hydraS1SoulboundAttester.collectionIdFirst,
-      config.hydraS1SoulboundAttester.collectionIdLast
+      hydraS1AccountboundAttester.address,
+      config.hydraS1AccountboundAttester.collectionIdFirst,
+      config.hydraS1AccountboundAttester.collectionIdLast
     )
   ).wait();
 

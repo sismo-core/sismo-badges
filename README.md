@@ -33,7 +33,7 @@ There are three core contracts:
 
 It also contains implementations of attester in `attesters/`:
 - `HydraS1SimpleAttester.sol`: ZK Attester using the [Hydra S1 Proving Scheme](https://hydra-s1.docs.sismo.io) and the notion of tickets (nullifiers). Users must provide a ZK Proof along their request to generate attestations
-- `HydraS1SoulboundAttester.sol`: Soulbound version of the Simple Hydra S1 Simple Attester. (Users can update at will where the attestation is stored)
+- `HydraS1AccountboundAttester.sol`: Accountbound version of the Simple Hydra S1 Simple Attester. (Users can update at will where the attestation is stored)
 
 <br/><br/>
 

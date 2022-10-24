@@ -20,7 +20,7 @@ import {
   SNARK_FIELD,
 } from '@sismo-core/hydra-s1';
 import { BigNumber } from 'ethers';
-import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-soulbound.task';
+import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound.task';
 import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
 import {
   encodeGroupProperties,
@@ -28,9 +28,9 @@ import {
   generateGroupIdFromEncodedProperties,
   generateGroupIdFromProperties,
   generateHydraS1Accounts,
-  generateLists,
+  generateGroups,
   generateTicketIdentifier,
-  Group,
+  HydraS1SimpleGroup,
   toBytes,
 } from '../../../utils';
 import { getEventArgs } from '../../../utils/expectEvent';
@@ -70,8 +70,8 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
   let source1Value: BigNumber;
   let accountsTree1: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
-  let group1: Group;
-  let group2: Group;
+  let group1: HydraS1SimpleGroup;
+  let group2: HydraS1SimpleGroup;
 
   // Valid request and proof
   let request: RequestStruct;
@@ -98,7 +98,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
     destination2 = hydraS1Accounts[3];
 
     // 3 - Generate data source
-    const allList = await generateLists(hydraS1Accounts);
+    const allList = await generateGroups(hydraS1Accounts);
     const { dataFormat, groups } = await generateAttesterGroups(allList);
 
     registryTree = dataFormat.registryTree;
@@ -124,7 +124,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         commitmentMapperRegistry,
         hydraS1SimpleAttester,
         availableRootsRegistry,
-      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-soulbound', {})) as Deployed0);
+      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {})) as Deployed0);
       const root = registryTree.getRoot();
       await availableRootsRegistry.registerRootForAttester(hydraS1SimpleAttester.address, root);
     });

@@ -1,3 +1,4 @@
+import { encodeAccountBoundAttestationExtraData } from './../../../utils/hydra-s1-accountbound';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
 import {
@@ -15,27 +16,28 @@ import {
   AttestationsRegistry,
   AvailableRootsRegistry,
   CommitmentMapperRegistry,
-  HydraS1SoulboundAttester,
+  HydraS1AccountboundAttester,
   HydraS1Verifier,
 } from 'types';
 import { RequestStruct } from 'types/HydraS1SimpleAttester';
 import {
-  encodeGroupProperties,
   evmRevert,
   evmSnapshot,
-  generateAttesterGroups,
-  generateGroupIdFromProperties,
+  generateHydraS1AccountboundAttesterGroups,
   generateHydraS1Accounts,
-  generateLists,
+  generateGroups,
   generateTicketIdentifier,
-  Group,
   increaseTime,
   toBytes,
+  HydraS1AccountboundGroup,
+  generateHydraS1AccountboundGroupIdFromProperties,
+  encodeHydraS1AccountboundGroupProperties,
+  GroupData,
 } from '../../../utils';
 
-describe('Test HydraS1 Soulbound Attester contract', () => {
+describe('Test HydraS1 Accountbound Attester contract', () => {
   let attestationsRegistry: AttestationsRegistry;
-  let hydraS1SoulboundAttester: HydraS1SoulboundAttester;
+  let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   let hydraS1Verifier: HydraS1Verifier;
   let commitmentMapperRegistry: CommitmentMapperRegistry;
   let availableRootsRegistry: AvailableRootsRegistry;
@@ -58,9 +60,11 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
   let registryTree: KVMerkleTree;
   let accountsTree: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
-  let group: Group;
-  let group2: Group;
+  let group: HydraS1AccountboundGroup;
+  let group2: HydraS1AccountboundGroup;
+  let allAvailableGroups: GroupData[];
   let ticketIdentifier: BigNumber;
+  let cooldownDuration: number;
   let userParams;
   let inputs: Inputs;
   let proof: SnarkProof;
@@ -78,8 +82,13 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
     let hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
     [source, destination, destination2] = hydraS1Accounts;
 
-    const { dataFormat, groups } = await generateAttesterGroups(
-      await generateLists(hydraS1Accounts)
+    allAvailableGroups = await generateGroups(hydraS1Accounts);
+    cooldownDuration = 10;
+    const { dataFormat, groups } = await generateHydraS1AccountboundAttesterGroups(
+      allAvailableGroups,
+      {
+        cooldownDuration,
+      }
     );
 
     registryTree = dataFormat.registryTree;
@@ -94,33 +103,33 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
   /********************************** DEPLOYMENTS **************************************/
   /*************************************************************************************/
   describe('Deployments', () => {
-    it('Should deploy, setup and test and test the constructed values of the contract', async () => {
+    it('Should deploy, setup and test the constructed values of the contract', async () => {
       ({
         attestationsRegistry,
-        hydraS1SoulboundAttester,
+        hydraS1AccountboundAttester,
         hydraS1Verifier,
         commitmentMapperRegistry,
         availableRootsRegistry,
-      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-soulbound', {
-        options: { deploymentNamePrefix: 'soulbound' },
+      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
+        options: { deploymentNamePrefix: 'accountbound' },
       }));
 
       // 0 - Checks that the verifier, available roots registry, commitment mapper registry and attestations registry are set
-      expect(await hydraS1SoulboundAttester.getVerifier()).to.equal(hydraS1Verifier.address);
-      expect(await hydraS1SoulboundAttester.getAvailableRootsRegistry()).to.equal(
+      expect(await hydraS1AccountboundAttester.getVerifier()).to.equal(hydraS1Verifier.address);
+      expect(await hydraS1AccountboundAttester.getAvailableRootsRegistry()).to.equal(
         availableRootsRegistry.address
       );
-      expect(await hydraS1SoulboundAttester.getCommitmentMapperRegistry()).to.equal(
+      expect(await hydraS1AccountboundAttester.getCommitmentMapperRegistry()).to.equal(
         commitmentMapperRegistry.address
       );
-      expect(await hydraS1SoulboundAttester.getAttestationRegistry()).to.equal(
+      expect(await hydraS1AccountboundAttester.getAttestationRegistry()).to.equal(
         attestationsRegistry.address
       );
     });
 
     after(async () => {
       ticketIdentifier = await generateTicketIdentifier(
-        hydraS1SoulboundAttester.address,
+        hydraS1AccountboundAttester.address,
         group.properties.groupIndex
       );
 
@@ -143,7 +152,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
           {
             groupId: group.id,
             claimedValue: sourceValue,
-            extraData: encodeGroupProperties(group.properties),
+            extraData: encodeHydraS1AccountboundGroupProperties(group.properties),
           },
         ],
         destination: BigNumber.from(destination.identifier).toHexString(),
@@ -158,7 +167,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
     it('Should revert when the collectionId is out of attester bounds', async () => {
       const wrongGroupProperties = {
         ...group.properties,
-        groupIndex: (await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_LAST()).toNumber(),
+        groupIndex: (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_LAST()).toNumber(),
       };
 
       const wrongRequest = {
@@ -166,32 +175,36 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
         claims: [
           {
             ...request.claims[0],
-            groupId: generateGroupIdFromProperties(wrongGroupProperties),
-            extraData: encodeGroupProperties(wrongGroupProperties),
+            groupId: generateHydraS1AccountboundGroupIdFromProperties(wrongGroupProperties),
+            extraData: encodeHydraS1AccountboundGroupProperties(wrongGroupProperties),
           },
         ],
       };
 
-      await expect(hydraS1SoulboundAttester.buildAttestations(wrongRequest, proof.toBytes())).to.be
-        .reverted;
+      await expect(
+        hydraS1AccountboundAttester.buildAttestations(wrongRequest, proof.toBytes())
+      ).to.be.revertedWith('CollectionIdOutOfBound');
     });
 
     it('Should build the attestations', async () => {
-      const buildAttestations = await hydraS1SoulboundAttester.buildAttestations(
+      const buildAttestations = await hydraS1AccountboundAttester.buildAttestations(
         request,
         proof.toBytes()
       );
 
       expect(buildAttestations).to.eql([
         [
-          (await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+          (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
             group.properties.groupIndex
           ),
           request.destination,
-          hydraS1SoulboundAttester.address,
+          hydraS1AccountboundAttester.address,
           sourceValue,
           group.properties.generationTimestamp,
-          ethers.utils.hexlify(BigNumber.from(inputs.publicInputs.userTicket).toHexString()),
+          encodeAccountBoundAttestationExtraData({
+            userTicket: inputs.publicInputs.userTicket,
+            burnCount: 0,
+          }),
         ],
       ]);
     });
@@ -207,7 +220,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       };
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(
+        hydraS1AccountboundAttester.generateAttestations(
           { ...request, claims: [{ ...request.claims[0], groupId: group2.id }] },
           proof.toBytes()
         )
@@ -220,13 +233,13 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       wrongExtraData.groupIndex = group2.properties.groupIndex;
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(
+        hydraS1AccountboundAttester.generateAttestations(
           {
             ...request,
             claims: [
               {
                 ...request.claims[0],
-                extraData: encodeGroupProperties(wrongExtraData),
+                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
               },
             ],
           },
@@ -234,7 +247,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
         )
       ).to.be.revertedWith(
         `GroupIdAndPropertiesMismatch(${BigNumber.from(
-          ethers.utils.keccak256(encodeGroupProperties(wrongExtraData))
+          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
         ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
       );
 
@@ -242,13 +255,13 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       wrongExtraData.generationTimestamp = group2.properties.generationTimestamp;
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(
+        hydraS1AccountboundAttester.generateAttestations(
           {
             ...request,
             claims: [
               {
                 ...request.claims[0],
-                extraData: encodeGroupProperties(wrongExtraData),
+                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
               },
             ],
           },
@@ -256,7 +269,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
         )
       ).to.be.revertedWith(
         `GroupIdAndPropertiesMismatch(${BigNumber.from(
-          ethers.utils.keccak256(encodeGroupProperties(wrongExtraData))
+          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
         ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
       );
 
@@ -264,13 +277,13 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       wrongExtraData.isScore = !group.properties.isScore;
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(
+        hydraS1AccountboundAttester.generateAttestations(
           {
             ...request,
             claims: [
               {
                 ...request.claims[0],
-                extraData: encodeGroupProperties(wrongExtraData),
+                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
               },
             ],
           },
@@ -278,7 +291,29 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
         )
       ).to.be.revertedWith(
         `GroupIdAndPropertiesMismatch(${BigNumber.from(
-          ethers.utils.keccak256(encodeGroupProperties(wrongExtraData))
+          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
+        ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
+      );
+
+      wrongExtraData.isScore = group.properties.isScore;
+      wrongExtraData.cooldownDuration = group.properties.cooldownDuration + 1;
+
+      await expect(
+        hydraS1AccountboundAttester.generateAttestations(
+          {
+            ...request,
+            claims: [
+              {
+                ...request.claims[0],
+                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
+              },
+            ],
+          },
+          proof.toBytes()
+        )
+      ).to.be.revertedWith(
+        `GroupIdAndPropertiesMismatch(${BigNumber.from(
+          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
         ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
       );
     });
@@ -293,21 +328,21 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       });
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, wrongProof.toBytes())
+        hydraS1AccountboundAttester.generateAttestations(request, wrongProof.toBytes())
       ).to.be.revertedWith(
         `AccountsTreeValueMismatch(${BigNumber.from(group.id)}, ${BigNumber.from(group2.id)})`
       );
 
       // 1 - Checks that it's reverted if the proof accounts tree is not the same as the fake claim groupId
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(
+        hydraS1AccountboundAttester.generateAttestations(
           {
             ...request,
             claims: [
               {
                 ...request.claims[0],
                 groupId: group2.id,
-                extraData: encodeGroupProperties(group2.properties),
+                extraData: encodeHydraS1AccountboundGroupProperties(group2.properties),
               },
             ],
           },
@@ -326,7 +361,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       });
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, wrongProof.toBytes())
+        hydraS1AccountboundAttester.generateAttestations(request, wrongProof.toBytes())
       ).to.be.revertedWith(`IsStrictMismatch(false, false)`);
     });
 
@@ -338,7 +373,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       });
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, wrongProof.toBytes())
+        hydraS1AccountboundAttester.generateAttestations(request, wrongProof.toBytes())
       ).to.be.revertedWith(
         `DestinationMismatch("${BigNumber.from(
           destination.identifier
@@ -347,7 +382,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
 
       // 1 - Checks that it's reverted if the proof destination is different from the fake claim destination
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(
+        hydraS1AccountboundAttester.generateAttestations(
           {
             ...request,
             destination: BigNumber.from(destination2.identifier).toHexString(),
@@ -369,16 +404,34 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       });
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, wrongProof.toBytes())
+        hydraS1AccountboundAttester.generateAttestations(request, wrongProof.toBytes())
       ).to.be.revertedWith(
         `ChainIdMismatch(${BigNumber.from(chainId)}, ${BigNumber.from(chainId - 1)})`
       );
     });
 
+    it('Should revert if the snark input claimedValue mismatch the claim claimedValue ', async () => {
+      // 0 - Checks that it's reverted if the proof claimedvalue is different from the fake claim claimedValue
+      await expect(
+        hydraS1AccountboundAttester.generateAttestations(
+          {
+            ...request,
+            claims: [
+              {
+                ...request.claims[0],
+                claimedValue: sourceValue.add(1),
+              },
+            ],
+          },
+          proof.toBytes()
+        )
+      ).to.be.revertedWith(`ValueMismatch(${sourceValue.add(1)}, ${sourceValue})`);
+    });
+
     it('Should revert if the attester has not access to the registry root', async () => {
       // 0 - Checks that it's reverted if the attester has not access to the registry root
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, proof.toBytes())
+        hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes())
       ).to.be.revertedWith(
         `RegistryRootMismatch(${BigNumber.from(inputs.publicInputs.registryTreeRoot)}`
       );
@@ -386,7 +439,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
 
     it('Should revert if the input commitment mapper pub keys mismatch the onchain commitment mapper pub keys', async () => {
       await availableRootsRegistry.registerRootForAttester(
-        hydraS1SoulboundAttester.address,
+        hydraS1AccountboundAttester.address,
         registryTree.getRoot()
       );
 
@@ -400,7 +453,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       await commitmentMapperRegistry.updateCommitmentMapperEdDSAPubKey(wrongCommitmentMapperPubKey);
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, proof.toBytes())
+        hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes())
       ).to.be.revertedWith(
         `CommitmentMapperPubKeyMismatch(${wrongCommitmentMapperPubKey[0]}, ${wrongCommitmentMapperPubKey[1]}, ${commitmentMapperPubKey[0]}, ${commitmentMapperPubKey[1]})`
       );
@@ -411,7 +464,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
     it('Should revert if the snark input ticketIdentifier mismatch the claim ticketIdentifier', async () => {
       // 0 - Checks that it's reverted if the fake proof ticketIdentifier is different from the claim ticketIdentifier
       const wrongTicketIdentifier = await generateTicketIdentifier(
-        hydraS1SoulboundAttester.address,
+        hydraS1AccountboundAttester.address,
         group2.properties.groupIndex
       );
 
@@ -421,7 +474,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       });
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, wrongProof.toBytes())
+        hydraS1AccountboundAttester.generateAttestations(request, wrongProof.toBytes())
       ).to.be.revertedWith(
         `TicketIdentifierMismatch(${ticketIdentifier}, ${wrongTicketIdentifier})`
       );
@@ -433,7 +486,7 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       wrongProof.input[6] = BigNumber.from(wrongProof.input[6]).add(SNARK_FIELD);
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, toBytes(wrongProof))
+        hydraS1AccountboundAttester.generateAttestations(request, toBytes(wrongProof))
       ).to.be.revertedWith(`InvalidGroth16Proof("verifier-gte-snark-scalar-field")`);
     });
 
@@ -443,79 +496,56 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       wrongProof.a[0] = BigNumber.from(proof.a[0]).sub(1);
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, toBytes(wrongProof))
+        hydraS1AccountboundAttester.generateAttestations(request, toBytes(wrongProof))
       ).to.be.revertedWith(`InvalidGroth16Proof("")`);
     });
 
     it('Should generate a proof with Hydra S1 Prover and verify it onchain using the attester', async () => {
-      const generateAttestationsTransaction = await hydraS1SoulboundAttester.generateAttestations(
-        request,
-        proof.toBytes()
-      );
+      const generateAttestationsTransaction =
+        await hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes());
 
       // 0 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
-        .to.emit(hydraS1SoulboundAttester, 'AttestationGenerated')
+        .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
         .withArgs([
           await (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           request.destination,
-          hydraS1SoulboundAttester.address,
+          hydraS1AccountboundAttester.address,
           sourceValue,
           group.properties.generationTimestamp,
-          BigNumber.from(inputs.publicInputs.userTicket).toHexString(),
+          encodeAccountBoundAttestationExtraData({
+            userTicket: inputs.publicInputs.userTicket,
+            burnCount: 0,
+          }),
         ]);
 
       // 1 - Checks that the provided userTicket was successfully recorded in the attester
       expect(
-        await hydraS1SoulboundAttester.getDestinationOfTicket(
+        await hydraS1AccountboundAttester.getDestinationOfTicket(
           BigNumber.from(inputs.publicInputs.userTicket)
         )
       ).to.equal(request.destination);
 
       expect(
-        await hydraS1SoulboundAttester.getTicketData(BigNumber.from(inputs.publicInputs.userTicket))
-      ).to.be.eql([BigNumber.from(destination.identifier).toHexString(), 0]);
-
-      expect(
-        await hydraS1SoulboundAttester.isTicketOnCooldown(
+        await hydraS1AccountboundAttester.getTicketData(
           BigNumber.from(inputs.publicInputs.userTicket)
         )
-      ).to.be.false;
-
-      console.log(sourceValue);
-
-      console.log(
-        await attestationsRegistry.hasAttestation(
-          (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-          ).add(group.properties.groupIndex),
-          request.destination
-        )
-      );
-
-      console.log(
-        await attestationsRegistry.getAttestationData(
-          (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-          ).add(group.properties.groupIndex),
-          request.destination
-        )
-      );
+      ).to.be.eql([BigNumber.from(destination.identifier).toHexString(), 0, 0]);
 
       // 2 - Checks that the attester recorded the attestation in the registry
       expect(
         await attestationsRegistry.hasAttestation(
           (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           destinationSigner.address
         )
       ).to.be.true;
     });
 
-    it('Should change the destination if the ticket is reused one time', async () => {
+    it('Should be able to change the destination, deleting the old attestation', async () => {
       const newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: destination2,
@@ -526,59 +556,86 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
         destination: BigNumber.from(destination2.identifier).toHexString(),
       };
 
-      const generateAttestationsTransaction = await hydraS1SoulboundAttester.generateAttestations(
-        newRequest,
-        newProof.toBytes()
-      );
+      const generateAttestationsTransaction =
+        await hydraS1AccountboundAttester.generateAttestations(newRequest, newProof.toBytes());
 
       // 0 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
-        .to.emit(hydraS1SoulboundAttester, 'AttestationGenerated')
+        .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
         .withArgs([
           await (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
+          newRequest.destination,
+          hydraS1AccountboundAttester.address,
+          sourceValue,
+          group.properties.generationTimestamp,
+          encodeAccountBoundAttestationExtraData({
+            userTicket: inputs.publicInputs.userTicket,
+            burnCount: 1, // burn count should be incremented
+          }),
         ]);
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'TicketDestinationUpdated')
+        .withArgs(inputs.publicInputs.userTicket, destination2.identifier);
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'TicketSetOnCooldown')
+        .withArgs(inputs.publicInputs.userTicket, 1);
 
       // 1 - Checks that the userTicket informations were successfully updated
       expect(
-        await hydraS1SoulboundAttester.getDestinationOfTicket(
+        await hydraS1AccountboundAttester.getDestinationOfTicket(
           BigNumber.from(inputs.publicInputs.userTicket)
         )
       ).to.be.equal(BigNumber.from(destination2.identifier));
 
       expect(
-        await hydraS1SoulboundAttester.getTicketData(BigNumber.from(inputs.publicInputs.userTicket))
+        await hydraS1AccountboundAttester.getTicketData(
+          BigNumber.from(inputs.publicInputs.userTicket)
+        )
       ).to.be.eql([
         BigNumber.from(destination2.identifier).toHexString(),
         await (await ethers.provider.getBlock('latest')).timestamp,
+        1, // the burnCount should be incremented
       ]);
 
+      // burnCount should be recorded in the attestationsRegistry
       expect(
-        await hydraS1SoulboundAttester.isTicketOnCooldown(
-          BigNumber.from(inputs.publicInputs.userTicket)
+        await attestationsRegistry.getAttestationExtraData(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          destination2Signer.address
         )
-      ).to.be.true;
+      ).to.equal(
+        encodeAccountBoundAttestationExtraData({
+          userTicket: inputs.publicInputs.userTicket,
+          burnCount: 1, // burnCount should be incremented
+        })
+      );
 
       // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
       // 2.1 - Checks that the old destination has not anymore it's attestation
       await expect(generateAttestationsTransaction)
-        .to.emit(hydraS1SoulboundAttester, 'AttestationDeleted')
+        .to.emit(hydraS1AccountboundAttester, 'AttestationDeleted')
         .withArgs([
           (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           destinationSigner.address,
-          hydraS1SoulboundAttester.address,
+          hydraS1AccountboundAttester.address,
           sourceValue,
           group.properties.generationTimestamp,
-          ethers.utils.hexlify(BigNumber.from(inputs.publicInputs.userTicket).toHexString()),
+          encodeAccountBoundAttestationExtraData({
+            userTicket: inputs.publicInputs.userTicket,
+            burnCount: 0,
+          }),
         ]);
 
       expect(
         await attestationsRegistry.hasAttestation(
           (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           destinationSigner.address
         )
@@ -588,81 +645,240 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       expect(
         await attestationsRegistry.hasAttestation(
           (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           destination2Signer.address
         )
       ).to.be.true;
     });
 
-    it('Should revert if the ticket is reused too many times in cooldown', async () => {
-      const ticketData = await hydraS1SoulboundAttester.getTicketData(
+    it('Should revert if the ticket is in cooldown', async () => {
+      const ticketData = await hydraS1AccountboundAttester.getTicketData(
         BigNumber.from(inputs.publicInputs.userTicket)
       );
 
       await expect(
-        hydraS1SoulboundAttester.generateAttestations(request, proof.toBytes())
-      ).to.be.revertedWith(`TicketUsedAndOnCooldown(["${ticketData[0]}", ${ticketData[1]}])`);
+        hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes())
+      ).to.be.revertedWith(
+        `TicketOnCooldown(["${ticketData[0]}", ${ticketData[1]}, ${ticketData[2]}], ${cooldownDuration})`
+      );
     });
 
-    it('Should reset the cooldown if the ticket is reused many times after the cooldown period', async () => {
+    it('Should renew the timestamp even if the ticket is in cooldown', async () => {
       const evmSnapshotId = await evmSnapshot(hre);
+      const latestCooldownStart = (
+        await hydraS1AccountboundAttester.getTicketData(
+          BigNumber.from(inputs.publicInputs.userTicket)
+        )
+      ).cooldownStart;
 
-      await increaseTime(hre, 300000);
+      const renewGenerationTimestamp = group.properties.generationTimestamp + 10;
+      // regenerate groups for attester with different timestamp
+      const { dataFormat, groups } = await generateHydraS1AccountboundAttesterGroups(
+        allAvailableGroups,
+        {
+          cooldownDuration,
+          generationTimestamp: renewGenerationTimestamp,
+        }
+      );
+      // register new registry tree root on chain
+      await availableRootsRegistry.registerRootForAttester(
+        hydraS1AccountboundAttester.address,
+        dataFormat.registryTree.getRoot()
+      );
 
-      const generateAttestationsTransaction = hydraS1SoulboundAttester.generateAttestations(
+      // create new prover using the new registryTree
+      const renewProver = new HydraS1Prover(dataFormat.registryTree, commitmentMapperPubKey);
+      const renewProof = await renewProver.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+        accountsTree: dataFormat.accountsTrees[0],
+      });
+
+      const renewRequest = {
+        claims: [
+          {
+            groupId: groups[0].id,
+            claimedValue: sourceValue,
+            extraData: encodeHydraS1AccountboundGroupProperties({
+              ...group.properties,
+              generationTimestamp: renewGenerationTimestamp,
+            }),
+          },
+        ],
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
+
+      const generateAttestationsTransaction =
+        await hydraS1AccountboundAttester.generateAttestations(renewRequest, renewProof.toBytes());
+
+      // 0 - Checks that the transaction emitted the event with the new timestamp
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
+        .withArgs([
+          await (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          renewRequest.destination,
+          hydraS1AccountboundAttester.address,
+          sourceValue,
+          renewGenerationTimestamp,
+          encodeAccountBoundAttestationExtraData({
+            userTicket: inputs.publicInputs.userTicket,
+            burnCount: 1,
+          }),
+        ]);
+
+      // A renew should not have changed the ticketData
+      // cooldownStart and burnCount should be the same
+      expect(
+        await hydraS1AccountboundAttester.getTicketData(
+          BigNumber.from(inputs.publicInputs.userTicket)
+        )
+      ).to.be.eql([BigNumber.from(destination2.identifier).toHexString(), latestCooldownStart, 1]);
+
+      // 2 - Checks that the attestation in the registry has the new timestamp
+      expect(
+        await attestationsRegistry.getAttestationTimestamp(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          destination2Signer.address
+        )
+      ).to.equal(renewGenerationTimestamp);
+
+      evmRevert(hre, evmSnapshotId);
+    });
+
+    it('Should be able to update the claimedValue to zero even if the ticket is in cooldown', async () => {
+      const evmSnapshotId = await evmSnapshot(hre);
+      // regenerate groups for attester with different timestamp
+      const { dataFormat, groups } = await generateHydraS1AccountboundAttesterGroups(
+        allAvailableGroups,
+        {
+          cooldownDuration,
+          isScore: true,
+          generationTimestamp: group.properties.generationTimestamp,
+        }
+      );
+      // register new registry tree root on chain
+      await availableRootsRegistry.registerRootForAttester(
+        hydraS1AccountboundAttester.address,
+        dataFormat.registryTree.getRoot()
+      );
+
+      // create new prover using the new registryTree
+      const renewProver = new HydraS1Prover(dataFormat.registryTree, commitmentMapperPubKey);
+      const renewProof = await renewProver.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+        accountsTree: dataFormat.accountsTrees[0],
+        isStrict: false,
+        claimedValue: 0,
+      });
+
+      const renewRequest = {
+        claims: [
+          {
+            groupId: groups[0].id,
+            claimedValue: 0,
+            extraData: encodeHydraS1AccountboundGroupProperties(groups[0].properties),
+          },
+        ],
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
+
+      const generateAttestationsTransaction =
+        await hydraS1AccountboundAttester.generateAttestations(renewRequest, renewProof.toBytes());
+
+      // Checks that the transaction emitted the event with a claimedValue of zero
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
+        .withArgs([
+          await (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          renewRequest.destination,
+          hydraS1AccountboundAttester.address,
+          0, // claimedValue
+          group.properties.generationTimestamp,
+          encodeAccountBoundAttestationExtraData({
+            userTicket: inputs.publicInputs.userTicket,
+            burnCount: 1,
+          }),
+        ]);
+
+      //  Checks that the attestation in the registry has a value of zero
+      expect(
+        await attestationsRegistry.getAttestationValue(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          destination2Signer.address
+        )
+      ).to.equal(0);
+
+      evmRevert(hre, evmSnapshotId);
+    });
+
+    it('Should be able to change again the destination after the cooldown period', async () => {
+      await increaseTime(hre, cooldownDuration);
+
+      const generateAttestationsTransaction = hydraS1AccountboundAttester.generateAttestations(
         request,
         proof.toBytes()
       );
 
       // 0 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
-        .to.emit(hydraS1SoulboundAttester, 'AttestationGenerated')
+        .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
         .withArgs([
           await (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
         ]);
 
       // 1 - Checks that the userTicket informations were successfully updated
       expect(
-        await hydraS1SoulboundAttester.getDestinationOfTicket(
+        await hydraS1AccountboundAttester.getDestinationOfTicket(
           BigNumber.from(inputs.publicInputs.userTicket)
         )
       ).to.be.equal(destination.identifier);
 
+      // cooldownStart should be reset to the latest block timestamp
+      // and burnCount incremented by 1
       expect(
-        await hydraS1SoulboundAttester.getTicketData(BigNumber.from(inputs.publicInputs.userTicket))
+        await hydraS1AccountboundAttester.getTicketData(
+          BigNumber.from(inputs.publicInputs.userTicket)
+        )
       ).to.be.eql([
         BigNumber.from(destination.identifier).toHexString(),
         await (await ethers.provider.getBlock('latest')).timestamp,
+        2, // burnCount should be incremented
       ]);
-
-      expect(
-        await hydraS1SoulboundAttester.isTicketOnCooldown(
-          BigNumber.from(inputs.publicInputs.userTicket)
-        )
-      ).to.be.true;
 
       // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
       // 2.1 - Checks that the old destination has not anymore it's attestation
       await expect(generateAttestationsTransaction)
-        .to.emit(hydraS1SoulboundAttester, 'AttestationDeleted')
+        .to.emit(hydraS1AccountboundAttester, 'AttestationDeleted')
         .withArgs([
           (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           destination2Signer.address,
-          hydraS1SoulboundAttester.address,
+          hydraS1AccountboundAttester.address,
           sourceValue,
           group.properties.generationTimestamp,
-          ethers.utils.hexlify(BigNumber.from(inputs.publicInputs.userTicket).toHexString()),
+          encodeAccountBoundAttestationExtraData({
+            userTicket: inputs.publicInputs.userTicket,
+            burnCount: 1,
+          }),
         ]);
 
       expect(
         await attestationsRegistry.hasAttestation(
           (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           destination2Signer.address
         )
@@ -672,105 +888,11 @@ describe('Test HydraS1 Soulbound Attester contract', () => {
       expect(
         await attestationsRegistry.hasAttestation(
           (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           destinationSigner.address
         )
       ).to.be.true;
-
-      evmRevert(hre, evmSnapshotId);
-    });
-  });
-
-  /*************************************************************************************/
-  /******************************** DELETE ATTESTATIONS ********************************/
-  /*************************************************************************************/
-  describe('Delete attestations', () => {
-    it('Should revert if the caller is not the owner of the ticket', async () => {
-      await expect(
-        hydraS1SoulboundAttester
-          .connect(destinationSigner)
-          .deleteAttestations(
-            [
-              BigNumber.from(group.properties.groupIndex).add(
-                await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-              ),
-            ],
-            BigNumber.from(destination2.identifier).toHexString(),
-            ethers.utils.toUtf8Bytes('')
-          )
-      ).to.be.revertedWith(
-        `NotAttestationOwner(${inputs.publicInputs.userTicket}, "${destinationSigner.address}")`
-      );
-    });
-
-    it('Should revert if the ticket is on cooldown', async () => {
-      await expect(
-        hydraS1SoulboundAttester
-          .connect(destination2Signer)
-          .deleteAttestations(
-            [
-              BigNumber.from(group.properties.groupIndex).add(
-                await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-              ),
-            ],
-            BigNumber.from(destination2.identifier).toHexString(),
-            ethers.utils.toUtf8Bytes('')
-          )
-      ).to.be.revertedWith(`TicketFrozen(${inputs.publicInputs.userTicket})`);
-    });
-
-    it('Should delete an attestation', async () => {
-      const evmSnapshotId = await evmSnapshot(hre);
-
-      await increaseTime(hre, 300000);
-
-      const ticketInformation = await hydraS1SoulboundAttester.getTicketData(
-        BigNumber.from(inputs.publicInputs.userTicket).toHexString()
-      );
-
-      const deleteAttestationsTransaction = await hydraS1SoulboundAttester
-        .connect(destination2Signer)
-        .deleteAttestations(
-          [
-            BigNumber.from(group.properties.groupIndex).add(
-              await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-            ),
-          ],
-          BigNumber.from(destination2.identifier).toHexString(),
-          ethers.utils.toUtf8Bytes('')
-        );
-
-      await expect(deleteAttestationsTransaction)
-        .to.emit(hydraS1SoulboundAttester, 'AttestationDeleted')
-        .withArgs([
-          (
-            await hydraS1SoulboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-          ).add(group.properties.groupIndex),
-          destination2Signer.address,
-          hydraS1SoulboundAttester.address,
-          sourceValue,
-          group.properties.generationTimestamp,
-          ethers.utils.hexlify(BigNumber.from(inputs.publicInputs.userTicket).toHexString()),
-        ]);
-
-      expect(
-        await hydraS1SoulboundAttester.getDestinationOfTicket(
-          BigNumber.from(inputs.publicInputs.userTicket)
-        )
-      ).to.be.equal(ethers.constants.AddressZero);
-
-      expect(
-        await hydraS1SoulboundAttester.getTicketData(BigNumber.from(inputs.publicInputs.userTicket))
-      ).to.be.eql([ethers.constants.AddressZero, ticketInformation[1]]);
-
-      expect(
-        await hydraS1SoulboundAttester.isTicketOnCooldown(
-          BigNumber.from(inputs.publicInputs.userTicket)
-        )
-      ).to.be.false;
-
-      await evmRevert(hre, evmSnapshotId);
     });
   });
 });
