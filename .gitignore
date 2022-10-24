@@ -7,3 +7,5 @@ types/**
 .vscode
 deployments/local
 save
+.env
+
