@@ -90,7 +90,7 @@ async function deploymentAction(
     hydraS1SimpleArgs
   )) as DeployedHydraS1SimpleAttester;
 
-  const soulBoundArgs: DeployHydraS1AccountboundAttesterArgs = {
+  const accountboundArgs: DeployHydraS1AccountboundAttesterArgs = {
     collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
     collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
     commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
@@ -101,7 +101,7 @@ async function deploymentAction(
 
   const { hydraS1AccountboundAttester } = (await hre.run(
     'deploy-hydra-s1-accountbound-attester',
-    soulBoundArgs
+    accountboundArgs
   )) as DeployedHydraS1AccountboundAttester;
 
   // Register an initial root for attester

@@ -19,7 +19,6 @@ export type DeploymentsConfigTypes = {
     hydraS1AccountboundAttester: {
       collectionIdFirst: string;
       collectionIdLast: string;
-      soulboundCooldownDuration: string;
       initialRoot: string;
     };
     hydraS1SimpleAttester: {

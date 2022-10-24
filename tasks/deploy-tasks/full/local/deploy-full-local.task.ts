@@ -74,7 +74,6 @@ async function deploymentAction(
     commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
     availableRootsRegistryAddress: availableRootsRegistry.address,
     attestationsRegistryAddress: attestationsRegistry.address,
-    cooldownDuration: config.hydraS1AccountboundAttester.soulboundCooldownDuration,
     options,
   } as DeployHydraS1AccountboundAttesterArgs)) as DeployedHydraS1AccountboundAttester;
 

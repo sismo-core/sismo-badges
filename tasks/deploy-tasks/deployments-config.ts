@@ -73,7 +73,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
-      soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
     synapsPythia1SimpleAttester: {
@@ -119,7 +118,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
-      soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
     synapsPythia1SimpleAttester: {
@@ -166,7 +164,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
-      soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
     synapsPythia1SimpleAttester: {
@@ -213,7 +210,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
-      soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
     synapsPythia1SimpleAttester: {
@@ -261,7 +257,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     hydraS1AccountboundAttester: {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
-      soulboundCooldownDuration: THREE_DAYS, // 3 days
       initialRoot: '0',
     },
     synapsPythia1SimpleAttester: {
@@ -309,7 +304,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '20000001',
       collectionIdLast: '30000000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
-      soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
     synapsPythia1SimpleAttester: {
       collectionIdFirst: '30000001',
@@ -356,7 +350,6 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
-      soulboundCooldownDuration: THREE_DAYS, // 3 days
     },
     synapsPythia1SimpleAttester: {
       collectionIdFirst: '30000001',

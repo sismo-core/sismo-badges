@@ -480,7 +480,6 @@ describe('Test E2E Protocol', () => {
           commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
           availableRootsRegistryAddress: availableRootsRegistry.address,
           attestationsRegistryAddress: attestationsRegistry.address,
-          cooldownDuration: config.hydraS1AccountboundAttester.soulboundCooldownDuration,
           options: { behindProxy: false },
         }
       );
