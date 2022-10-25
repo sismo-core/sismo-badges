@@ -71,7 +71,7 @@ async function deploymentAction(
       hydraS1VerifierAddress: config.hydraS1Verifier.address,
       options: {
         ...options,
-        implementationVersion: 2,
+        implementationVersion: 3,
         proxyAddress: config.hydraS1SimpleAttester.address,
       },
     }
@@ -111,7 +111,7 @@ async function deploymentAction(
       hydraS1VerifierAddress: config.hydraS1Verifier.address,
       options: {
         ...options,
-        implementationVersion: 2,
+        implementationVersion: 3,
         proxyAddress: config.hydraS1AccountboundAttester.address,
       },
     }
