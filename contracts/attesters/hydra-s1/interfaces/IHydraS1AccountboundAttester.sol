@@ -10,17 +10,38 @@ import {AvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsReg
 import {HydraS1Lib, HydraS1ProofData, HydraS1ProofInput} from './../libs/HydraS1Lib.sol';
 import {IHydraS1Base} from './../base/IHydraS1Base.sol';
 
-// todo: explain well what is specific to this attester
+/**
+ * @title Hydra-S1 Accountbound Interface
+ * @author Sismo
+ * @notice Interface with the errors, events and methods specific to the HydraS1AcountboundAttester.
+ **/
 interface IHydraS1AccountboundAttester is IHydraS1Base, IAttester {
   struct TicketData {
     address destination;
     uint32 cooldownStart;
     uint16 burnCount;
   }
+
+  /**
+   * @dev Error when the userTicket is on cooldown. The user have to wait the cooldownDuration
+   * before being able to change again the destination address.
+   **/
   error TicketOnCooldown(TicketData ticketData, uint32 cooldownDuration);
+
+  /**
+   * @dev Error when the collectionId of an attestation overflow the AUTHORIZED_COLLECTION_ID_LAST
+   **/
   error CollectionIdOutOfBound(uint256 collectionId);
 
+  /**
+   * @dev Event emitted when the userTicket (or nullifierHash) is associated to a destination address.
+   **/
   event TicketDestinationUpdated(uint256 ticket, address newOwner);
+
+  /**
+   * @dev Event emitted when the userTicket has been set on cooldown. This happens when the
+   * attestation destination of a ticket has been changed
+   **/
   event TicketSetOnCooldown(uint256 ticket, uint16 burnCount);
 
   /**

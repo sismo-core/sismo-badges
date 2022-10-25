@@ -10,11 +10,25 @@ import {AvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsReg
 import {HydraS1Lib, HydraS1ProofData, HydraS1ProofInput} from './../libs/HydraS1Lib.sol';
 import {IHydraS1Base} from './../base/IHydraS1Base.sol';
 
-// todo: explain well what is specific to this attester
+/**
+ * @title Hydra-S1 Accountbound Interface
+ * @author Sismo
+ * @notice Interface with errors, events and methods specific to the HydraS1SimpleAttester.
+ **/
 interface IHydraS1SimpleAttester is IHydraS1Base, IAttester {
+  /**
+   * @dev Error when the userTicket (or nullifierHash) is already used for a destination address
+   **/
   error TicketUsed(uint256 userTicket);
+
+  /**
+   * @dev Error when the collectionId of an attestation overflow the AUTHORIZED_COLLECTION_ID_LAST
+   **/
   error CollectionIdOutOfBound(uint256 collectionId);
 
+  /**
+   * @dev Event emitted when the userTicket (or nullifierHash) is associated to a destination address.
+   **/
   event TicketDestinationUpdated(uint256 ticket, address newOwner);
 
   /**
