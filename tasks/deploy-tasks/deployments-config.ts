@@ -169,7 +169,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
   // deployer "alpha-testnets-mumbai-mnemonic-deployer-october-13-2022"
   mumbai: {
     deployOptions: {
-      manualConfirm: false,
+      manualConfirm: true,
       log: true,
       behindProxy: true,
       proxyAdmin: ALPHA_MUMBAI_PROXY_ADMIN,
