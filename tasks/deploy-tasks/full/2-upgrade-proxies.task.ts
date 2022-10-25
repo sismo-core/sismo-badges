@@ -87,6 +87,7 @@ async function deploymentAction(
       commitmentSignerPubKeyX: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX,
       commitmentSignerPubKeyY: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY,
       pythia1VerifierAddress: config.pythia1Verifier.address,
+      owner: config.synapsPythia1SimpleAttester.owner,
       options: {
         ...options,
         implementationVersion: 2,

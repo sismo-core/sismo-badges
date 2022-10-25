@@ -7,7 +7,17 @@ import {HydraS1Verifier, HydraS1Lib, HydraS1ProofData} from '../libs/HydraS1Lib.
 import {ICommitmentMapperRegistry} from '../../../periphery/utils/CommitmentMapperRegistry.sol';
 import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRegistry.sol';
 
-// todo: explain well what is specific to this attester
+/**
+ * @title Hydra-S1 Base Interface
+ * @author Sismo
+ * @notice Interface that facilitates the use of the Hydra-S1 ZK Proving Scheme.
+ * Hydra-S1 is single source, single group: it allows users to verify they are part of one and only one group at a time
+ * It is inherited by the family of Hydra-S1 attesters.
+ * It contains the errors and method specific of the Hydra-S1 attesters family and the Hydra-S1 ZK Proving Scheme
+ * We invite readers to refer to the following:
+ *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
+ *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
+ **/
 interface IHydraS1Base {
   error ClaimsLengthDifferentThanOne(uint256 claimLength);
   error RegistryRootMismatch(uint256 inputRoot);

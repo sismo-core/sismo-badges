@@ -21,11 +21,9 @@ import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRe
  * Hydra-S1 is single source, single group: it allows users to verify they are part of one and only one group at a time
  * It is inherited by the family of Hydra-S1 attesters.
  * It contains the user input checking and the ZK-SNARK proof verification.
- * We invite readers to refer to:
+ * We invite readers to refer to the following:
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
- 
- 
  **/
 abstract contract HydraS1Base is IHydraS1Base, Initializable {
   using HydraS1Lib for HydraS1ProofData;

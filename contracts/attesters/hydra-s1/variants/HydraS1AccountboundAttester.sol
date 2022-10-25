@@ -38,7 +38,8 @@ import {HydraS1AccountboundLib, HydraS1AccountboundClaim} from '../libs/HydraS1A
  *   userTicket = hash(sourceSecret, ticketIdentifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
  
  * - Accountbound (with cooldown period)
- *   A user can chose to delete attestations or generate attestation to a new destination.
+ *   Users can choose to delete or generate attestations to a new destination using their source account.
+ *   The attestation is "Accountbound" to the source account.
  *   When deleting/ sending to a new destination, the ticket will enter a cooldown period, so it remains occasional
  *   User will need to wait until the end of the cooldown period before being able to delete or switch destination again
  *   One can however know that the former and the new destinations were created using the same userTicket
@@ -144,7 +145,7 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
     if (
       userTicketData.destination != address(0) && userTicketData.destination != request.destination
     ) {
-      burnCount+=1;
+      burnCount += 1;
     }
 
     attestations[0] = Attestation(
@@ -180,7 +181,7 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
       userTicketData.destination != address(0) && userTicketData.destination != request.destination
     ) {
       HydraS1AccountboundClaim memory claim = request._hydraS1Accountboundclaim();
-      if (_isOnCooldown(userTicketData, claim.groupProperties.cooldownDuration)) 
+      if (_isOnCooldown(userTicketData, claim.groupProperties.cooldownDuration))
         revert TicketOnCooldown(userTicketData, claim.groupProperties.cooldownDuration);
 
       // Delete the old Attestation on the account before recording the new one
@@ -260,17 +261,18 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
   function _setTicketOnCooldown(uint256 userTicket) internal {
     _userTicketsData[userTicket].cooldownStart = uint32(block.timestamp);
     _userTicketsData[userTicket].burnCount += 1;
-    emit TicketSetOnCooldown(
-      userTicket,
-      _userTicketsData[userTicket].burnCount
-    );
+    emit TicketSetOnCooldown(userTicket, _userTicketsData[userTicket].burnCount);
   }
 
   function _getDestinationOfTicket(uint256 userTicket) internal view returns (address) {
     return _userTicketsData[userTicket].destination;
   }
 
-  function _isOnCooldown(TicketData memory userTicketData, uint32 cooldownDuration) internal view returns (bool) {
+  function _isOnCooldown(TicketData memory userTicketData, uint32 cooldownDuration)
+    internal
+    view
+    returns (bool)
+  {
     return userTicketData.cooldownStart + cooldownDuration > block.timestamp;
   }
 
