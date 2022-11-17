@@ -31,7 +31,7 @@ import {
   generateAttesterGroups,
   generateHydraS1Accounts,
   generateGroups,
-  generateTicketIdentifier,
+  generateExternalNullifier,
   getEventArgs,
   HydraS1SimpleGroup,
   encodeHydraS1AccountboundGroupProperties,
@@ -98,8 +98,8 @@ describe('Test E2E Protocol', () => {
   let request2: RequestStruct;
   let proofRequest1: string;
   let proofRequest2: string;
-  let ticketIdentifier1: BigNumber;
-  let ticketIdentifier2: BigNumber;
+  let externalNullifier1: BigNumber;
+  let externalNullifier2: BigNumber;
   let attestationsRequested1: AttestationStructOutput[];
   let attestationsRequested2: AttestationStructOutput[];
   let poseidon;
@@ -193,12 +193,12 @@ describe('Test E2E Protocol', () => {
     });
     it('Should prepare test requests', async () => {
       // Deploy Sismo Protocol Core contracts
-      ticketIdentifier1 = await generateTicketIdentifier(
+      externalNullifier1 = await generateExternalNullifier(
         hydraS1SimpleAttester.address,
         group1.properties.groupIndex
       );
 
-      ticketIdentifier2 = await generateTicketIdentifier(
+      externalNullifier2 = await generateExternalNullifier(
         hydraS1AccountboundAttester.address,
         group2.properties.groupIndex
       );
@@ -221,7 +221,7 @@ describe('Test E2E Protocol', () => {
           claimedValue: source1Value,
           chainId: chainId,
           accountsTree: accountsTree1,
-          ticketIdentifier: ticketIdentifier1,
+          ticketIdentifier: externalNullifier1,
           isStrict: !group1.properties.isScore,
         })
       ).toBytes();
@@ -244,7 +244,7 @@ describe('Test E2E Protocol', () => {
           claimedValue: source2Value,
           chainId: chainId,
           accountsTree: accountsTree2,
-          ticketIdentifier: ticketIdentifier2,
+          ticketIdentifier: externalNullifier2,
           isStrict: !group2.properties.isScore,
         })
       ).toBytes();
@@ -399,7 +399,7 @@ describe('Test E2E Protocol', () => {
         pythia1group1.id
       );
 
-      const ticketIdentifier = await generateTicketIdentifier(
+      const externalNullifier = await generateExternalNullifier(
         pythia1SimpleAttester.address,
         pythia1group1.properties.internalCollectionId
       );
@@ -424,7 +424,7 @@ describe('Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 

@@ -80,21 +80,21 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
   *******************************************************/
 
   /**
-   * @dev MANDATORY: must be implemented to return the ticket identifier from a user request
+   * @dev MANDATORY: must be implemented to return the external nullifier from a user request
    * so it can be checked against snark input
-   * ticket = hash(sourceSecretHash, ticketIdentifier), which is verified inside the snark
+   * nullifier = hash(sourceSecretHash, externalNullifier), which is verified inside the snark
    * users bring sourceSecretHash as private input which guarantees privacy
 
    * This function MUST be implemented by Hydra-S1 attesters.
-   * This is the core function that implements the logic of tickets
+   * This is the core function that implements the logic of external nullifiers
 
-   * Do they get one ticket per claim?
-   * Do they get 2 tickets per claim?
-   * Do they get 1 ticket per claim, every month?
+   * Do they get one external nullifier per claim?
+   * Do they get 2 external nullifiers per claim?
+   * Do they get 1 external nullifier per claim, every month?
    * Take a look at Hydra-S1 Simple Attester for an example
    * @param claim user claim: part of a group of accounts, with a claimedValue for their account
    */
-  function _getTicketIdentifierOfClaim(HydraS1Claim memory claim)
+  function _getExternalNullifierOfClaim(HydraS1Claim memory claim)
     internal
     view
     virtual
@@ -138,10 +138,10 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
         input.commitmentMapperPubKey[1]
       );
 
-    uint256 ticketIdentifier = _getTicketIdentifierOfClaim(claim);
+    uint256 externalNullifier = _getExternalNullifierOfClaim(claim);
 
-    if (input.ticketIdentifier != ticketIdentifier)
-      revert TicketIdentifierMismatch(ticketIdentifier, input.ticketIdentifier);
+    if (input.externalNullifier != externalNullifier)
+      revert ExternalNullifierMismatch(externalNullifier, input.externalNullifier);
   }
 
   /**
