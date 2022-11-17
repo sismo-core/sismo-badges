@@ -3,8 +3,6 @@
 pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
-import {IAccountbound} from './IAccountbound.sol';
-
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../../core/libs/Structs.sol';
 import {Attester, IAttester, IAttestationsRegistry} from '../../../core/Attester.sol';
