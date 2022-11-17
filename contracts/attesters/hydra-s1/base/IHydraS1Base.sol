@@ -28,7 +28,7 @@ interface IHydraS1Base {
     uint256 inputX,
     uint256 inputY
   );
-  error TicketIdentifierMismatch(uint256 expectedTicketIdentifier, uint256 ticketIdentifier);
+  error ExternalNullifierMismatch(uint256 expectedExternalNullifier, uint256 externalNullifier);
   error IsStrictMismatch(bool expectedStrictness, bool strictNess);
   error ChainIdMismatch(uint256 expectedChainId, uint256 chainId);
   error ValueMismatch(uint256 expectedValue, uint256 inputValue);

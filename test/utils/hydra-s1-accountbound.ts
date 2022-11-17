@@ -115,11 +115,11 @@ export const encodeHydraS1AccountboundGroupProperties = (
 };
 
 export const encodeAccountBoundAttestationExtraData = ({
-  userTicket,
+  nullifier,
   burnCount,
 }: {
-  userTicket: BigNumberish | BigInt;
+  nullifier: BigNumberish | BigInt;
   burnCount: number;
 }) => {
-  return ethers.utils.defaultAbiCoder.encode(['uint256', 'uint16'], [userTicket, burnCount]);
+  return ethers.utils.defaultAbiCoder.encode(['uint256', 'uint16'], [nullifier, burnCount]);
 };

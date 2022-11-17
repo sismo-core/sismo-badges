@@ -29,7 +29,7 @@ import {
   generateGroupIdFromProperties,
   generateHydraS1Accounts,
   generateGroups,
-  generateTicketIdentifier,
+  generateExternalNullifier,
   HydraS1SimpleGroup,
   toBytes,
 } from '../../../utils';
@@ -76,7 +76,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
   // Valid request and proof
   let request: RequestStruct;
   let proof: SnarkProof;
-  let ticketIdentifier: BigNumber;
+  let externalNullifier: BigNumber;
 
   before(async () => {
     const signers = await hre.ethers.getSigners();
@@ -136,7 +136,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
 
   describe('Generate valid attestation', () => {
     it('Should generate a proof with a Hydra S1 prover and verify it onchain using the attester', async () => {
-      ticketIdentifier = await generateTicketIdentifier(
+      externalNullifier = await generateExternalNullifier(
         hydraS1SimpleAttester.address,
         group1.properties.groupIndex
       );
@@ -158,7 +158,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !group1.properties.isScore,
       });
 
@@ -194,7 +194,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree2,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: false,
       });
 
@@ -274,7 +274,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !group1.properties.isScore,
       });
 
@@ -331,8 +331,8 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
       );
     });
 
-    it('Should revert due to wrong ticket identifier', async () => {
-      const wrongTicketIdentifier = 123;
+    it('Should revert due to wrong external nullifier', async () => {
+      const wrongExternalNullifier = 123;
 
       const proof2 = await prover.generateSnarkProof({
         source: source1,
@@ -340,14 +340,14 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: wrongTicketIdentifier,
+        ticketIdentifier: wrongExternalNullifier,
         isStrict: !group1.properties.isScore,
       });
 
       await expect(
         hydraS1SimpleAttester.generateAttestations(request, proof2.toBytes())
       ).to.be.revertedWith(
-        `TicketIdentifierMismatch(${ticketIdentifier}, ${wrongTicketIdentifier})`
+        `ExternalNullifierMismatch(${externalNullifier}, ${wrongExternalNullifier})`
       );
     });
 
@@ -355,8 +355,8 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
     /************** _verifyProof() **********/
     /****************************************/
 
-    it('Should not allow snark field overflow by providing a ticket that is outside the snark field', async () => {
-      // override the ticket proof to overflow
+    it('Should not allow snark field overflow by providing a nullifier that is outside the snark field', async () => {
+      // override the nullifier proof to overflow
       const wrongProof = { ...proof, input: [...proof.input] };
       wrongProof.input[6] = BigNumber.from(wrongProof.input[6]).add(SNARK_FIELD);
 
@@ -367,7 +367,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
       ).to.be.revertedWith(`InvalidGroth16Proof("verifier-gte-snark-scalar-field")`);
     });
     it('Should revert if wrong snark proof', async () => {
-      // override the ticket proof to overflow
+      // override the nullifier proof to overflow
       const wrongProof = { ...proof, a: [...proof.a] };
       wrongProof.a[0] = BigNumber.from(proof.a[0]).sub(1);
 
@@ -394,13 +394,13 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !group1.properties.isScore,
       });
 
       await expect(
         hydraS1SimpleAttester.generateAttestations(wrongRequest, proof2.toBytes())
-      ).to.be.revertedWith(`TicketUsed(${proof.input[6]})`);
+      ).to.be.revertedWith(`NullifierUsed(${proof.input[6]})`);
     });
   });
 });

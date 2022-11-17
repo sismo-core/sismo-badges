@@ -32,20 +32,20 @@ import {HydraS1AccountboundLib, HydraS1AccountboundClaim} from '../libs/HydraS1A
  *   If a user can generate an attestation of max value 100, they can also generate any attestation with value < 100.
  *   This attester generate attestations of scores
 
- * - Ticketed
- *   Each source account gets one userTicket per claim (i.e only one attestation per source account per claim)
+ * - Nullified
+ *   Each source account gets one nullifier per claim (i.e only one attestation per source account per claim)
  *   For people used to semaphore/ tornado cash people:
- *   userTicket = hash(sourceSecret, ticketIdentifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
+ *   nullifier = hash(sourceSecret, externalNullifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
  
  * - Accountbound (with cooldown period)
  *   Users can choose to delete or generate attestations to a new destination using their source account.
  *   The attestation is "Accountbound" to the source account.
- *   When deleting/ sending to a new destination, the ticket will enter a cooldown period, so it remains occasional
+ *   When deleting/ sending to a new destination, the nullifier will enter a cooldown period, so it remains occasional
  *   User will need to wait until the end of the cooldown period before being able to delete or switch destination again
- *   One can however know that the former and the new destinations were created using the same userTicket
+ *   One can however know that the former and the new destinations were created using the same nullifier
  
  * - Renewable
- *   A userTicket can actually be reused as long as the destination of the attestation remains the same
+ *   A nullifier can actually be reused as long as the destination of the attestation remains the same
  *   It enables users to renew or update their attestations
  **/
 contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Base, Attester {
@@ -58,7 +58,7 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
   uint256 public immutable AUTHORIZED_COLLECTION_ID_FIRST;
   uint256 public immutable AUTHORIZED_COLLECTION_ID_LAST;
 
-  mapping(uint256 => TicketData) internal _userTicketsData;
+  mapping(uint256 => NullifierData) internal _nullifiersData;
 
   /*******************************************************
     INITIALIZATION FUNCTIONS                           
@@ -135,15 +135,15 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
 
     // The issuer of attestations is the attester
     address issuer = address(this);
-    // user sends the ticket as input in the data
-    uint256 userTicket = proofData._getTicket();
-    TicketData memory userTicketData = _userTicketsData[userTicket];
+    // user sends the nullifier as input in the data
+    uint256 nullifier = proofData._getNullifier();
+    NullifierData memory nullifierData = _nullifiersData[nullifier];
 
-    uint16 burnCount = userTicketData.burnCount;
+    uint16 burnCount = nullifierData.burnCount;
     // If the attestation is minted on a new destination address
     // the burnCount encoded in the extraData of the Attestation should be incremented
     if (
-      userTicketData.destination != address(0) && userTicketData.destination != request.destination
+      nullifierData.destination != address(0) && nullifierData.destination != request.destination
     ) {
       burnCount += 1;
     }
@@ -154,7 +154,7 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
       issuer,
       claim.claimedValue,
       claim.groupProperties.generationTimestamp,
-      abi.encode(userTicket, burnCount)
+      abi.encode(nullifier, burnCount)
     );
 
     return (attestations);
@@ -165,7 +165,7 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
   *******************************************************/
   /**
    * @dev Hook run before recording the attestation.
-   * Throws if ticket already used, not a renewal, and ticket on cooldown.
+   * Throws if nullifier already used, not a renewal, and nullifier on cooldown.
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
@@ -174,21 +174,21 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
     virtual
     override
   {
-    uint256 userTicket = proofData._getTicket();
-    TicketData memory userTicketData = _userTicketsData[userTicket];
+    uint256 nullifier = proofData._getNullifier();
+    NullifierData memory nullifierData = _nullifiersData[nullifier];
 
     if (
-      userTicketData.destination != address(0) && userTicketData.destination != request.destination
+      nullifierData.destination != address(0) && nullifierData.destination != request.destination
     ) {
       HydraS1AccountboundClaim memory claim = request._hydraS1Accountboundclaim();
-      if (_isOnCooldown(userTicketData, claim.groupProperties.cooldownDuration))
-        revert TicketOnCooldown(userTicketData, claim.groupProperties.cooldownDuration);
+      if (_isOnCooldown(nullifierData, claim.groupProperties.cooldownDuration))
+        revert NullifierOnCooldown(nullifierData, claim.groupProperties.cooldownDuration);
 
       // Delete the old Attestation on the account before recording the new one
       address[] memory attestationOwners = new address[](1);
       uint256[] memory attestationCollectionIds = new uint256[](1);
 
-      attestationOwners[0] = userTicketData.destination;
+      attestationOwners[0] = nullifierData.destination;
       attestationCollectionIds[0] =
         AUTHORIZED_COLLECTION_ID_FIRST +
         claim.groupProperties.groupIndex;
@@ -198,16 +198,16 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
       emit AttestationDeleted(
         Attestation(
           AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex,
-          userTicketData.destination,
+          nullifierData.destination,
           address(this),
           claim.claimedValue,
           claim.groupProperties.generationTimestamp,
-          abi.encode(userTicket, userTicketData.burnCount)
+          abi.encode(nullifier, nullifierData.burnCount)
         )
       );
-      _setTicketOnCooldown(userTicket);
+      _setNullifierOnCooldown(nullifier);
     }
-    _setDestinationForTicket(userTicket, request.destination);
+    _setDestinationForNullifier(nullifier, request.destination);
   }
 
   /*******************************************************
@@ -215,22 +215,25 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
   *******************************************************/
 
   /**
-   * @dev Returns the ticket identifier from a user claim
+   * @dev Returns the external nullifier from a user claim
    * @param claim user Hydra-S1 claim = have an account with a specific value in a specific group
-   * ticket = hash(sourceSecretHash, ticketIdentifier), which is verified inside the snark
+   * nullifier = hash(sourceSecretHash, externalNullifier), which is verified inside the snark
    * users bring sourceSecretHash as private input in snark which guarantees privacy
    
-   * Here we chose ticketIdentifier = hash(attesterAddress, claim.GroupId)
-   * Creates one ticket per group, per user and makes sure no collision with other attester's tickets
+   * Here we chose externalNullifier = hash(attesterAddress, claim.GroupId)
+   * Creates one nullifier per group, per user and makes sure no collision with other attester's nullifiers
   **/
-  function _getTicketIdentifierOfClaim(HydraS1Claim memory claim)
+  function _getExternalNullifierOfClaim(HydraS1Claim memory claim)
     internal
     view
     override
     returns (uint256)
   {
-    uint256 ticketIdentifier = _encodeInSnarkField(address(this), claim.groupProperties.groupIndex);
-    return ticketIdentifier;
+    uint256 externalNullifier = _encodeInSnarkField(
+      address(this),
+      claim.groupProperties.groupIndex
+    );
+    return externalNullifier;
   }
 
   /*******************************************************
@@ -238,46 +241,51 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
   *******************************************************/
 
   /**
-   * @dev Getter, returns the last attestation destination of a ticket
-   * @param userTicket ticket used
+   * @dev Getter, returns the last attestation destination of a nullifier
+   * @param nullifier nullifier used
    **/
-  function getDestinationOfTicket(uint256 userTicket) external view override returns (address) {
-    return _getDestinationOfTicket(userTicket);
+  function getDestinationOfNullifier(uint256 nullifier) external view override returns (address) {
+    return _getDestinationOfNullifier(nullifier);
   }
 
   /**
-   * @dev Getter, returns the data linked to a ticket
-   * @param userTicket ticket used
+   * @dev Getter, returns the data linked to a nullifier
+   * @param nullifier nullifier used
    **/
-  function getTicketData(uint256 userTicket) external view override returns (TicketData memory) {
-    return _getTicketData(userTicket);
+  function getNullifierData(uint256 nullifier)
+    external
+    view
+    override
+    returns (NullifierData memory)
+  {
+    return _getNullifierData(nullifier);
   }
 
-  function _setDestinationForTicket(uint256 userTicket, address destination) internal virtual {
-    _userTicketsData[userTicket].destination = destination;
-    emit TicketDestinationUpdated(userTicket, destination);
+  function _setDestinationForNullifier(uint256 nullifier, address destination) internal virtual {
+    _nullifiersData[nullifier].destination = destination;
+    emit NullifierDestinationUpdated(nullifier, destination);
   }
 
-  function _setTicketOnCooldown(uint256 userTicket) internal {
-    _userTicketsData[userTicket].cooldownStart = uint32(block.timestamp);
-    _userTicketsData[userTicket].burnCount += 1;
-    emit TicketSetOnCooldown(userTicket, _userTicketsData[userTicket].burnCount);
+  function _setNullifierOnCooldown(uint256 nullifier) internal {
+    _nullifiersData[nullifier].cooldownStart = uint32(block.timestamp);
+    _nullifiersData[nullifier].burnCount += 1;
+    emit NullifierSetOnCooldown(nullifier, _nullifiersData[nullifier].burnCount);
   }
 
-  function _getDestinationOfTicket(uint256 userTicket) internal view returns (address) {
-    return _userTicketsData[userTicket].destination;
+  function _getDestinationOfNullifier(uint256 nullifier) internal view returns (address) {
+    return _nullifiersData[nullifier].destination;
   }
 
-  function _isOnCooldown(TicketData memory userTicketData, uint32 cooldownDuration)
+  function _isOnCooldown(NullifierData memory nullifierData, uint32 cooldownDuration)
     internal
     view
     returns (bool)
   {
-    return userTicketData.cooldownStart + cooldownDuration > block.timestamp;
+    return nullifierData.cooldownStart + cooldownDuration > block.timestamp;
   }
 
-  function _getTicketData(uint256 userTicket) internal view returns (TicketData memory) {
-    return _userTicketsData[userTicket];
+  function _getNullifierData(uint256 nullifier) internal view returns (NullifierData memory) {
+    return _nullifiersData[nullifier];
   }
 
   function _encodeInSnarkField(address addr, uint256 nb) internal pure returns (uint256) {
