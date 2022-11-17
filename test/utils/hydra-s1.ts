@@ -139,7 +139,7 @@ export const encodeGroupProperties = (groupProperties: HydraS1SimpleGroupPropert
 /************    PROVING SCHEME     *************/
 /*************************************************/
 
-export async function generateTicketIdentifier(attesterAddress: string, groupIndex: number) {
+export async function generateExternalNullifier(attesterAddress: string, groupIndex: number) {
   return BigNumber.from(
     ethers.utils.keccak256(
       ethers.utils.defaultAbiCoder.encode(['address', 'uint256'], [attesterAddress, groupIndex])

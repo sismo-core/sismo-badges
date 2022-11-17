@@ -9,10 +9,10 @@ import {Pythia1Lib, Pythia1ProofData, Pythia1ProofInput} from './../libs/Pythia1
 import {IPythia1Base} from './../base/IPythia1Base.sol';
 
 interface IPythia1SimpleAttester is IPythia1Base, IAttester {
-  error TicketUsed(uint256 userTicket);
+  error NullifierUsed(uint256 nullifier);
   error CollectionIdOutOfBound(uint256 collectionId);
 
-  event TicketDestinationUpdated(uint256 ticket, address newOwner);
+  event NullifierDestinationUpdated(uint256 nullifier, address newOwner);
   event CommitmentSignerPubKeyUpdated(uint256[2] newCommitmentSignerPubKey);
 
   /**
@@ -23,10 +23,10 @@ interface IPythia1SimpleAttester is IPythia1Base, IAttester {
   function initialize(uint256[2] memory commitmentSignerPubKey, address owner) external;
 
   /**
-   * @dev Getter, returns the last attestation destination of a ticket
-   * @param userTicket ticket used
+   * @dev Getter, returns the last attestation destination of a nullifier
+   * @param nullifier nullifier used
    **/
-  function getDestinationOfTicket(uint256 userTicket) external view returns (address);
+  function getDestinationOfNullifier(uint256 nullifier) external view returns (address);
 
   /**
    * @dev Getter

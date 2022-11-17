@@ -222,7 +222,8 @@ describe('Test Front contract', () => {
       await assertAttestationDataIsValid(attestationsRegistry, attestations.first, userDestination);
     });
     it('Should not generate early user attestation if the date is > to Sept 15 2022', async () => {
-      await increaseTime(hre, Date.parse('16 Sept 20222 00:00:00 GMT') - Date.now());
+      // not needed since the date is passed (writing this comment on November 17th 2022)
+      // await increaseTime(hre, Date.parse('16 Sept 20222 00:00:00 GMT') - Date.now());
 
       const generateAttestationsTransaction = await front.generateAttestations(
         mockAttester.address,

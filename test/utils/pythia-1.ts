@@ -29,12 +29,12 @@ export const generatePythia1Group = ({ internalCollectionId, isScore }): Pythia1
   };
 };
 
-export const computeUserTicket = async (
+export const computeNullifier = async (
   secret: BigNumberish,
-  ticketIdentifier: BigNumberish
+  externalNullifier: BigNumberish
 ): Promise<BigNumber> => {
   const poseidon = await buildPoseidon();
-  return poseidon([secret, ticketIdentifier]);
+  return poseidon([secret, externalNullifier]);
 };
 
 export class CommitmentSignerTester {

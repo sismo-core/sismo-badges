@@ -62,22 +62,22 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
   *******************************************************/
 
   /**
-   * @dev MANDATORY: must be implemented to return the ticket identifier from a user request
+   * @dev MANDATORY: must be implemented to return the external nullifier from a user request
    * so it can be checked against snark input
-   * ticket = hash(secretHash, ticketIdentifier), which is verified inside the snark
+   * nullifier = hash(secretHash, externalNullifier), which is verified inside the snark
    * the secretHash is a number only known by the user and is used in 
    * the zero knowledge as a private input which guarantees privacy
 
    * This function MUST be implemented by Pythia-1 attesters.
-   * This is the core function that implements the logic of tickets
+   * This is the core function that implements the logic of external nullifier
 
-   * Do they get one ticket per claim?
-   * Do they get 2 tickets per claim?
-   * Do they get 1 ticket per claim, every month?
+   * Do they get one external nullifier per claim?
+   * Do they get 2 external nullifiers per claim?
+   * Do they get 1 external nullifier per claim, every month?
    * Take a look at Pythia-1 Simple Attester for an example
    * @param claim user claim: a particular claim that a user have that he can prove s right.
    */
-  function _getTicketIdentifierOfClaim(Pythia1Claim memory claim)
+  function _getExternalNullifierOfClaim(Pythia1Claim memory claim)
     internal
     view
     virtual
@@ -126,10 +126,10 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
         input.commitmentSignerPubKey[1]
       );
 
-    uint256 ticketIdentifier = _getTicketIdentifierOfClaim(claim);
+    uint256 externalNullifier = _getExternalNullifierOfClaim(claim);
 
-    if (input.ticketIdentifier != ticketIdentifier)
-      revert TicketIdentifierMismatch(ticketIdentifier, input.ticketIdentifier);
+    if (input.externalNullifier != externalNullifier)
+      revert ExternalNullifierMismatch(externalNullifier, input.externalNullifier);
   }
 
   /**
