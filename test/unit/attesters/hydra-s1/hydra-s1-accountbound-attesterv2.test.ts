@@ -112,7 +112,9 @@ describe('Test HydraS1 Accountbound Attester V2 contract', () => {
         hydraS1Verifier,
         commitmentMapperRegistry,
         availableRootsRegistry,
-      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {}));
+      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
+        options: { deploymentNamePrefix: 'accountbound-v2' },
+      }));
 
       // 0 - Checks that the verifier, available roots registry, commitment mapper registry and attestations registry are set
       expect(await hydraS1AccountboundAttesterv2.getVerifier()).to.equal(hydraS1Verifier.address);
