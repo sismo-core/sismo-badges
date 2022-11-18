@@ -8,6 +8,8 @@ import {
   Badges,
   TransparentUpgradeableProxy__factory,
 } from '../../../../types';
+import { formatBytes32String } from 'ethers/lib/utils';
+import { evmRevert, evmSnapshot } from '../../../../test/utils';
 
 describe('Test Attestations Registry Config Logic contract', () => {
   let deployer: SignerWithAddress;
@@ -18,6 +20,8 @@ describe('Test Attestations Registry Config Logic contract', () => {
   let attestationsRegistry: AttestationsRegistry;
   let secondAttestationsRegistry: AttestationsRegistry;
   let badges: Badges;
+
+  let snapshotId: string;
 
   before(async () => {
     const signers = await ethers.getSigners();
@@ -48,6 +52,8 @@ describe('Test Attestations Registry Config Logic contract', () => {
       // 0 - Checks that the owner is set to the deployer address
       expect(await attestationsRegistry.owner()).to.equal(deployer.address);
       expect(await secondAttestationsRegistry.owner()).to.equal(secondDeployer.address);
+
+      snapshotId = await evmSnapshot(hre);
     });
   });
 
@@ -528,6 +534,189 @@ describe('Test Attestations Registry Config Logic contract', () => {
       await expect(attestationsRegistry.renounceOwnership())
         .to.emit(attestationsRegistry, 'OwnershipTransferred')
         .withArgs(deployer.address, ethers.constants.AddressZero);
+    });
+  });
+
+  describe('Tags', async () => {
+    let TAGS = {
+      CURATED: 1,
+      SYBIL_RESISTANCE: 2,
+      TEST_INSERTION: 10,
+      NOT_INSERTED: 50,
+    };
+
+    before(async () => {
+      await evmRevert(hre, snapshotId);
+    });
+
+    describe('Tag insertion', async () => {
+      it('Should revert when inserting a new tag as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .insertNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'))
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should insert a new tag as an owner', async () => {
+        const tagInserted = await attestationsRegistry
+          .connect(deployer)
+          .insertNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
+
+        await expect(tagInserted)
+          .to.emit(attestationsRegistry, 'NewTagInserted')
+          .withArgs(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
+      });
+
+      it('Should revert when inserting a tag with index > 63', async () => {
+        await expect(
+          attestationsRegistry.insertNewTag(64, formatBytes32String('TAG_OVERFLOW'))
+        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+      });
+
+      it('Should revert when trying to re-insert a tag for the same index', async () => {
+        await expect(
+          attestationsRegistry.insertNewTag(TAGS.TEST_INSERTION, formatBytes32String('OTHER TAG'))
+        ).to.be.revertedWith('TagAlreadyExists(10)');
+      });
+    });
+
+    describe('Tag update', async () => {
+      it('Should revert when updating tag as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .updateTagName(TAGS.TEST_INSERTION, formatBytes32String('CURATED2'))
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when trying to update update a tag name that does not exists', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .updateTagName(TAGS.NOT_INSERTED, formatBytes32String('NOT_INSERTED'))
+        ).to.be.revertedWith('TagDoesNotExist(50)');
+      });
+
+      it('Should update a tag name', async () => {
+        const tagUpdated = await attestationsRegistry
+          .connect(deployer)
+          .updateTagName(TAGS.TEST_INSERTION, formatBytes32String('CURATED2'));
+
+        await expect(tagUpdated)
+          .to.emit(attestationsRegistry, 'TagNameUpdated')
+          .withArgs(TAGS.TEST_INSERTION, formatBytes32String('CURATED2'));
+      });
+    });
+
+    describe('Tag deletion', async () => {
+      it('Should revert when deleting a tag as a non-owner', async () => {
+        await expect(
+          attestationsRegistry.connect(notOwner).deleteTag(TAGS.NOT_INSERTED)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when trying to update update a tag name that does not exists', async () => {
+        await expect(
+          attestationsRegistry.connect(notOwner).deleteTag(TAGS.NOT_INSERTED)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should delete a tag', async () => {
+        const tagDeleted = await attestationsRegistry
+          .connect(deployer)
+          .deleteTag(TAGS.TEST_INSERTION);
+        await expect(tagDeleted)
+          .to.emit(attestationsRegistry, 'TagDeleted')
+          .withArgs(TAGS.TEST_INSERTION);
+      });
+    });
+
+    describe('Register AttestationsCollection Tags', async () => {
+      before(async () => {
+        // Register the tag we will use during the tests
+        await attestationsRegistry
+          .connect(deployer)
+          .insertNewTag(TAGS.CURATED, formatBytes32String('CURATED'));
+      });
+
+      it('Should revert when registering a tag as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .registerAttestationsCollectionTag(1, TAGS.CURATED, 1)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when registering a tag to an AttestationsCollection and the tag is not already inserted', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .registerAttestationsCollectionTag(1, TAGS.NOT_INSERTED, 1)
+        ).to.be.revertedWith('TagDoesNotExist(50)');
+      });
+
+      it('Should register a tag to an AttestationsCollection with power 1', async () => {
+        const tagRegistered = await attestationsRegistry
+          .connect(deployer)
+          .registerAttestationsCollectionTag(1, TAGS.CURATED, 1);
+
+        await expect(tagRegistered)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagRegistered')
+          .withArgs(1, TAGS.CURATED, 1);
+
+        expect(await attestationsRegistry.hasAttestationsCollectionTag(1, TAGS.CURATED)).to.be.true;
+        expect(
+          await attestationsRegistry.getAttestationsCollectionTagPower(1, TAGS.CURATED)
+        ).to.be.eq(1);
+      });
+
+      it('Should register a tag to an AttestationsCollection and increase the power', async () => {
+        const tagRegistered = await attestationsRegistry
+          .connect(deployer)
+          .registerAttestationsCollectionTag(1, TAGS.CURATED, 5);
+
+        await expect(tagRegistered)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagRegistered')
+          .withArgs(1, TAGS.CURATED, 5);
+
+        expect(await attestationsRegistry.hasAttestationsCollectionTag(1, TAGS.CURATED)).to.be.true;
+        expect(
+          await attestationsRegistry.getAttestationsCollectionTagPower(1, TAGS.CURATED)
+        ).to.be.eq(5);
+      });
+
+      it('Should revert to register a tag to an AttestationsCollection with power > 7', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .registerAttestationsCollectionTag(1, TAGS.CURATED, 8)
+        ).to.be.revertedWith('TagPowerOutOfBounds(8)');
+      });
+
+      it('Should revert when unregistering a tag as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .unregisterAttestationsCollectionTag(1, TAGS.CURATED)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should unregister tag to an AttestationsCollection', async () => {
+        const tagRegistered = await attestationsRegistry
+          .connect(deployer)
+          .unregisterAttestationsCollectionTag(1, TAGS.CURATED);
+
+        await expect(tagRegistered)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagUnregistered')
+          .withArgs(1, TAGS.CURATED);
+
+        expect(await attestationsRegistry.hasAttestationsCollectionTag(1, TAGS.CURATED)).to.be
+          .false;
+        expect(
+          await attestationsRegistry.getAttestationsCollectionTagPower(1, TAGS.CURATED)
+        ).to.be.eq(0);
+      });
     });
   });
 
