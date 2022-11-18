@@ -17,6 +17,17 @@ interface IAttestationsRegistryConfigLogic {
     uint256 FirstId,
     uint256 lastCollectionId
   );
+  error TagDoesNotExist(uint8 tagIndex);
+  error TagAlreadyExists(uint8 tagIndex);
+  error ArgsLengthDoesNotMatch();
+
+  event NewTagInserted(uint8 tagIndex, bytes32 tagName);
+  event TagNameUpdated(uint8 tagIndex, bytes32 tagName);
+  event TagDeleted(uint8 tagIndex);
+
+  event AttestationsCollectionTagRegistered(uint256 collectionId, uint8 tagIndex, uint8 tagPower);
+  event AttestationsCollectionTagUnregistered(uint256 collectionId, uint8 tagIndex);
+
   event IssuerAuthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
   event IssuerUnauthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
 
@@ -80,4 +91,58 @@ interface IAttestationsRegistryConfigLogic {
    * @dev Unpauses the registry
    */
   function unpause() external;
+
+  function hasAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex)
+    external
+    view
+    returns (bool);
+
+  function hasAttestationsCollectionTags(uint256 collectionId, uint8[] memory tagIndex)
+    external
+    view
+    returns (bool);
+
+  function getAttestationsCollectionTagPower(uint256 collectionId, uint8 tagIndex)
+    external
+    view
+    returns (uint8);
+
+  function getAttestationsCollectionTagsPower(uint256 collectionId, uint8[] memory tagIndex)
+    external
+    view
+    returns (uint8[] memory);
+
+  function registerAttestationsCollectionTag(
+    uint256 collectionId,
+    uint8 tagIndex,
+    uint8 tagPower
+  ) external;
+
+  function registerAttestationsCollectionTags(
+    uint256[] memory collectionIds,
+    uint8[] memory tagIndices,
+    uint8[] memory tagPowers
+  ) external;
+
+  function unregisterAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex) external;
+
+  function unregisterAttestationsCollectionTags(
+    uint256[] memory collectionIds,
+    uint8[] memory tagIndices
+  ) external;
+
+  /**
+   * @dev Tags logic
+   */
+  function insertNewTag(uint8 tagIndex, bytes32 tagName) external;
+
+  function insertNewTags(uint8[] memory tagIndices, bytes32[] memory tagNames) external;
+
+  function updateTagName(uint8 tagIndex, bytes32 newTagName) external;
+
+  function updateTagNames(uint8[] memory tagIndices, bytes32[] memory newTagNames) external;
+
+  function deleteTag(uint8 tagIndex) external;
+
+  function deleteTags(uint8[] memory tagIndices) external;
 }
