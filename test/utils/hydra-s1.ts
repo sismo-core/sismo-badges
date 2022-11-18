@@ -73,7 +73,15 @@ export type AttesterGroups = {
   dataFormat: RegistryAccountsMerkle;
 };
 
-export const generateAttesterGroups = async (allList: GroupData[]): Promise<AttesterGroups> => {
+export type generateAttesterGroups = {
+  generationTimestamp?: number;
+  isScore?: boolean;
+};
+
+export const generateAttesterGroups = async (
+  allList: GroupData[],
+  options?: generateAttesterGroups
+): Promise<AttesterGroups> => {
   let poseidon = await buildPoseidon();
 
   /*********************** GENERATE GROUPS *********************/
@@ -81,11 +89,15 @@ export const generateAttesterGroups = async (allList: GroupData[]): Promise<Atte
   const groups: HydraS1SimpleGroup[] = [];
   let generationTimestamp = Math.round(Date.now() / 1000);
 
+  if (options && options.generationTimestamp) {
+    generationTimestamp = options.generationTimestamp;
+  }
+
   for (let i = 0; i < allList.length; i++) {
     const properties = {
       groupIndex: i,
       generationTimestamp,
-      isScore: i % 2 == 1,
+      isScore: options && options.isScore ? options.isScore : i % 2 == 1,
     };
 
     groups.push({
