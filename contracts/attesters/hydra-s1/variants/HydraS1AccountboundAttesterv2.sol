@@ -54,6 +54,13 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
 
+  // Mapping to know cooldown value for a specific groupId
+  mapping(uint256 => uint32) internal _groupIdCooldowns;
+
+  // mappings to know the state related to a specific nullifier
+  mapping(uint256 => uint32) internal _nullifiersCooldownStart;
+  mapping(uint256 => uint16) internal _nullifiersBurnCount;
+
   /*******************************************************
     INITIALIZATION FUNCTIONS                           
   *******************************************************/
@@ -72,8 +79,7 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
     address availableRootsRegistryAddress,
     address commitmentMapperAddress,
     uint256 collectionIdFirst,
-    uint256 collectionIdLast,
-    uint32 defaultCooldownDuration
+    uint256 collectionIdLast
   )
     HydraS1SimpleAttester(
       attestationsRegistryAddress,
@@ -101,13 +107,10 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
     Attestation[] memory attestations = super.buildAttestations(request, proofData);
 
     uint256 nullifier = proofData._getNullifier();
-    uint16 burnCount = super.handleAccountboundBurnCount(
-      nullifier,
-      _getDestinationOfNullifier(nullifier),
-      attestations[0].owner
-    );
+    attestations[0].extraData =
+      attestations[0].extraData +
+      _encodeNullifierAndNullifierBurnCount(nullifier, attestations[0].owner);
 
-    attestations[0].extraData = attestations[0].extraData + abi.encode(nullifier, burnCount);
     return (attestations);
   }
 
@@ -162,5 +165,28 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
       _setNullifierOnCooldown(nullifiers);
     }
     _setDestinationForNullifier(nullifier, request.destination);
+  }
+
+  /*******************************************************
+    LOGIC FUNCTIONS RELATED TO ACCOUNTBOUND BEHAVIOUR
+  *******************************************************/
+
+  /**
+   * @dev ABI encodes nullifier and the burn count of the nullifier
+   * @param nullifier user nullifier
+   * @param claimDestination destination referenced in the user claim
+   */
+  function _encodeNullifierAndNullifierBurnCount(
+    uint256 nullifier,
+    address claimDestination
+  ) internal virtual returns (bytes memory) {
+    address nullifierDestination = _getDestinationOfNullifier(nullifier);
+    uint16 burnCount = _nullifiersBurnCount[nullifier];
+    // If the attestation is minted on a new destination address
+    // the burnCount encoded in the extraData of the Attestation should be incremented
+    if (nullifierDestination != address(0) && nullifierDestination != claimDestination) {
+      burnCount += 1;
+    }
+    return (abi.encode(nullifier, burnCount));
   }
 }
