@@ -158,11 +158,11 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
           address(this),
           claim.claimedValue,
           claim.groupProperties.generationTimestamp,
-          abi.encode(nullifier, _nullifiersBurnCount[nullifier])
+          abi.encode(nullifier, _getNullifierBurnCount(nullifier))
         )
       );
 
-      _setNullifierOnCooldown(nullifiers);
+      _setNullifierOnCooldown(nullifier);
     }
     _setDestinationForNullifier(nullifier, request.destination);
   }
@@ -181,12 +181,58 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
     address claimDestination
   ) internal virtual returns (bytes memory) {
     address nullifierDestination = _getDestinationOfNullifier(nullifier);
-    uint16 burnCount = _nullifiersBurnCount[nullifier];
+    uint16 burnCount = _getNullifierBurnCount(nullifier);
     // If the attestation is minted on a new destination address
     // the burnCount encoded in the extraData of the Attestation should be incremented
     if (nullifierDestination != address(0) && nullifierDestination != claimDestination) {
       burnCount += 1;
     }
     return (abi.encode(nullifier, burnCount));
+  }
+
+  /*******************************************************
+        GETTERS AND SETTERS FOR NULLIFIER MAPPINGS
+  *******************************************************/
+
+  function _setNullifierOnCooldown(uint256 nullifier) internal {
+    _nullifiersCooldownStart[nullifier] = uint32(block.timestamp);
+    _nullifiersBurnCount[nullifier] += 1;
+    emit NullifierSetOnCooldown(nullifier, _nullifiersBurnCount[nullifier]);
+  }
+
+  function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
+    return _getNullifierCooldownStart(nullifier);
+  }
+
+  function _getNullifierCooldownStart(uint256 nullifier) internal view returns (uint32) {
+    return _nullifiersCooldownStart[nullifier];
+  }
+
+  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
+    return _getNullifierBurnCount(nullifier);
+  }
+
+  function _getNullifierBurnCount(uint256 nullifier) internal view returns (uint16) {
+    return _nullifiersBurnCount[nullifier];
+  }
+
+  /*******************************************************
+         GETTERS AND SETTERS FOR GROUP ID MAPPING
+  *******************************************************/
+
+  function setCooldownDurationForgroupId(uint256 groupId, uint32 cooldownDuration) public {
+    _groupIdCooldowns[groupId] = cooldownDuration;
+  }
+
+  function getCooldownDurationForGroupId(uint256 groupId) external view returns (uint32) {
+    return _getCooldownDurationForGroupId(groupId);
+  }
+
+  function _getCooldownDurationForGroupId(uint256 groupId) internal view returns (uint32) {
+    uint32 cooldownDuration = _groupIdCooldowns[groupId];
+    if (cooldownDuration == 0) {
+      revert CooldownDurationNotSetForGroupId(groupId);
+    }
+    return cooldownDuration;
   }
 }
