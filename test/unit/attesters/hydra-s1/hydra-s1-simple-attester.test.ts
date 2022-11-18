@@ -158,7 +158,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: externalNullifier,
+        externalNullifier: externalNullifier,
         isStrict: !group1.properties.isScore,
       });
 
@@ -194,7 +194,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree2,
-        ticketIdentifier: externalNullifier,
+        externalNullifier: externalNullifier,
         isStrict: false,
       });
 
@@ -274,7 +274,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: externalNullifier,
+        externalNullifier: externalNullifier,
         isStrict: !group1.properties.isScore,
       });
 
@@ -340,7 +340,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: wrongExternalNullifier,
+        externalNullifier: wrongExternalNullifier,
         isStrict: !group1.properties.isScore,
       });
 
@@ -394,7 +394,7 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         accountsTree: accountsTree1,
-        ticketIdentifier: externalNullifier,
+        externalNullifier: externalNullifier,
         isStrict: !group1.properties.isScore,
       });
 

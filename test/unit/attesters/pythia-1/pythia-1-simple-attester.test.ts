@@ -136,7 +136,7 @@ describe('Test pythia 1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         groupId: group1.id,
-        ticketIdentifier: externalNullifier,
+        externalNullifier: externalNullifier,
         isStrict: !group1.properties.isScore,
       })) as SnarkProof;
 
