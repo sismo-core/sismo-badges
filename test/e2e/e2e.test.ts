@@ -10,6 +10,7 @@ import {
   HydraS1AccountboundAttester,
   Pythia1SimpleAttester,
   TransparentUpgradeableProxy__factory,
+  HydraS1AccountboundAttesterv2,
 } from '../../types';
 import { RequestStruct } from 'types/Attester';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -54,6 +55,7 @@ describe('Test E2E Protocol', () => {
   // contracts
   let attestationsRegistry: AttestationsRegistry;
   let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
+  let hydraS1AccountboundAttesterv2: HydraS1AccountboundAttesterv2;
   let hydraS1SimpleAttester: HydraS1SimpleAttester;
   let pythia1SimpleAttester: Pythia1SimpleAttester;
   let availableRootsRegistry: AvailableRootsRegistry;
@@ -164,6 +166,7 @@ describe('Test E2E Protocol', () => {
         commitmentMapperRegistry,
         hydraS1SimpleAttester,
         hydraS1AccountboundAttester,
+        hydraS1AccountboundAttesterv2,
         availableRootsRegistry,
       } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
         options: {
@@ -471,9 +474,9 @@ describe('Test E2E Protocol', () => {
       expect(implementationAddress).to.eql(newHydraS1SimpleAttester.address);
     });
 
-    it('Should update Hydra S1 Accountbound implementation', async () => {
-      const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = await hre.run(
-        'deploy-hydra-s1-accountbound-attester',
+    it('Should update Hydra S1 Accountbound implementation with V2', async () => {
+      const { hydraS1AccountboundAttesterv2: newHydraS1AccountboundAttester } = await hre.run(
+        'deploy-hydra-s1-accountbound-attester-v2',
         {
           collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
           collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
@@ -485,7 +488,7 @@ describe('Test E2E Protocol', () => {
       );
 
       const hydraS1AccountboundAttesterProxy = TransparentUpgradeableProxy__factory.connect(
-        hydraS1AccountboundAttester.address,
+        hydraS1AccountboundAttesterv2.address,
         proxyAdminSigner
       );
 

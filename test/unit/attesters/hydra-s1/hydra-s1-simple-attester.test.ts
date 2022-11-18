@@ -124,7 +124,9 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         commitmentMapperRegistry,
         hydraS1SimpleAttester,
         availableRootsRegistry,
-      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {})) as Deployed0);
+      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
+        proxyAdmin: proxyAdminSigner.address,
+      })) as Deployed0);
       const root = registryTree.getRoot();
       await availableRootsRegistry.registerRootForAttester(hydraS1SimpleAttester.address, root);
     });
