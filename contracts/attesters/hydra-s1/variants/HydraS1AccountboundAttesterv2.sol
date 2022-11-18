@@ -107,9 +107,9 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
     Attestation[] memory attestations = super.buildAttestations(request, proofData);
 
     uint256 nullifier = proofData._getNullifier();
-    attestations[0].extraData = abi.encode(
-      attestations[0].extraData,
-      encodeNullifierAndNullifierBurnCount(nullifier, attestations[0].owner)
+    attestations[0].extraData = encodeNullifierAndNullifierBurnCount(
+      nullifier,
+      attestations[0].owner
     );
 
     return (attestations);
@@ -162,7 +162,6 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
           abi.encode(nullifier, _getNullifierBurnCount(nullifier))
         )
       );
-
       _setNullifierOnCooldown(nullifier);
     }
     _setDestinationForNullifier(nullifier, request.destination);
