@@ -107,9 +107,10 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
     Attestation[] memory attestations = super.buildAttestations(request, proofData);
 
     uint256 nullifier = proofData._getNullifier();
-    attestations[0].extraData =
-      attestations[0].extraData +
-      _encodeNullifierAndNullifierBurnCount(nullifier, attestations[0].owner);
+    attestations[0].extraData = abi.encode(
+      attestations[0].extraData,
+      encodeNullifierAndNullifierBurnCount(nullifier, attestations[0].owner)
+    );
 
     return (attestations);
   }
@@ -176,10 +177,10 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
    * @param nullifier user nullifier
    * @param claimDestination destination referenced in the user claim
    */
-  function _encodeNullifierAndNullifierBurnCount(
+  function encodeNullifierAndNullifierBurnCount(
     uint256 nullifier,
     address claimDestination
-  ) internal virtual returns (bytes memory) {
+  ) public view virtual returns (bytes memory) {
     address nullifierDestination = _getDestinationOfNullifier(nullifier);
     uint16 burnCount = _getNullifierBurnCount(nullifier);
     // If the attestation is minted on a new destination address
@@ -188,6 +189,27 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
       burnCount += 1;
     }
     return (abi.encode(nullifier, burnCount));
+  }
+
+  function _isCooldownRenewedForNullifier(
+    uint256 nullifier,
+    address oldDestination,
+    address newDestination,
+    uint256 groupId
+  ) internal virtual returns (bool) {
+    uint16 burnCount = _getNullifierBurnCount(nullifier);
+
+    if (oldDestination != address(0) && oldDestination != newDestination) {
+      uint32 cooldownDuration = _getCooldownDurationForGroupId(groupId);
+      if (_isOnCooldown(nullifier, cooldownDuration))
+        revert NullifierOnCooldown(nullifier, oldDestination, burnCount, cooldownDuration);
+      return true;
+    }
+    return false;
+  }
+
+  function _isOnCooldown(uint256 nullifier, uint32 cooldownDuration) internal view returns (bool) {
+    return _getNullifierCooldownStart(nullifier) + cooldownDuration > block.timestamp;
   }
 
   /*******************************************************
