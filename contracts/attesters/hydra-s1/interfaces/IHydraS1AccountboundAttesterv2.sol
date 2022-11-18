@@ -14,4 +14,10 @@ interface IHydraS1AccountboundAttesterv2 is IHydraS1SimpleAttester {
   event NullifierSetOnCooldown(uint256 nullifier, uint16 burnCount);
 
   error CooldownDurationNotSetForGroupId(uint256 groupId);
+  error NullifierOnCooldown(
+    uint256 nullifier,
+    address destination,
+    uint16 burnCount,
+    uint32 cooldownStart
+  );
 }
