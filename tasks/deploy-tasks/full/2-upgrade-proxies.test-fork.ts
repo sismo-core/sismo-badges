@@ -311,7 +311,7 @@ describe('FORK-Test E2E Protocol', () => {
           claimedValue: source1Value,
           chainId: chainId,
           accountsTree: accountsTree1,
-          ticketIdentifier: externalNullifier1,
+          externalNullifier: externalNullifier1,
           isStrict: !group1.properties.isScore,
         })
       ).toBytes();
@@ -334,7 +334,7 @@ describe('FORK-Test E2E Protocol', () => {
           claimedValue: source2Value,
           chainId: chainId,
           accountsTree: accountsTree2,
-          ticketIdentifier: externalNullifier2,
+          externalNullifier: externalNullifier2,
           isStrict: !group2.properties.isScore,
         })
       ).toBytes();
@@ -519,7 +519,7 @@ describe('FORK-Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        ticketIdentifier: externalNullifier,
+        externalNullifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 
@@ -630,7 +630,7 @@ describe('FORK-Test E2E Protocol', () => {
           claimedValue: source3Value,
           chainId: chainId,
           accountsTree: accountsTree1,
-          ticketIdentifier: externalNullifier1,
+          externalNullifier: externalNullifier1,
           isStrict: !group1.properties.isScore,
         })
       ).toBytes();
@@ -653,7 +653,7 @@ describe('FORK-Test E2E Protocol', () => {
           claimedValue: source4Value,
           chainId: chainId,
           accountsTree: accountsTreeAccountBound,
-          ticketIdentifier: externalNullifierAccountBound,
+          externalNullifier: externalNullifierAccountBound,
           isStrict: !groupAccountBound.properties.isScore,
         })
       ).toBytes();
@@ -831,7 +831,7 @@ describe('FORK-Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        ticketIdentifier: externalNullifier,
+        externalNullifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 
