@@ -542,41 +542,41 @@ describe('Test Attestations Registry Config Logic contract', () => {
       CURATED: 1,
       SYBIL_RESISTANCE: 2,
       TEST_INSERTION: 10,
-      NOT_INSERTED: 50,
+      NOT_CREATED: 50,
     };
 
     before(async () => {
       await evmRevert(hre, snapshotId);
     });
 
-    describe('Tag insertion', async () => {
-      it('Should revert when inserting a new tag as a non-owner', async () => {
+    describe('Tag creation', async () => {
+      it('Should revert when creating a new tag as a non-owner', async () => {
         await expect(
           attestationsRegistry
             .connect(notOwner)
-            .insertNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'))
+            .createNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'))
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should insert a new tag as an owner', async () => {
+      it('Should create a new tag as an owner', async () => {
         const tagInserted = await attestationsRegistry
           .connect(deployer)
-          .insertNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
+          .createNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
 
         await expect(tagInserted)
           .to.emit(attestationsRegistry, 'NewTagInserted')
           .withArgs(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
       });
 
-      it('Should revert when inserting a tag with index > 63', async () => {
+      it('Should revert when creating a tag with index > 63', async () => {
         await expect(
-          attestationsRegistry.insertNewTag(64, formatBytes32String('TAG_OVERFLOW'))
+          attestationsRegistry.createNewTag(64, formatBytes32String('TAG_OVERFLOW'))
         ).to.be.revertedWith('TagIndexOutOfBounds(64)');
       });
 
-      it('Should revert when trying to re-insert a tag for the same index', async () => {
+      it('Should revert when trying to re-creating a tag for the same index', async () => {
         await expect(
-          attestationsRegistry.insertNewTag(TAGS.TEST_INSERTION, formatBytes32String('OTHER TAG'))
+          attestationsRegistry.createNewTag(TAGS.TEST_INSERTION, formatBytes32String('OTHER TAG'))
         ).to.be.revertedWith('TagAlreadyExists(10)');
       });
     });
@@ -594,7 +594,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .updateTagName(TAGS.NOT_INSERTED, formatBytes32String('NOT_INSERTED'))
+            .updateTagName(TAGS.NOT_CREATED, formatBytes32String('NOT_INSERTED'))
         ).to.be.revertedWith('TagDoesNotExist(50)');
       });
 
@@ -612,13 +612,13 @@ describe('Test Attestations Registry Config Logic contract', () => {
     describe('Tag deletion', async () => {
       it('Should revert when deleting a tag as a non-owner', async () => {
         await expect(
-          attestationsRegistry.connect(notOwner).deleteTag(TAGS.NOT_INSERTED)
+          attestationsRegistry.connect(notOwner).deleteTag(TAGS.NOT_CREATED)
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
       it('Should revert when trying to update update a tag name that does not exists', async () => {
         await expect(
-          attestationsRegistry.connect(notOwner).deleteTag(TAGS.NOT_INSERTED)
+          attestationsRegistry.connect(notOwner).deleteTag(TAGS.NOT_CREATED)
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
@@ -637,7 +637,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
         // Register the tag we will use during the tests
         await attestationsRegistry
           .connect(deployer)
-          .insertNewTag(TAGS.CURATED, formatBytes32String('CURATED'));
+          .createNewTag(TAGS.CURATED, formatBytes32String('CURATED'));
       });
 
       it('Should revert when registering a tag as a non-owner', async () => {
@@ -648,11 +648,11 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when registering a tag to an AttestationsCollection and the tag is not already inserted', async () => {
+      it('Should revert when registering a tag to an AttestationsCollection and the tag is not already created', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .registerAttestationsCollectionTag(1, TAGS.NOT_INSERTED, 1)
+            .registerAttestationsCollectionTag(1, TAGS.NOT_CREATED, 1)
         ).to.be.revertedWith('TagDoesNotExist(50)');
       });
 
