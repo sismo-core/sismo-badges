@@ -30,6 +30,61 @@ contract AttestationsRegistryConfigLogic is
   using TagLib for uint8;
 
   /**
+   * @dev Returns whether an attestationsCollection has a specific tag referenced by its index
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param tagIndex Index of the tag. Can go from 0 to 63.
+   */
+  function hasAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex)
+    external
+    view
+    returns (bool)
+  {
+    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
+    return currentTags._hasTag(tagIndex);
+  }
+
+  function hasAttestationsCollectionTags(uint256 collectionId, uint8[] memory tagIndex)
+    external
+    view
+    returns (bool)
+  {
+    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
+    for (uint256 i = 0; i < tagIndex.length; i++) {
+      if (!currentTags._hasTag(tagIndex[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * @dev Returns the tag's power (from 1 to 7) of an attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param tagIndex Index of the tag. Can go from 0 to 63.
+   */
+  function getAttestationsCollectionTagPower(uint256 collectionId, uint8 tagIndex)
+    external
+    view
+    returns (uint8)
+  {
+    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
+    return currentTags._getTagPower(tagIndex);
+  }
+
+  function getAttestationsCollectionTagsPower(uint256 collectionId, uint8[] memory tagIndex)
+    external
+    view
+    returns (uint8[] memory)
+  {
+    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
+    uint8[] memory tagsPower = new uint8[](tagIndex.length);
+    for (uint256 i = 0; i < tagIndex.length; i++) {
+      tagsPower[i] = currentTags._getTagPower(tagIndex[i]);
+    }
+    return tagsPower;
+  }
+
+  /**
    * @dev Authorize an issuer for a specific range
    * @param issuer Issuer that will be authorized
    * @param firstCollectionId First collection Id of the range for which the issuer will be authorized
@@ -95,23 +150,82 @@ contract AttestationsRegistryConfigLogic is
   }
 
   /**
-   * @dev Create new tag. A tag has an index and a name.
-   * The index corresponds to the position of the tag inside the
+   * @dev Register a tag for an attestationsCollection. The tag should be already created.
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param tagIndex Index of the tag
+   * @param tagPower Power associated to the tag. Can take the value 1 to 7
    */
-  function insertNewTag(uint8 tagIndex, bytes32 tagName) external onlyOwner {
-    _insertNewTag(tagIndex, tagName);
+  function registerAttestationsCollectionTag(
+    uint256 collectionId,
+    uint8 tagIndex,
+    uint8 tagPower
+  ) external onlyOwner {
+    _registerAttestationsCollectionTag(collectionId, tagIndex, tagPower);
   }
 
-  function insertNewTags(uint8[] memory tagIndices, bytes32[] memory tagNames) external onlyOwner {
+  function registerAttestationsCollectionTags(
+    uint256[] memory collectionIds,
+    uint8[] memory tagIndices,
+    uint8[] memory tagPowers
+  ) external onlyOwner {
+    if (collectionIds.length != tagIndices.length || collectionIds.length != tagPowers.length) {
+      revert ArgsLengthDoesNotMatch();
+    }
+
+    for (uint256 i = 0; i < collectionIds.length; i++) {
+      _registerAttestationsCollectionTag(collectionIds[i], tagIndices[i], tagPowers[i]);
+    }
+  }
+
+  /**
+   * @dev Unregister a tag for an attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param tagIndex Index of the tag
+   */
+  function unregisterAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex)
+    external
+    onlyOwner
+  {
+    _unregisterAttestationsCollectionTag(collectionId, tagIndex);
+  }
+
+  function unregisterAttestationsCollectionTags(
+    uint256[] memory collectionIds,
+    uint8[] memory tagIndices
+  ) external onlyOwner {
+    if (collectionIds.length != tagIndices.length) {
+      revert ArgsLengthDoesNotMatch();
+    }
+
+    for (uint256 i = 0; i < collectionIds.length; i++) {
+      _unregisterAttestationsCollectionTag(collectionIds[i], tagIndices[i]);
+    }
+  }
+
+  /**
+   * @dev Create a new tag.
+   * @param tagIndex Index of the tag. Can go from 0 to 63.
+   * @param tagName Name in bytes32 of the tag
+   */
+  function createNewTag(uint8 tagIndex, bytes32 tagName) external onlyOwner {
+    _createNewTag(tagIndex, tagName);
+  }
+
+  function createNewTags(uint8[] memory tagIndices, bytes32[] memory tagNames) external onlyOwner {
     if (tagIndices.length != tagNames.length) {
       revert ArgsLengthDoesNotMatch();
     }
 
     for (uint256 i = 0; i < tagIndices.length; i++) {
-      _insertNewTag(tagIndices[i], tagNames[i]);
+      _createNewTag(tagIndices[i], tagNames[i]);
     }
   }
 
+  /**
+   * @dev Update the name of an existing tag
+   * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
+   * @param newTagName new name in bytes32 of the tag
+   */
   function updateTagName(uint8 tagIndex, bytes32 newTagName) external onlyOwner {
     _updateTagName(tagIndex, newTagName);
   }
@@ -129,6 +243,10 @@ contract AttestationsRegistryConfigLogic is
     }
   }
 
+  /**
+   * @dev Delete an existing tag
+   * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
+   */
   function deleteTag(uint8 tagIndex) external onlyOwner {
     _deleteTag(tagIndex);
   }
@@ -137,93 +255,6 @@ contract AttestationsRegistryConfigLogic is
     for (uint256 i = 0; i < tagIndices.length; i++) {
       _deleteTag(tagIndices[i]);
     }
-  }
-
-  function hasAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex)
-    external
-    view
-    returns (bool)
-  {
-    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
-    return currentTags._hasTag(tagIndex);
-  }
-
-  function hasAttestationsCollectionTags(uint256 collectionId, uint8[] memory tagIndex)
-    external
-    view
-    returns (bool)
-  {
-    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
-    for (uint256 i = 0; i < tagIndex.length; i++) {
-      if (!currentTags._hasTag(tagIndex[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  function getAttestationsCollectionTagPower(uint256 collectionId, uint8 tagIndex)
-    external
-    view
-    returns (uint8)
-  {
-    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
-    return currentTags._getTagPower(tagIndex);
-  }
-
-  function getAttestationsCollectionTagsPower(uint256 collectionId, uint8[] memory tagIndex)
-    external
-    view
-    returns (uint8[] memory)
-  {
-    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
-    uint8[] memory tagsPower = new uint8[](tagIndex.length);
-    for (uint256 i = 0; i < tagIndex.length; i++) {
-      tagsPower[i] = currentTags._getTagPower(tagIndex[i]);
-    }
-    return tagsPower;
-  }
-
-  function registerAttestationsCollectionTags(
-    uint256[] memory collectionIds,
-    uint8[] memory tagIndices,
-    uint8[] memory tagPowers
-  ) external onlyOwner {
-    if (collectionIds.length != tagIndices.length || collectionIds.length != tagPowers.length) {
-      revert ArgsLengthDoesNotMatch();
-    }
-
-    for (uint256 i = 0; i < collectionIds.length; i++) {
-      _registerAttestationsCollectionTag(collectionIds[i], tagIndices[i], tagPowers[i]);
-    }
-  }
-
-  function registerAttestationsCollectionTag(
-    uint256 collectionId,
-    uint8 tagIndex,
-    uint8 tagPower
-  ) external onlyOwner {
-    _registerAttestationsCollectionTag(collectionId, tagIndex, tagPower);
-  }
-
-  function unregisterAttestationsCollectionTags(
-    uint256[] memory collectionIds,
-    uint8[] memory tagIndices
-  ) external onlyOwner {
-    if (collectionIds.length != tagIndices.length) {
-      revert ArgsLengthDoesNotMatch();
-    }
-
-    for (uint256 i = 0; i < collectionIds.length; i++) {
-      _unregisterAttestationsCollectionTag(collectionIds[i], tagIndices[i]);
-    }
-  }
-
-  function unregisterAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex)
-    external
-    onlyOwner
-  {
-    _unregisterAttestationsCollectionTag(collectionId, tagIndex);
   }
 
   /**
@@ -282,8 +313,33 @@ contract AttestationsRegistryConfigLogic is
     emit IssuerUnauthorized(issuer, firstCollectionId, lastCollectionId);
   }
 
-  // TAG section
-  function _insertNewTag(uint8 tagIndex, bytes32 tagName) internal {
+
+  function _registerAttestationsCollectionTag(
+    uint256 collectionId,
+    uint8 tagIndex,
+    uint8 tagPower
+  ) internal {
+    if (_tags[tagIndex] == 0) {
+      revert TagDoesNotExist(tagIndex);
+    }
+
+    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
+
+    _attestationsCollectionTagsBitmap[collectionId] = currentTags._addTag(tagIndex, tagPower);
+
+    emit AttestationsCollectionTagRegistered(collectionId, tagIndex, tagPower);
+  }
+
+  function _unregisterAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex) internal {
+    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
+
+    _attestationsCollectionTagsBitmap[collectionId] = currentTags._removeTag(tagIndex);
+
+    emit AttestationsCollectionTagUnregistered(collectionId, tagIndex);
+  }
+
+
+  function _createNewTag(uint8 tagIndex, bytes32 tagName) internal {
     if (_tags[tagIndex] != 0) {
       revert TagAlreadyExists(tagIndex);
     }
@@ -313,30 +369,5 @@ contract AttestationsRegistryConfigLogic is
     delete _tags[tagIndex];
 
     emit TagDeleted(tagIndex);
-  }
-
-  // TAG registration
-  function _registerAttestationsCollectionTag(
-    uint256 collectionId,
-    uint8 tagIndex,
-    uint8 tagPower
-  ) internal {
-    if (_tags[tagIndex] == 0) {
-      revert TagDoesNotExist(tagIndex);
-    }
-
-    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
-
-    _attestationsCollectionTagsBitmap[collectionId] = currentTags._addTag(tagIndex, tagPower);
-
-    emit AttestationsCollectionTagRegistered(collectionId, tagIndex, tagPower);
-  }
-
-  function _unregisterAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex) internal {
-    uint256 currentTags = _attestationsCollectionTagsBitmap[collectionId];
-
-    _attestationsCollectionTagsBitmap[collectionId] = currentTags._removeTag(tagIndex);
-
-    emit AttestationsCollectionTagUnregistered(collectionId, tagIndex);
   }
 }
