@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {Claim, Request} from '../../../core/libs/Structs.sol';
 import {HydraS1Lib, HydraS1Claim, HydraS1GroupProperties} from './HydraS1Lib.sol';
@@ -42,11 +42,9 @@ library HydraS1AccountboundLib {
     );
   }
 
-  function _hydraS1Accountboundclaim(Request memory self)
-    internal
-    pure
-    returns (HydraS1AccountboundClaim memory)
-  {
+  function _hydraS1Accountboundclaim(
+    Request memory self
+  ) internal pure returns (HydraS1AccountboundClaim memory) {
     Claim memory claim = self.claims[0];
     _validateClaim(claim);
 
@@ -65,11 +63,9 @@ library HydraS1AccountboundLib {
     );
   }
 
-  function _generateGroupIdFromEncodedProperties(bytes memory encodedProperties)
-    internal
-    pure
-    returns (uint256)
-  {
+  function _generateGroupIdFromEncodedProperties(
+    bytes memory encodedProperties
+  ) internal pure returns (uint256) {
     return uint256(keccak256(encodedProperties)) % HydraS1Lib.SNARK_FIELD;
   }
 

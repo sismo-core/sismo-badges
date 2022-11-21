@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 interface ICommitmentMapperRegistry {
   event UpdatedCommitmentMapperEdDSAPubKey(uint256[2] newEdDSAPubKey);

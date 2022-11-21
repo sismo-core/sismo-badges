@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 import {IAttester} from './interfaces/IAttester.sol';
 import {IAttestationsRegistry} from './interfaces/IAttestationsRegistry.sol';
 import {Request, Attestation, AttestationData} from './libs/Structs.sol';
@@ -46,11 +46,10 @@ abstract contract Attester is IAttester {
    * @param proofData Data sent along the request to prove its validity
    * @return attestations Attestations that has been recorded
    */
-  function generateAttestations(Request calldata request, bytes calldata proofData)
-    external
-    override
-    returns (Attestation[] memory)
-  {
+  function generateAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) external override returns (Attestation[] memory) {
     // Verify if request is valid by verifying against proof
     _verifyRequest(request, proofData);
 
@@ -133,11 +132,10 @@ abstract contract Attester is IAttester {
    * @param proofData Data sent along the request to prove its validity
    * @return attestations Attestations that will be recorded
    */
-  function buildAttestations(Request calldata request, bytes calldata proofData)
-    public
-    view
-    virtual
-    returns (Attestation[] memory);
+  function buildAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) public view virtual returns (Attestation[] memory);
 
   /**
    * @dev Attestation registry getter
@@ -175,10 +173,10 @@ abstract contract Attester is IAttester {
    * @param request User request
    * @param proofData Data sent along the request to prove its validity
    */
-  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-  {}
+  function _beforeRecordAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual {}
 
   /**
    * @dev (Optional) Can be overridden in attesters inheriting this contract
@@ -193,10 +191,10 @@ abstract contract Attester is IAttester {
    * @param attestations Attestations to delete
    * @param proofData Data sent along the deletion request to prove its validity
    */
-  function _beforeDeleteAttestations(Attestation[] memory attestations, bytes calldata proofData)
-    internal
-    virtual
-  {}
+  function _beforeDeleteAttestations(
+    Attestation[] memory attestations,
+    bytes calldata proofData
+  ) internal virtual {}
 
   /**
    * @dev Optional: Hook, can be overridden in attesters
@@ -204,8 +202,8 @@ abstract contract Attester is IAttester {
    * @param attestations Attestations to delete
    * @param proofData Data sent along the deletion request to prove its validity
    */
-  function _afterDeleteAttestations(Attestation[] memory attestations, bytes calldata proofData)
-    internal
-    virtual
-  {}
+  function _afterDeleteAttestations(
+    Attestation[] memory attestations,
+    bytes calldata proofData
+  ) internal virtual {}
 }
