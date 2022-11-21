@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
@@ -98,10 +98,11 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _verifyRequest(
-    Request calldata request,
-    bytes calldata proofData
-  ) internal virtual override {
+  function _verifyRequest(Request calldata request, bytes calldata proofData)
+    internal
+    virtual
+    override
+  {
     Pythia1ProofData memory snarkProof = abi.decode(proofData, (Pythia1ProofData));
     Pythia1ProofInput memory snarkInput = snarkProof._input();
     Pythia1Claim memory claim = request._claim();
@@ -116,10 +117,13 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @dev Returns attestations that will be recorded, constructed from the user request
    * @param request users request. Claim of having an account part of a group of accounts
    */
-  function buildAttestations(
-    Request calldata request,
-    bytes calldata
-  ) public view virtual override(IAttester, Attester) returns (Attestation[] memory) {
+  function buildAttestations(Request calldata request, bytes calldata)
+    public
+    view
+    virtual
+    override(IAttester, Attester)
+    returns (Attestation[] memory)
+  {
     Pythia1Claim memory claim = request._claim();
 
     Attestation[] memory attestations = new Attestation[](1);
@@ -200,9 +204,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
     Pythia-1 Attester Specific Functions
   *******************************************************/
 
-  function updateCommitmentSignerPubKey(
-    uint256[2] memory commitmentSignerPubKey
-  ) external onlyOwner {
+  function updateCommitmentSignerPubKey(uint256[2] memory commitmentSignerPubKey)
+    external
+    onlyOwner
+  {
     _updateCommitmentSignerPubKey(commitmentSignerPubKey);
   }
 

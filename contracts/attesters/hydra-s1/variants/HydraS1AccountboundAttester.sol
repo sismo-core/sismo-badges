@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1AccountboundAttester} from '../interfaces/IHydraS1AccountboundAttester.sol';
@@ -97,11 +97,10 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData snark proof backing the claim
    */
-  function _verifyRequest(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _verifyRequest(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     HydraS1ProofData memory snarkProof = abi.decode(proofData, (HydraS1ProofData));
     HydraS1ProofInput memory snarkInput = snarkProof._input();
     HydraS1Claim memory claim = request._hydraS1claim();
@@ -117,13 +116,10 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData snark public input as well as snark proof
    */
-  function buildAttestations(Request calldata request, bytes calldata proofData)
-    public
-    view
-    virtual
-    override(IAttester, Attester)
-    returns (Attestation[] memory)
-  {
+  function buildAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) public view virtual override(IAttester, Attester) returns (Attestation[] memory) {
     HydraS1AccountboundClaim memory claim = request._hydraS1Accountboundclaim();
 
     Attestation[] memory attestations = new Attestation[](1);
@@ -169,11 +165,10 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _beforeRecordAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     uint256 nullifier = proofData._getNullifier();
     NullifierData memory nullifierData = _nullifiersData[nullifier];
 
@@ -223,12 +218,9 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
    * Here we chose externalNullifier = hash(attesterAddress, claim.GroupId)
    * Creates one nullifier per group, per user and makes sure no collision with other attester's nullifiers
   **/
-  function _getExternalNullifierOfClaim(HydraS1Claim memory claim)
-    internal
-    view
-    override
-    returns (uint256)
-  {
+  function _getExternalNullifierOfClaim(
+    HydraS1Claim memory claim
+  ) internal view override returns (uint256) {
     uint256 externalNullifier = _encodeInSnarkField(
       address(this),
       claim.groupProperties.groupIndex
@@ -252,12 +244,9 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
    * @dev Getter, returns the data linked to a nullifier
    * @param nullifier nullifier used
    **/
-  function getNullifierData(uint256 nullifier)
-    external
-    view
-    override
-    returns (NullifierData memory)
-  {
+  function getNullifierData(
+    uint256 nullifier
+  ) external view override returns (NullifierData memory) {
     return _getNullifierData(nullifier);
   }
 
@@ -276,11 +265,10 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
     return _nullifiersData[nullifier].destination;
   }
 
-  function _isOnCooldown(NullifierData memory nullifierData, uint32 cooldownDuration)
-    internal
-    view
-    returns (bool)
-  {
+  function _isOnCooldown(
+    NullifierData memory nullifierData,
+    uint32 cooldownDuration
+  ) internal view returns (bool) {
     return nullifierData.cooldownStart + cooldownDuration > block.timestamp;
   }
 
