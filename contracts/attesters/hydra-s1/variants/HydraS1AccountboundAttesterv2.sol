@@ -8,18 +8,17 @@ import {HydraS1SimpleAttester} from '../HydraS1SimpleAttester.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../../core/libs/Structs.sol';
-import {Attester, IAttester, IAttestationsRegistry} from '../../../core/Attester.sol';
+import {IAttester} from '../../../core/Attester.sol';
 
 // Imports related to HydraS1 Proving Scheme
 import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Claim} from '../base/HydraS1Base.sol';
-import {HydraS1AccountboundLib, HydraS1AccountboundClaim} from '../libs/HydraS1AccountboundLib.sol';
 
 /**
  * @title  Hydra-S1 Accountbound Attester
  * @author Sismo
  * @notice This attester is part of the family of the Hydra-S1 Attesters.
  * Hydra-S1 attesters enable users to prove they have an account in a group in a privacy preserving way.
- * The Hydra-S1 Base abstract contract is inherited and holds the complex Hydra S1 verification logic.
+ * The Hydra-S1 Simple Attester contract is inherited and holds the complex Hydra S1 verification logic.
  * We invite readers to refer to:
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
@@ -54,10 +53,10 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
 
-  // Mapping to know cooldown value for a specific groupId
+  // Mapping to store cooldown value for each groupId
   mapping(uint256 => uint32) internal _groupIdCooldowns;
 
-  // mappings to know the state related to a specific nullifier
+  // mappings to store the state related to a specific nullifier (its cooldownStart and its burnCount)
   mapping(uint256 => uint32) internal _nullifiersCooldownStart;
   mapping(uint256 => uint16) internal _nullifiersBurnCount;
 
@@ -183,7 +182,7 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
     address nullifierDestination = _getDestinationOfNullifier(nullifier);
     uint16 burnCount = _getNullifierBurnCount(nullifier);
     // If the attestation is minted on a new destination address
-    // the burnCount encoded in the extraData of the Attestation should be incremented
+    // the burnCount that will eencoded in the extraData of the Attestation should be incremented
     if (nullifierDestination != address(0) && nullifierDestination != claimDestination) {
       burnCount += 1;
     }

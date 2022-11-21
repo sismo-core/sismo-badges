@@ -535,7 +535,7 @@ describe('Test HydraS1 Accountbound Attester V2 contract', () => {
       ).to.be.true;
     });
 
-    it('Should be able to change the destination, deleting the old attestation', async () => {
+    it('Should revert if the groupId has no cooldownDuration set', async () => {
       const newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: destination2,
@@ -546,8 +546,24 @@ describe('Test HydraS1 Accountbound Attester V2 contract', () => {
         destination: BigNumber.from(destination2.identifier).toHexString(),
       };
 
+      await expect(
+        hydraS1AccountboundAttesterv2.generateAttestations(newRequest, newProof.toBytes())
+      ).to.be.revertedWith(`CooldownDurationNotSetForGroupId(${BigNumber.from(group.id)}`);
+    });
+
+    it('Should be able to change the destination, deleting the old attestation', async () => {
       // set a cooldown of 1 second for first group
       await hydraS1AccountboundAttesterv2.setCooldownDurationForgroupId(group.id, 1);
+
+      const newProof = await prover.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+      });
+
+      const newRequest = {
+        ...request,
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
 
       const generateAttestationsTransaction =
         await hydraS1AccountboundAttesterv2.generateAttestations(newRequest, newProof.toBytes());
