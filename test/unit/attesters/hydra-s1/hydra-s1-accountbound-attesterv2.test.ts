@@ -1,8 +1,4 @@
-import {
-  encodeAccountBoundAttestationExtraData,
-  generateHydraS1AccountboundAttesterGroups,
-  HydraS1AccountboundGroupProperties,
-} from './../../../utils/hydra-s1-accountbound';
+import { encodeAccountBoundAttestationExtraData } from './../../../utils/hydra-s1-accountbound';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
 import {
@@ -32,13 +28,10 @@ import {
   generateExternalNullifier,
   increaseTime,
   toBytes,
-  HydraS1AccountboundGroup,
-  encodeHydraS1AccountboundGroupProperties,
   GroupData,
   generateAttesterGroups,
   HydraS1SimpleGroup,
   encodeGroupProperties,
-  generateGroupIdFromEncodedProperties,
   generateGroupIdFromProperties,
 } from '../../../utils';
 
