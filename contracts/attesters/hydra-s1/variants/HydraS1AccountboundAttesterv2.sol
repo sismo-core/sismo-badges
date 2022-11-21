@@ -240,7 +240,7 @@ contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS
          GETTERS AND SETTERS FOR GROUP ID MAPPING
   *******************************************************/
 
-  function setCooldownDurationForgroupId(uint256 groupId, uint32 cooldownDuration) public {
+  function setCooldownDurationForgroupId(uint256 groupId, uint32 cooldownDuration) external {
     _groupIdCooldowns[groupId] = cooldownDuration;
   }
 
