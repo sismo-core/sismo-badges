@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {ERC1155} from '@openzeppelin/contracts/token/ERC1155/ERC1155.sol';
 import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.sol';
@@ -50,13 +50,10 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    * @param account Address to check badge balance (= value of attestation)
    * @param id Badge Id to check (= attestationCollectionId)
    */
-  function balanceOf(address account, uint256 id)
-    public
-    view
-    virtual
-    override(ERC1155, IBadges)
-    returns (uint256)
-  {
+  function balanceOf(
+    address account,
+    uint256 id
+  ) public view virtual override(ERC1155, IBadges) returns (uint256) {
     return _attestationsRegistry.getAttestationValue(id, account);
   }
 
@@ -70,13 +67,10 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
   /**
    * @dev Reverts, this is a non transferable ERC115 contract
    */
-  function isApprovedForAll(address account, address operator)
-    public
-    view
-    virtual
-    override
-    returns (bool)
-  {
+  function isApprovedForAll(
+    address account,
+    address operator
+  ) public view virtual override returns (bool) {
     revert BadgesNonTransferrable();
   }
 
@@ -103,11 +97,9 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    * @dev Set the attestations registry address. Can only be called by owner (default admin)
    * @param attestationsRegistry new attestations registry address
    */
-  function setAttestationsRegistry(address attestationsRegistry)
-    external
-    override
-    onlyRole(DEFAULT_ADMIN_ROLE)
-  {
+  function setAttestationsRegistry(
+    address attestationsRegistry
+  ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
     _attestationsRegistry = IAttestationsRegistry(attestationsRegistry);
   }
 
@@ -129,13 +121,9 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
   /**
    * @dev ERC165
    */
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(AccessControl, ERC1155)
-    returns (bool)
-  {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(AccessControl, ERC1155) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
 

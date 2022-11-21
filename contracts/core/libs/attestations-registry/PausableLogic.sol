@@ -2,7 +2,7 @@
 // Forked from, removed storage, OpenZeppelin Contracts v4.4.1 (access/Ownable.sol)
 // OpenZeppelin Contracts v4.4.1 (security/Pausable.sol)
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import '../utils/Context.sol';
 import './AttestationsRegistryState.sol';

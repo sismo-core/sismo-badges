@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {Request, Attestation} from '../libs/Structs.sol';
 import {IAttestationsRegistry} from '../interfaces/IAttestationsRegistry.sol';
@@ -22,9 +22,10 @@ interface IAttester {
    * @param proofData Data sent along the request to prove its validity
    * @return attestations Attestations that has been recorded
    */
-  function generateAttestations(Request calldata request, bytes calldata proofData)
-    external
-    returns (Attestation[] memory);
+  function generateAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) external returns (Attestation[] memory);
 
   /**
    * @dev External facing function. Allows to delete an attestation by submitting proof
@@ -46,10 +47,10 @@ interface IAttester {
    * @param proofData Data sent along the request to prove its validity
    * @return attestations Attestations that will be recorded
    */
-  function buildAttestations(Request calldata request, bytes calldata proofData)
-    external
-    view
-    returns (Attestation[] memory);
+  function buildAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) external view returns (Attestation[] memory);
 
   /**
    * @dev Attestation registry address getter

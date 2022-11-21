@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 import {IAttestationsRegistry} from '../core/interfaces/IAttestationsRegistry.sol';
 import {AttestationsRegistryConfigLogic} from '../core/libs/attestations-registry/AttestationsRegistryConfigLogic.sol';
 import {AttestationsRegistryState} from '../core/libs/attestations-registry/AttestationsRegistryState.sol';
@@ -15,11 +15,10 @@ contract MockAttestationsRegistry {
     ATTESTATION_VALUE = attestationValue;
   }
 
-  function getAttestationValue(uint256 collectionId, address owner)
-    external
-    view
-    returns (uint256)
-  {
+  function getAttestationValue(
+    uint256 collectionId,
+    address owner
+  ) external view returns (uint256) {
     return ATTESTATION_VALUE;
   }
 

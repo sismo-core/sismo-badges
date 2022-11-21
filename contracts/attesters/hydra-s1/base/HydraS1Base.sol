@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1Base} from './IHydraS1Base.sol';
@@ -94,22 +94,19 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
    * Take a look at Hydra-S1 Simple Attester for an example
    * @param claim user claim: part of a group of accounts, with a claimedValue for their account
    */
-  function _getExternalNullifierOfClaim(HydraS1Claim memory claim)
-    internal
-    view
-    virtual
-    returns (uint256);
+  function _getExternalNullifierOfClaim(
+    HydraS1Claim memory claim
+  ) internal view virtual returns (uint256);
 
   /**
    * @dev Checks whether the user claim and the snark public input are a match
    * @param claim user claim
    * @param input snark public input
    */
-  function _validateInput(HydraS1Claim memory claim, HydraS1ProofInput memory input)
-    internal
-    view
-    virtual
-  {
+  function _validateInput(
+    HydraS1Claim memory claim,
+    HydraS1ProofInput memory input
+  ) internal view virtual {
     if (input.accountsTreeValue != claim.groupId)
       revert AccountsTreeValueMismatch(claim.groupId, input.accountsTreeValue);
 
@@ -155,13 +152,9 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
       if (!success) revert InvalidGroth16Proof('');
     } catch Error(string memory reason) {
       revert InvalidGroth16Proof(reason);
-    } catch Panic(
-      uint256 /*errorCode*/
-    ) {
+    } catch Panic(uint256 /*errorCode*/) {
       revert InvalidGroth16Proof('');
-    } catch (
-      bytes memory /*lowLevelData*/
-    ) {
+    } catch (bytes memory /*lowLevelData*/) {
       revert InvalidGroth16Proof('');
     }
   }

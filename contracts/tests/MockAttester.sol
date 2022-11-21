@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {Attestation, Request} from '../core/libs/Structs.sol';
 import {Attester} from '../core/Attester.sol';
@@ -19,11 +19,10 @@ contract MockAttester is IAttester, Attester {
     ATTESTATION_ID_MAX = collectionIdLast;
   }
 
-  function _verifyRequest(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {}
+  function _verifyRequest(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {}
 
   function buildAttestations(
     Request calldata request,

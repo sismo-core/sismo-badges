@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1AccountboundAttesterv2} from '../interfaces/IHydraS1AccountboundAttesterv2.sol';
