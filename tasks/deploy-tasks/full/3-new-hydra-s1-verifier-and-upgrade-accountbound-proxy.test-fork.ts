@@ -1,4 +1,4 @@
-import { getImplementation } from './../../../utils/proxy';
+import { getImplementation } from '../../../utils/proxy';
 import {
   AttestationStructOutput,
   HydraS1SimpleAttester,
@@ -51,12 +51,11 @@ import {
   KVMerkleTree,
   SnarkProof,
 } from '@sismo-core/hydra-s1';
+import { HydraS1Prover as HydraS1ProverPrevious } from 'hydra-s1-previous';
 import { CommitmentMapperTester } from '@sismo-core/commitment-mapper-tester-js';
 import { Pythia1Prover } from '@sismo-core/pythia-1';
 import { BigNumber } from 'ethers';
 
-import { Deployed0 } from './0-deploy-core-and-hydra-s1-simple-and-accountbound.task';
-import { Deployed1 } from './1-deploy-pythia-1-simple.task';
 import {
   CommitmentSignerTester,
   encodePythia1GroupProperties,
@@ -64,13 +63,13 @@ import {
 } from '../../../test/utils/pythia-1';
 
 // Launch with command
-// FORK=true FORK_NETWORK=polygon npx hardhat test ./tasks/deploy-tasks/full/3-upgrade-proxies-11212022.test-fork.ts
+// FORK=true FORK_NETWORK=polygon npx hardhat test ./tasks/deploy-tasks/full/3-new-hydra-s1-verifier-and-upgrade-accountbound-proxy.test-fork.ts
 
 /*************************************************************************************/
 /*********************************** FORK - E2E **************************************/
 /*************************************************************************************/
 
-describe('FORK-Test E2E Protocol', () => {
+describe('FORK-Test New Hydra S1 Verifier and Upgrade Accountbound proxy', () => {
   let chainId: number;
   let snapshotId: string;
 
@@ -89,8 +88,9 @@ describe('FORK-Test E2E Protocol', () => {
 
   // hydra s1 prover
   let hydraS1Prover1: HydraS1Prover;
+  let hydraS1ProverPrevious: HydraS1ProverPrevious;
   let hydraS1Prover2: HydraS1Prover;
-  let hydraS1ProverAccountBound: HydraS1Prover;
+  let hydraS1ProverAccountBound: HydraS1ProverPrevious;
   let commitmentMapper: CommitmentMapperTester;
   let commitmentMapperPubKey: EddsaPublicKey;
   let registryTree1: KVMerkleTree;
@@ -198,9 +198,13 @@ describe('FORK-Test E2E Protocol', () => {
     );
 
     // 4 - Init Proving scheme
+    hydraS1ProverPrevious = new HydraS1ProverPrevious(registryTree1, commitmentMapperPubKey);
     hydraS1Prover1 = new HydraS1Prover(registryTree1, commitmentMapperPubKey);
     hydraS1Prover2 = new HydraS1Prover(registryTree2, commitmentMapperPubKey);
-    hydraS1ProverAccountBound = new HydraS1Prover(registryTreeAccountBound, commitmentMapperPubKey);
+    hydraS1ProverAccountBound = new HydraS1ProverPrevious(
+      registryTreeAccountBound,
+      commitmentMapperPubKey
+    );
     pythia1Prover = new Pythia1Prover();
   });
 
@@ -208,8 +212,8 @@ describe('FORK-Test E2E Protocol', () => {
   /********************************** SETUP ********************************************/
   /*************************************************************************************/
 
-  describe('Update Implementation', () => {
-    it('Should run the upgrade script', async () => {
+  describe('Deployments, setup contracts and prepare test requests', () => {
+    it('Should retrieve core contracts and update roots for attester', async () => {
       // Deploy Sismo Protocol Core contracts
       availableRootsRegistry = AvailableRootsRegistry__factory.connect(
         config.availableRootsRegistry.address,
@@ -225,6 +229,16 @@ describe('FORK-Test E2E Protocol', () => {
         config.front.address,
         await impersonateAddress(hre, randomSigner.address, true)
       ) as Front;
+
+      hydraS1SimpleAttester = HydraS1SimpleAttester__factory.connect(
+        config.hydraS1SimpleAttester.address,
+        await impersonateAddress(hre, randomSigner.address, true)
+      );
+
+      hydraS1AccountboundAttester = HydraS1AccountboundAttester__factory.connect(
+        config.hydraS1AccountboundAttester.address,
+        await impersonateAddress(hre, randomSigner.address, true)
+      );
 
       attestationsRegistry = AttestationsRegistry__factory.connect(
         config.attestationsRegistry.address,
@@ -247,16 +261,211 @@ describe('FORK-Test E2E Protocol', () => {
         })
       ).wait();
 
+      await (
+        await availableRootsRegistry.registerRootForAttester(
+          hydraS1SimpleAttester.address,
+          registryTree1.getRoot(),
+          { gasLimit: 600000 }
+        )
+      ).wait();
+
+      await (
+        await availableRootsRegistry.registerRootForAttester(
+          hydraS1AccountboundAttester.address,
+          registryTreeAccountBound.getRoot(),
+          { gasLimit: 600000 }
+        )
+      ).wait();
+
       earlyUserCollectionId = await front.EARLY_USER_COLLECTION();
 
+      const pythiaOwner = await impersonateAddress(hre, await pythia1SimpleAttester.owner(), true);
+      const commitmentSignerPubKey = await commitmentSigner.getPublicKey();
+
+      await (
+        await pythia1SimpleAttester
+          .connect(pythiaOwner)
+          .updateCommitmentSignerPubKey(commitmentSignerPubKey, { gasLimit: 600000 })
+      ).wait();
+    });
+  });
+
+  /*******************************************************************************************************/
+  /************************ ATTESTATIONS AND BADGES GENERATIONS (BEFORE UPDATE) **************************/
+  /*******************************************************************************************************/
+
+  describe('Test attestations generations (before proxy update)', () => {
+    it('Should prepare test requests', async () => {
+      externalNullifier1 = await generateExternalNullifier(
+        hydraS1SimpleAttester.address,
+        group1.properties.groupIndex
+      );
+
+      externalNullifierAccountBound = await generateExternalNullifier(
+        hydraS1AccountboundAttester.address,
+        groupAccountBound.properties.groupIndex
+      );
+
+      request3 = {
+        claims: [
+          {
+            groupId: group1.id,
+            claimedValue: source3Value,
+            extraData: encodeGroupProperties(group1.properties),
+          },
+        ],
+        destination: BigNumber.from(destination1.identifier).toHexString(),
+      };
+
+      proofRequest3 = (
+        await hydraS1ProverPrevious.generateSnarkProof({
+          source: source3,
+          destination: destination1,
+          claimedValue: source3Value,
+          chainId: chainId,
+          accountsTree: accountsTree1,
+          ticketIdentifier: externalNullifier1,
+          isStrict: !group1.properties.isScore,
+        })
+      ).toBytes();
+
+      request4 = {
+        claims: [
+          {
+            groupId: groupAccountBound.id,
+            claimedValue: source4Value,
+            extraData: encodeHydraS1AccountboundGroupProperties(groupAccountBound.properties),
+          },
+        ],
+        destination: BigNumber.from(destination1.identifier).toHexString(),
+      };
+
+      proofRequest4 = (
+        await hydraS1ProverAccountBound.generateSnarkProof({
+          source: source4,
+          destination: destination1,
+          claimedValue: source4Value,
+          chainId: chainId,
+          accountsTree: accountsTreeAccountBound,
+          ticketIdentifier: externalNullifierAccountBound,
+          isStrict: !groupAccountBound.properties.isScore,
+        })
+      ).toBytes();
+
+      [attestationsRequested3, attestationsRequested4] = await front.batchBuildAttestations(
+        [hydraS1SimpleAttester.address, hydraS1AccountboundAttester.address],
+        [request3, request4],
+        [proofRequest3, proofRequest4]
+      );
+
+      snapshotId = await evmSnapshot(hre);
+    });
+
+    it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via batch', async () => {
+      const tx = await front.batchGenerateAttestations(
+        [hydraS1SimpleAttester.address, hydraS1AccountboundAttester.address],
+        [request3, request4],
+        [proofRequest3, proofRequest4],
+        { gasLimit: 1200000 }
+      );
+      const { events } = await tx.wait();
+
+      const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
+        [attestationsRequested3[0].collectionId, attestationsRequested4[0].collectionId],
+        [request3.destination, request4.destination]
+      );
+
+      const expectedAttestationsValues = [
+        attestationsRequested3[0].value,
+        attestationsRequested4[0].value,
+      ];
+
+      expect(attestationsValues).to.be.eql(expectedAttestationsValues);
+
+      const balances = await badges.balanceOfBatch(
+        [request3.destination, request4.destination],
+        [attestationsRequested3[0].collectionId, attestationsRequested4[0].collectionId]
+      );
+
+      const expectedBalances = expectedAttestationsValues;
+
+      expect(balances).to.be.eql(expectedBalances);
+    });
+
+    it('Should reset contracts', async () => {
+      await evmRevert(hre, snapshotId);
+
+      const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
+        [attestationsRequested3[0].collectionId, attestationsRequested4[0].collectionId],
+        [request3.destination, request4.destination]
+      );
+
+      const expectedAttestationsValues = [BigNumber.from(0), BigNumber.from(0)];
+
+      expect(attestationsValues).to.be.eql(expectedAttestationsValues);
+
+      const balances = await badges.balanceOfBatch(
+        [request3.destination, request4.destination],
+        [attestationsRequested3[0].collectionId, attestationsRequested4[0].collectionId]
+      );
+
+      const expectedBalances = expectedAttestationsValues;
+
+      expect(balances).to.be.eql(expectedBalances);
+    });
+    it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via front contract and two separate txs', async () => {
+      const tx = await front.generateAttestations(
+        hydraS1SimpleAttester.address,
+        request3,
+        proofRequest3,
+        { gasLimit: 600000 }
+      );
+      await front.generateAttestations(
+        hydraS1AccountboundAttester.address,
+        request4,
+        proofRequest4,
+        {
+          gasLimit: 600000,
+        }
+      );
+      const { events } = await tx.wait();
+
+      const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
+        [attestationsRequested3[0].collectionId, attestationsRequested4[0].collectionId],
+        [request3.destination, request4.destination]
+      );
+
+      const expectedAttestationsValues = [
+        attestationsRequested3[0].value,
+        attestationsRequested4[0].value,
+      ];
+
+      expect(attestationsValues).to.be.eql(expectedAttestationsValues);
+
+      const balances = await badges.balanceOfBatch(
+        [request3.destination, request4.destination],
+        [attestationsRequested3[0].collectionId, attestationsRequested4[0].collectionId]
+      );
+
+      const expectedBalances = expectedAttestationsValues;
+
+      expect(balances).to.be.eql(expectedBalances);
+    });
+  });
+
+  /**********************************************************************************************/
+  /********************************** PROXIES UPDATE ********************************************/
+  /**********************************************************************************************/
+
+  describe('Update Implementation', () => {
+    it('Should run the upgrade script', async () => {
       // deploy new verifiers for hydraS1 and Pythia1 and upgrade attester proxies
       ({
         hydraS1Verifier,
         hydraS1SimpleAttester,
-        pythia1Verifier,
         pythia1SimpleAttester,
         hydraS1AccountboundAttester,
-      } = await hre.run('3-upgrade-proxies-11212022', {
+      } = await hre.run('3-new-hydra-s1-verifier-and-upgrade-accountbound-proxy', {
         options: { manualConfirm: false, log: false },
       }));
 
@@ -300,7 +509,7 @@ describe('FORK-Test E2E Protocol', () => {
     });
   });
 
-  describe('prepare test requests', () => {
+  describe('prepare test requests (group properties encoding has changed)', () => {
     it('Should prepare test requests', async () => {
       externalNullifier1 = await generateExternalNullifier(
         hydraS1SimpleAttester.address,
@@ -366,9 +575,9 @@ describe('FORK-Test E2E Protocol', () => {
     });
   });
 
-  //   /*************************************************************************************/
-  //   /************************ATTESTATIONS AND BADGES GENERATIONS**************************/
-  //   /*************************************************************************************/
+  /*************************************************************************************/
+  /************************ATTESTATIONS AND BADGES GENERATIONS**************************/
+  /*************************************************************************************/
 
   describe('Test attestations generations', () => {
     it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via batch', async () => {
@@ -381,36 +590,21 @@ describe('FORK-Test E2E Protocol', () => {
 
       const { events } = await tx.wait();
 
-      const earlyUserActivated = Date.now() < Date.parse('15 Sept 2022 00:00:00 GMT');
-      if (earlyUserActivated) {
-        const args = getEventArgs(events, 'EarlyUserAttestationGenerated');
-        expect(args.destination).to.eql(request1.destination);
-      }
-
       const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
-        [
-          attestationsRequested1[0].collectionId,
-          attestationsRequested2[0].collectionId,
-          earlyUserCollectionId,
-        ],
-        [request1.destination, request2.destination, request1.destination]
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
+        [request1.destination, request2.destination]
       );
 
       const expectedAttestationsValues = [
         attestationsRequested1[0].value,
         attestationsRequested2[0].value,
-        earlyUserActivated ? BigNumber.from(1) : BigNumber.from(0),
       ];
 
       expect(attestationsValues).to.be.eql(expectedAttestationsValues);
 
       const balances = await badges.balanceOfBatch(
-        [request1.destination, request2.destination, request1.destination],
-        [
-          attestationsRequested1[0].collectionId,
-          attestationsRequested2[0].collectionId,
-          earlyUserCollectionId,
-        ]
+        [request1.destination, request2.destination],
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId]
       );
 
       const expectedBalances = expectedAttestationsValues;
@@ -422,25 +616,17 @@ describe('FORK-Test E2E Protocol', () => {
       await evmRevert(hre, snapshotId);
 
       const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
-        [
-          attestationsRequested1[0].collectionId,
-          attestationsRequested2[0].collectionId,
-          earlyUserCollectionId,
-        ],
-        [request1.destination, request2.destination, request1.destination]
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
+        [request1.destination, request2.destination]
       );
 
-      const expectedAttestationsValues = [BigNumber.from(0), BigNumber.from(0), BigNumber.from(0)];
+      const expectedAttestationsValues = [BigNumber.from(7), BigNumber.from(8)];
 
       expect(attestationsValues).to.be.eql(expectedAttestationsValues);
 
       const balances = await badges.balanceOfBatch(
-        [request1.destination, request2.destination, request1.destination],
-        [
-          attestationsRequested1[0].collectionId,
-          attestationsRequested2[0].collectionId,
-          earlyUserCollectionId,
-        ]
+        [request1.destination, request2.destination],
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId]
       );
 
       const expectedBalances = expectedAttestationsValues;
@@ -464,43 +650,30 @@ describe('FORK-Test E2E Protocol', () => {
       );
 
       const { events } = await tx.wait();
-      const earlyUserActivated = Date.now() < Date.parse('15 Sept 2022 00:00:00 GMT');
-      if (earlyUserActivated) {
-        const args = getEventArgs(events, 'EarlyUserAttestationGenerated');
-        expect(args.destination).to.eql(request1.destination);
-      }
 
       const attestationsValues = await attestationsRegistry.getAttestationValueBatch(
-        [
-          attestationsRequested1[0].collectionId,
-          attestationsRequested2[0].collectionId,
-          earlyUserCollectionId,
-        ],
-        [request1.destination, request2.destination, request1.destination]
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId],
+        [request1.destination, request2.destination]
       );
 
       const expectedAttestationsValues = [
         attestationsRequested1[0].value,
         attestationsRequested2[0].value,
-        earlyUserActivated ? BigNumber.from(1) : BigNumber.from(0),
       ];
 
       expect(attestationsValues).to.be.eql(expectedAttestationsValues);
 
       const balances = await badges.balanceOfBatch(
-        [request1.destination, request2.destination, request1.destination],
-        [
-          attestationsRequested1[0].collectionId,
-          attestationsRequested2[0].collectionId,
-          earlyUserCollectionId,
-        ]
+        [request1.destination, request2.destination],
+        [attestationsRequested1[0].collectionId, attestationsRequested2[0].collectionId]
       );
 
       const expectedBalances = expectedAttestationsValues;
 
       expect(balances).to.be.eql(expectedBalances);
     });
-    it('Should generate an attestation from pythia 1 simple (after proxy updates)', async () => {
+
+    it('Should generate an attestation from pythia 1 simple', async () => {
       const secret = BigNumber.from('0x456');
       const commitment = poseidon([secret]);
       const commitmentValue = BigNumber.from('0x11');

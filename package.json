@@ -56,6 +56,7 @@
     "hardhat-gas-reporter": "^1.0.7",
     "hardhat-storage-layout": "^0.1.6",
     "husky": "4.2.5",
+    "hydra-s1-previous": "npm:@sismo-core/hydra-s1@v1.0.5",
     "js-sha3": "^0.8.0",
     "mocha": "^10.0.0",
     "pretty-quick": "^3.1.3",

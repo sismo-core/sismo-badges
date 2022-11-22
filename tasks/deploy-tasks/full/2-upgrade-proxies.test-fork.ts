@@ -519,7 +519,7 @@ describe('FORK-Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        externalNullifier: externalNullifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 
@@ -831,7 +831,7 @@ describe('FORK-Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        externalNullifier: externalNullifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 

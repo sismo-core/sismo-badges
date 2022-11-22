@@ -17,7 +17,6 @@ export interface Deployed3 {
   hydraS1SimpleAttester: HydraS1SimpleAttester;
   hydraS1Verifier: HydraS1Verifier;
   pythia1SimpleAttester: Pythia1SimpleAttester;
-  pythia1Verifier: Pythia1Verifier;
   hydraS1AccountboundAttester: HydraS1AccountboundAttester;
 }
 
@@ -56,20 +55,23 @@ async function deploymentAction(
     })) as DeployedHydraS1SimpleAttester;
 
   // Upgrade Pythia1Verifier and Pythia1SimpleAttester
-  const { pythia1SimpleAttester: newPythia1SimpleAttester, pythia1Verifier: newPythia1Verifier } =
-    (await hre.run('deploy-pythia-1-simple-attester', {
+  const { pythia1SimpleAttester: newPythia1SimpleAttester } = (await hre.run(
+    'deploy-pythia-1-simple-attester',
+    {
       collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
       collectionIdLast: config.synapsPythia1SimpleAttester.collectionIdLast,
       attestationsRegistryAddress: config.attestationsRegistry.address,
       commitmentSignerPubKeyX: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX,
       commitmentSignerPubKeyY: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY,
       owner: config.synapsPythia1SimpleAttester.owner,
+      pythia1Verifier: config.pythia1Verifier.address,
       options: {
         ...options,
         implementationVersion: 2,
         proxyAddress: config.synapsPythia1SimpleAttester.address,
       },
-    })) as DeployedPythia1SimpleAttester;
+    }
+  )) as DeployedPythia1SimpleAttester;
 
   // Upgrade HydraS1AccountboundAttester
   const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = (await hre.run(
@@ -92,10 +94,9 @@ async function deploymentAction(
   return {
     hydraS1Verifier: newHydraS1Verifier,
     hydraS1SimpleAttester: newHydraS1SimpleAttester,
-    pythia1Verifier: newPythia1Verifier,
     pythia1SimpleAttester: newPythia1SimpleAttester,
     hydraS1AccountboundAttester: newHydraS1AccountboundAttester,
   };
 }
 
-task('3-upgrade-proxies-11212022').setAction(deploymentAction);
+task('3-new-hydra-s1-verifier-and-upgrade-accountbound-proxy').setAction(deploymentAction);
