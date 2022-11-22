@@ -51,7 +51,7 @@ describe('Test E2E Protocol', () => {
   // contracts
   let attestationsRegistry: AttestationsRegistry;
   let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
-  let hydraS1SimpleAttester: HydraS1SimpleAttester;
+  let hydraS1SimpleAttester: HydraS1SimpleAttester | undefined;
   let pythia1SimpleAttester: Pythia1SimpleAttester;
   let availableRootsRegistry: AvailableRootsRegistry;
   let commitmentMapperRegistry: CommitmentMapperRegistry;
@@ -173,10 +173,11 @@ describe('Test E2E Protocol', () => {
 
       await (
         await availableRootsRegistry.registerRootForAttester(
-          hydraS1SimpleAttester.address,
+          hydraS1SimpleAttester!.address,
           registryTree1.getRoot()
         )
       ).wait();
+
       await (
         await availableRootsRegistry.registerRootForAttester(
           hydraS1AccountboundAttester.address,
@@ -188,7 +189,7 @@ describe('Test E2E Protocol', () => {
     it('Should prepare test requests', async () => {
       // Deploy Sismo Protocol Core contracts
       externalNullifier1 = await generateExternalNullifier(
-        hydraS1SimpleAttester.address,
+        hydraS1SimpleAttester!.address,
         group1.properties.groupIndex
       );
 
@@ -244,7 +245,7 @@ describe('Test E2E Protocol', () => {
       ).toBytes();
 
       [attestationsRequested1, attestationsRequested2] = await front.batchBuildAttestations(
-        [hydraS1SimpleAttester.address, hydraS1AccountboundAttester.address],
+        [hydraS1SimpleAttester!.address, hydraS1AccountboundAttester.address],
         [request1, request2],
         [proofRequest1, proofRequest2]
       );
@@ -260,7 +261,7 @@ describe('Test E2E Protocol', () => {
   describe('Test attestations generations', () => {
     it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via batch', async () => {
       const tx = await front.batchGenerateAttestations(
-        [hydraS1SimpleAttester.address, hydraS1AccountboundAttester.address],
+        [hydraS1SimpleAttester!.address, hydraS1AccountboundAttester.address],
         [request1, request2],
         [proofRequest1, proofRequest2]
       );
@@ -333,7 +334,7 @@ describe('Test E2E Protocol', () => {
     });
     it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via front and two separate txs', async () => {
       const tx = await front.generateAttestations(
-        hydraS1SimpleAttester.address,
+        hydraS1SimpleAttester!.address,
         request1,
         proofRequest1
       );
@@ -445,6 +446,7 @@ describe('Test E2E Protocol', () => {
       const { hydraS1SimpleAttester: newHydraS1SimpleAttester } = await hre.run(
         'deploy-hydra-s1-simple-attester',
         {
+          enableDeployment: config.hydraS1SimpleAttester.enableDeployment,
           collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
           collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
           commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
@@ -455,7 +457,7 @@ describe('Test E2E Protocol', () => {
       );
 
       const hydraS1SimpleAttesterProxy = TransparentUpgradeableProxy__factory.connect(
-        hydraS1SimpleAttester.address,
+        hydraS1SimpleAttester!.address,
         proxyAdminSigner
       );
 
@@ -465,7 +467,7 @@ describe('Test E2E Protocol', () => {
       expect(implementationAddress).to.eql(newHydraS1SimpleAttester.address);
     });
 
-    it('Should update Hydra S1 Accountbound implementation with V2', async () => {
+    it('Should update Hydra S1 Accountbound implementation', async () => {
       const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = await hre.run(
         'deploy-hydra-s1-accountbound-attester',
         {

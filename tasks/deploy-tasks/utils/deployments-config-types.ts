@@ -30,6 +30,7 @@ export type DeploymentsConfigTypes = {
       initialRoot: string;
     };
     hydraS1SimpleAttester: {
+      enableDeployment: boolean;
       address: string;
       collectionIdFirst: string;
       collectionIdLast: string;
