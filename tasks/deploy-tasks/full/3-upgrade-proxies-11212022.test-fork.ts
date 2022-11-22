@@ -1,5 +1,4 @@
 import { getImplementation } from './../../../utils/proxy';
-import { HydraS1AccountboundAttester } from '../../../types/HydraS1AccountboundAttester';
 import {
   AttestationStructOutput,
   HydraS1SimpleAttester,
@@ -540,7 +539,7 @@ describe('FORK-Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        externalNullifier: externalNullifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 
