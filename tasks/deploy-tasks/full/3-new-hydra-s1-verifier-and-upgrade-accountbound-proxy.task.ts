@@ -14,7 +14,7 @@ import { DeployedHydraS1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters
 import { deploymentsConfig } from '../deployments-config';
 
 export interface Deployed3 {
-  hydraS1SimpleAttester: HydraS1SimpleAttester;
+  hydraS1SimpleAttester?: HydraS1SimpleAttester;
   hydraS1Verifier: HydraS1Verifier;
   pythia1SimpleAttester: Pythia1SimpleAttester;
   hydraS1AccountboundAttester: HydraS1AccountboundAttester;
