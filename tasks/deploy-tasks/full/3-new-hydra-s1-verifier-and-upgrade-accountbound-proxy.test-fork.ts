@@ -148,12 +148,36 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade Accountbound proxy', () =>
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
 
   const oldAttestersAddressesConfig = {
+    sandboxPolygon: {
+      hydraS1SimpleAttester: {
+        address: '0x0AB188c7260666146B300aD3ad5b2AB99eb91D45',
+      },
+      hydraS1AccountboundAttester: {
+        address: '0x66331568ca321e333aB25a74BCF0c2623730bd4B',
+      },
+    },
     polygon: {
       hydraS1SimpleAttester: {
         address: '0x10b27d9efa4A1B65412188b6f4F29e64Cf5e0146',
       },
       hydraS1AccountboundAttester: {
         address: '0x095590C542571Df14c6220c3163112286a5f7518',
+      },
+    },
+    mumbai: {
+      hydraS1SimpleAttester: {
+        address: '0x069e6B99f4DA543156f66274FC6673442803C587',
+      },
+      hydraS1AccountboundAttester: {
+        address: '0x76D8Ed0e34555dEF84c2bfff9be85446e8E9fa2A',
+      },
+    },
+    goerli: {
+      hydraS1SimpleAttester: {
+        address: '0x89d80C9E65fd1aC8970B78A4F17E2e772030C1cB',
+      },
+      hydraS1AccountboundAttester: {
+        address: '0x12e69A9b08709324d64c5AEaF4169b03B6199c6C',
       },
     },
   };
