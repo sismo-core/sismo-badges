@@ -14,7 +14,7 @@ interface IPythia1Base {
     uint256 inputX,
     uint256 inputY
   );
-  error ExternalNullifierMismatch(uint256 expectedExternalNullifier, uint256 externalNullifier);
+  error TicketIdentifierMismatch(uint256 expectedTicketIdentifier, uint256 ticketIdentifier);
   error IsStrictMismatch(bool expectedStrictness, bool strictNess);
   error ChainIdMismatch(uint256 expectedChainId, uint256 chainId);
   error ValueMismatch(uint256 expectedValue, uint256 inputValue);

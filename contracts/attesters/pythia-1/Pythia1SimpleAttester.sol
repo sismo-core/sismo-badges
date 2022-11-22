@@ -35,10 +35,10 @@ import {Pythia1Base, Pythia1Lib, Pythia1ProofData, Pythia1ProofInput, Pythia1Cla
  *   If a user can generate an attestation of max value 100, they can also generate any attestation with value < 100.
  *   This attester generate attestations of scores
 
- * - Nullified
- *   Each users gets one nullifier per claim
+ * - Ticketed
+ *   Each users gets one userTicket per claim
  *   For people used to semaphore/ tornado cash people:
- *   nullifier = hash(secret, externalNullifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
+ *   userTicket = hash(secret, ticketIdentifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
  **/
 
 contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester, Ownable {
@@ -52,7 +52,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   uint256 public immutable AUTHORIZED_COLLECTION_ID_LAST;
 
   uint256[2] internal _commitmentSignerPubKey;
-  mapping(uint256 => address) internal _nullifiersDestinations;
+  mapping(uint256 => address) internal _ticketsDestinations;
 
   /*******************************************************
     INITIALIZATION FUNCTIONS                           
@@ -98,11 +98,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _verifyRequest(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _verifyRequest(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     Pythia1ProofData memory snarkProof = abi.decode(proofData, (Pythia1ProofData));
     Pythia1ProofInput memory snarkInput = snarkProof._input();
     Pythia1Claim memory claim = request._claim();
@@ -117,13 +116,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @dev Returns attestations that will be recorded, constructed from the user request
    * @param request users request. Claim of having an account part of a group of accounts
    */
-  function buildAttestations(Request calldata request, bytes calldata)
-    public
-    view
-    virtual
-    override(IAttester, Attester)
-    returns (Attestation[] memory)
-  {
+  function buildAttestations(
+    Request calldata request,
+    bytes calldata
+  ) public view virtual override(IAttester, Attester) returns (Attestation[] memory) {
     Pythia1Claim memory claim = request._claim();
 
     Attestation[] memory attestations = new Attestation[](1);
@@ -153,24 +149,23 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
 
   /**
    * @dev Hook run before recording the attestation.
-   * Throws if nullifier already used
+   * Throws if ticket already used
    * @param request users request. Claim of beiing part of a group.
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
-    // we get the nullifier used from the snark input in the data provided
-    uint256 nullifier = proofData._getNullifier();
-    address currentDestination = _getDestinationOfNullifier(nullifier);
+  function _beforeRecordAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
+    // we get the ticket used from the snark input in the data provided
+    uint256 userTicket = proofData._getTicket();
+    address currentDestination = _getDestinationOfTicket(userTicket);
 
     if (currentDestination != address(0)) {
-      revert NullifierUsed(nullifier);
+      revert TicketUsed(userTicket);
     }
 
-    _setDestinationForNullifier(nullifier, request.destination);
+    _setDestinationForTicket(userTicket, request.destination);
   }
 
   /*******************************************************
@@ -178,26 +173,23 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   *******************************************************/
 
   /**
-   * @dev Returns the external nullifier from a user claim
+   * @dev Returns the ticket identifier from a user claim
    * @param claim user Pythia-1 claim = have an offchain account with a specific value in a specific group
-   * nullifier = hash(secretHash, externalNullifier), which is verified inside the snark
+   * ticket = hash(secretHash, ticketIdentifier), which is verified inside the snark
    * users bring secretHash as private input in snark which guarantees privacy
    * the secretHash is only known by the user and never escape the user's browser
    
-   * Here we chose externalNullifier = hash(attesterAddress, claim.GroupId)
-   * Creates one nullifier per group, per user and makes sure no collision with other attester's nullifiers
+   * Here we chose ticketIdentifier = hash(attesterAddress, claim.GroupId)
+   * Creates one ticket per group, per user and makes sure no collision with other attester's tickets
   **/
-  function _getExternalNullifierOfClaim(Pythia1Claim memory claim)
-    internal
-    view
-    override
-    returns (uint256)
-  {
-    uint256 externalNullifier = _encodeInSnarkField(
+  function _getTicketIdentifierOfClaim(
+    Pythia1Claim memory claim
+  ) internal view override returns (uint256) {
+    uint256 ticketIdentifier = _encodeInSnarkField(
       address(this),
       claim.groupProperties.internalCollectionId
     );
-    return externalNullifier;
+    return ticketIdentifier;
   }
 
   function _getCommitmentSignerPubKey() internal view override returns (uint256[2] memory) {
@@ -208,10 +200,9 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
     Pythia-1 Attester Specific Functions
   *******************************************************/
 
-  function updateCommitmentSignerPubKey(uint256[2] memory commitmentSignerPubKey)
-    external
-    onlyOwner
-  {
+  function updateCommitmentSignerPubKey(
+    uint256[2] memory commitmentSignerPubKey
+  ) external onlyOwner {
     _updateCommitmentSignerPubKey(commitmentSignerPubKey);
   }
 
@@ -221,20 +212,20 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   }
 
   /**
-   * @dev Getter, returns the last attestation destination of a nullifier
-   * @param nullifier nullifier used
+   * @dev Getter, returns the last attestation destination of a ticket
+   * @param userTicket ticket used
    **/
-  function getDestinationOfNullifier(uint256 nullifier) external view override returns (address) {
-    return _getDestinationOfNullifier(nullifier);
+  function getDestinationOfTicket(uint256 userTicket) external view override returns (address) {
+    return _getDestinationOfTicket(userTicket);
   }
 
-  function _setDestinationForNullifier(uint256 nullifier, address destination) internal virtual {
-    _nullifiersDestinations[nullifier] = destination;
-    emit NullifierDestinationUpdated(nullifier, destination);
+  function _setDestinationForTicket(uint256 userTicket, address destination) internal virtual {
+    _ticketsDestinations[userTicket] = destination;
+    emit TicketDestinationUpdated(userTicket, destination);
   }
 
-  function _getDestinationOfNullifier(uint256 nullifier) internal view returns (address) {
-    return _nullifiersDestinations[nullifier];
+  function _getDestinationOfTicket(uint256 userTicket) internal view returns (address) {
+    return _ticketsDestinations[userTicket];
   }
 
   function _encodeInSnarkField(address addr, uint256 nb) internal pure returns (uint256) {
