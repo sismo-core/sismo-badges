@@ -32,8 +32,6 @@ async function deploymentAction(
 
   // The following proxies will be updated:
   // - HydraS1Verifier => rename ticket in nullifier
-  // - HydraS1SimpleAttester  => rename ticket in nullifier
-  // - Pythia1SimpleAttester  => rename ticket in nullifier
   // - HydraS1AccountboundAttester => cooldown duration removed from groupProperties + inherits from HydraS1SimpleAttester
 
   // Upgrade HydraS1Verifier

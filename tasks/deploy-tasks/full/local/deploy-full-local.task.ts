@@ -108,14 +108,6 @@ async function deploymentAction(
     )
   ).wait();
 
-  await (
-    await attestationsRegistry.authorizeRange(
-      hydraS1AccountboundAttester.address,
-      config.hydraS1AccountboundAttester.collectionIdFirst,
-      config.hydraS1AccountboundAttester.collectionIdLast
-    )
-  ).wait();
-
   if (hydraS1SimpleAttester) {
     await (
       await attestationsRegistry.authorizeRange(
