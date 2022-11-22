@@ -31,8 +31,8 @@ struct Pythia1ProofData {
   // commitmentSignerPubKey.x;
   // commitmentSignerPubKey.y;
   // groupId;
-  // externalNullifier;
-  // nullifier;
+  // ticketIdentifier;
+  // userTicket;
   // value;
   // isStrict;
 }
@@ -41,8 +41,8 @@ struct Pythia1ProofInput {
   address destination;
   uint256 chainId;
   uint256 groupId;
-  uint256 externalNullifier;
-  uint256 nullifier;
+  uint256 ticketIdentifier;
+  uint256 ticket;
   uint256 value;
   bool isStrict;
   uint256[2] commitmentSignerPubKey;
@@ -61,7 +61,7 @@ library Pythia1Lib {
         _getChainId(self),
         _getGroupId(self),
         _getExpectedExternalNullifier(self),
-        _getNullifier(self),
+        _getTicket(self),
         _getValue(self),
         _getIsStrict(self),
         _getCommitmentMapperPubKey(self)
@@ -78,15 +78,12 @@ library Pythia1Lib {
     return (Pythia1Claim(claim.groupId, claim.claimedValue, self.destination, groupProperties));
   }
 
-  function _toCircomFormat(Pythia1ProofData memory self)
+  function _toCircomFormat(
+    Pythia1ProofData memory self
+  )
     internal
     pure
-    returns (
-      uint256[2] memory,
-      uint256[2][2] memory,
-      uint256[2] memory,
-      uint256[9] memory
-    )
+    returns (uint256[2] memory, uint256[2][2] memory, uint256[2] memory, uint256[9] memory)
   {
     return (self.proof.a, self.proof.b, self.proof.c, self.input);
   }
@@ -99,11 +96,9 @@ library Pythia1Lib {
     return self.input[1];
   }
 
-  function _getCommitmentMapperPubKey(Pythia1ProofData memory self)
-    internal
-    pure
-    returns (uint256[2] memory)
-  {
+  function _getCommitmentMapperPubKey(
+    Pythia1ProofData memory self
+  ) internal pure returns (uint256[2] memory) {
     return [self.input[2], self.input[3]];
   }
 
@@ -111,15 +106,13 @@ library Pythia1Lib {
     return self.input[4];
   }
 
-  function _getExpectedExternalNullifier(Pythia1ProofData memory self)
-    internal
-    pure
-    returns (uint256)
-  {
+  function _getExpectedExternalNullifier(
+    Pythia1ProofData memory self
+  ) internal pure returns (uint256) {
     return self.input[5];
   }
 
-  function _getNullifier(Pythia1ProofData memory self) internal pure returns (uint256) {
+  function _getTicket(Pythia1ProofData memory self) internal pure returns (uint256) {
     return self.input[6];
   }
 
@@ -131,34 +124,30 @@ library Pythia1Lib {
     return self.input[8] == 1;
   }
 
-  function _getNullifier(bytes calldata self) internal pure returns (uint256) {
+  function _getTicket(bytes calldata self) internal pure returns (uint256) {
     Pythia1ProofData memory snarkProofData = abi.decode(self, (Pythia1ProofData));
-    uint256 nullifier = uint256(_getNullifier(snarkProofData));
-    return nullifier;
+    uint256 userTicket = uint256(_getTicket(snarkProofData));
+    return userTicket;
   }
 
-  function _generateGroupIdFromProperties(uint128 internalCollectionId, bool isScore)
-    internal
-    pure
-    returns (uint256)
-  {
+  function _generateGroupIdFromProperties(
+    uint128 internalCollectionId,
+    bool isScore
+  ) internal pure returns (uint256) {
     return
       _generateGroupIdFromEncodedProperties(_encodeGroupProperties(internalCollectionId, isScore));
   }
 
-  function _generateGroupIdFromEncodedProperties(bytes memory encodedProperties)
-    internal
-    pure
-    returns (uint256)
-  {
+  function _generateGroupIdFromEncodedProperties(
+    bytes memory encodedProperties
+  ) internal pure returns (uint256) {
     return uint256(keccak256(encodedProperties)) % Pythia1Lib.SNARK_FIELD;
   }
 
-  function _encodeGroupProperties(uint128 internalCollectionId, bool isScore)
-    internal
-    pure
-    returns (bytes memory)
-  {
+  function _encodeGroupProperties(
+    uint128 internalCollectionId,
+    bool isScore
+  ) internal pure returns (bytes memory) {
     return abi.encode(internalCollectionId, isScore);
   }
 
