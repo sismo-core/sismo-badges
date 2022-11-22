@@ -85,11 +85,14 @@ async function deploymentAction(
     options,
   } as DeployPythia1SimpleAttesterArgs)) as DeployedPythia1SimpleAttester;
 
-  await hre.run('register-for-attester', {
-    availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1SimpleAttester.address,
-    root: config.hydraS1SimpleAttester.initialRoot,
-  });
+  if (hydraS1SimpleAttester) {
+    await hre.run('register-for-attester', {
+      availableRootsRegistryAddress: availableRootsRegistry.address,
+      attester: hydraS1SimpleAttester.address,
+      root: config.hydraS1SimpleAttester.initialRoot,
+    });
+  }
+
   await hre.run('register-for-attester', {
     availableRootsRegistryAddress: availableRootsRegistry.address,
     attester: hydraS1AccountboundAttester.address,
@@ -113,13 +116,15 @@ async function deploymentAction(
     )
   ).wait();
 
-  await (
-    await attestationsRegistry.authorizeRange(
-      hydraS1SimpleAttester.address,
-      config.hydraS1SimpleAttester.collectionIdFirst,
-      config.hydraS1SimpleAttester.collectionIdLast
-    )
-  ).wait();
+  if (hydraS1SimpleAttester) {
+    await (
+      await attestationsRegistry.authorizeRange(
+        hydraS1SimpleAttester.address,
+        config.hydraS1SimpleAttester.collectionIdFirst,
+        config.hydraS1SimpleAttester.collectionIdLast
+      )
+    ).wait();
+  }
 
   await (
     await attestationsRegistry.authorizeRange(
