@@ -40,7 +40,7 @@ export interface Deployed0 {
   front: Front;
   commitmentMapperRegistry: CommitmentMapperRegistry;
   availableRootsRegistry: AvailableRootsRegistry;
-  hydraS1SimpleAttester: HydraS1SimpleAttester;
+  hydraS1SimpleAttester?: HydraS1SimpleAttester | undefined;
   hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   hydraS1Verifier: HydraS1Verifier;
 }
@@ -77,6 +77,7 @@ async function deploymentAction(
   } as DeployCommitmentMapperArgs)) as DeployedCommitmentMapper;
 
   const hydraS1SimpleArgs: DeployHydraS1SimpleAttesterArgs = {
+    enableDeployment: config.hydraS1SimpleAttester.enableDeployment,
     collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
     collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
     commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
@@ -105,17 +106,19 @@ async function deploymentAction(
   )) as DeployedHydraS1AccountboundAttester;
 
   // Register an initial root for attester
-  if (options.manualConfirm || options.log) {
+  if (hydraS1SimpleAttester && (options.manualConfirm || options.log)) {
     console.log(`
     ----------------------------------------------------------------
     * Register initial root for hydraS1SimpleAttester attester`);
   }
-  await hre.run('register-for-attester', {
-    availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1SimpleAttester.address,
-    root: config.hydraS1SimpleAttester.initialRoot,
-    options: getCommonOptions(options),
-  });
+  if (hydraS1SimpleAttester) {
+    await hre.run('register-for-attester', {
+      availableRootsRegistryAddress: availableRootsRegistry.address,
+      attester: hydraS1SimpleAttester.address,
+      root: config.hydraS1SimpleAttester.initialRoot,
+      options: getCommonOptions(options),
+    });
+  }
 
   if (options.manualConfirm || options.log) {
     console.log(`
@@ -130,18 +133,20 @@ async function deploymentAction(
   });
 
   // Give to the attester the authorization to write on the attestations Registry
-  if (options.manualConfirm || options.log) {
+  if (hydraS1SimpleAttester && (options.manualConfirm || options.log)) {
     console.log(`
     ----------------------------------------------------------------
     * Authorize HydraS1SimpleAttester to record on the AttestationsRegistry`);
   }
-  await hre.run('attestations-registry-authorize-range', {
-    attestationsRegistryAddress: attestationsRegistry.address,
-    attesterAddress: hydraS1SimpleAttester.address,
-    collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
-    collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
-    options: getCommonOptions(options),
-  } as AuthorizeRangeArgs);
+  if (hydraS1SimpleAttester) {
+    await hre.run('attestations-registry-authorize-range', {
+      attestationsRegistryAddress: attestationsRegistry.address,
+      attesterAddress: hydraS1SimpleAttester.address,
+      collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
+      collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
+      options: getCommonOptions(options),
+    } as AuthorizeRangeArgs);
+  }
 
   if (options.manualConfirm || options.log) {
     console.log(`
