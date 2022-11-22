@@ -96,6 +96,7 @@ async function deploymentAction(
     deployed.address,
     deployer
   );
+
   return { hydraS1AccountboundAttester, hydraS1Verifier };
 }
 

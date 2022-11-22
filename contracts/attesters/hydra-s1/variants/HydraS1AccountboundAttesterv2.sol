@@ -3,7 +3,7 @@
 pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
-import {IHydraS1AccountboundAttesterv2} from '../interfaces/IHydraS1AccountboundAttesterv2.sol';
+import {IHydraS1AccountboundAttester} from '../interfaces/IHydraS1AccountboundAttester.sol';
 import {HydraS1SimpleAttester} from '../HydraS1SimpleAttester.sol';
 
 // Core protocol Protocol imports
@@ -48,7 +48,7 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   A nullifier can actually be reused as long as the destination of the attestation remains the same
  *   It enables users to renew or update their attestations
  **/
-contract HydraS1AccountboundAttesterv2 is IHydraS1AccountboundAttesterv2, HydraS1SimpleAttester {
+contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1SimpleAttester {
   using HydraS1Lib for HydraS1ProofData;
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;

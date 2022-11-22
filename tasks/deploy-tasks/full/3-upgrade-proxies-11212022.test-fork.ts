@@ -35,7 +35,7 @@ import {
   CommitmentMapperRegistry__factory,
   Front,
   Front__factory,
-  HydraS1AccountboundAttesterv2,
+  HydraS1AccountboundAttester,
   HydraS1AccountboundAttester__factory,
   HydraS1SimpleAttester__factory,
   HydraS1Verifier,
@@ -78,7 +78,7 @@ describe('FORK-Test E2E Protocol', () => {
   // contracts
   let attestationsRegistry: AttestationsRegistry;
   let hydraS1Verifier: HydraS1Verifier;
-  let hydraS1AccountboundAttester: HydraS1AccountboundAttesterv2;
+  let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   let hydraS1SimpleAttester: HydraS1SimpleAttester;
   let pythia1Verifier: Pythia1Verifier;
   let pythia1SimpleAttester: Pythia1SimpleAttester;
