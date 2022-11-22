@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 
 import {Attestation, AttestationData} from '../libs/Structs.sol';
 import {IAttestationsRegistryConfigLogic} from './IAttestationsRegistryConfigLogic.sol';
