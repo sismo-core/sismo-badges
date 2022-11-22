@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
 import {Pythia1Verifier, Pythia1Lib, Pythia1ProofData} from '../libs/Pythia1Lib.sol';

@@ -4,21 +4,21 @@ pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1AccountboundAttester} from '../interfaces/IHydraS1AccountboundAttester.sol';
+import {HydraS1SimpleAttester} from '../HydraS1SimpleAttester.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../../core/libs/Structs.sol';
-import {Attester, IAttester, IAttestationsRegistry} from '../../../core/Attester.sol';
+import {IAttester} from '../../../core/Attester.sol';
 
 // Imports related to HydraS1 Proving Scheme
 import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Claim} from '../base/HydraS1Base.sol';
-import {HydraS1AccountboundLib, HydraS1AccountboundClaim} from '../libs/HydraS1AccountboundLib.sol';
 
 /**
  * @title  Hydra-S1 Accountbound Attester
  * @author Sismo
  * @notice This attester is part of the family of the Hydra-S1 Attesters.
  * Hydra-S1 attesters enable users to prove they have an account in a group in a privacy preserving way.
- * The Hydra-S1 Base abstract contract is inherited and holds the complex Hydra S1 verification logic.
+ * The Hydra-S1 Simple Attester contract is inherited and holds the complex Hydra S1 verification logic.
  * We invite readers to refer to:
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
@@ -48,17 +48,17 @@ import {HydraS1AccountboundLib, HydraS1AccountboundClaim} from '../libs/HydraS1A
  *   A nullifier can actually be reused as long as the destination of the attestation remains the same
  *   It enables users to renew or update their attestations
  **/
-contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Base, Attester {
+contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1SimpleAttester {
   using HydraS1Lib for HydraS1ProofData;
   using HydraS1Lib for bytes;
-  using HydraS1AccountboundLib for Request;
+  using HydraS1Lib for Request;
 
-  // The deployed contract will need to be authorized to write into the Attestation registry
-  // It should get write access on collections from AUTHORIZED_COLLECTION_ID_FIRST to AUTHORIZED_COLLECTION_ID_LAST.
-  uint256 public immutable AUTHORIZED_COLLECTION_ID_FIRST;
-  uint256 public immutable AUTHORIZED_COLLECTION_ID_LAST;
+  // Mapping to store cooldown value for each groupId
+  mapping(uint256 => uint32) internal _groupIdCooldowns;
 
-  mapping(uint256 => NullifierData) internal _nullifiersData;
+  // mappings to store the state related to a specific nullifier (its cooldownStart and its burnCount)
+  mapping(uint256 => uint32) internal _nullifiersCooldownStart;
+  mapping(uint256 => uint16) internal _nullifiersBurnCount;
 
   /*******************************************************
     INITIALIZATION FUNCTIONS                           
@@ -80,36 +80,19 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
     uint256 collectionIdFirst,
     uint256 collectionIdLast
   )
-    Attester(attestationsRegistryAddress)
-    HydraS1Base(hydraS1VerifierAddress, availableRootsRegistryAddress, commitmentMapperAddress)
-  {
-    AUTHORIZED_COLLECTION_ID_FIRST = collectionIdFirst;
-    AUTHORIZED_COLLECTION_ID_LAST = collectionIdLast;
-  }
+    HydraS1SimpleAttester(
+      attestationsRegistryAddress,
+      hydraS1VerifierAddress,
+      availableRootsRegistryAddress,
+      commitmentMapperAddress,
+      collectionIdFirst,
+      collectionIdLast
+    )
+  {}
 
   /*******************************************************
     MANDATORY FUNCTIONS TO OVERRIDE FROM ATTESTER.SOL
   *******************************************************/
-
-  /**
-   * @dev Throws if user attestations request is invalid
-   * Look into HydraS1Base for more details
-   * @param request users request. Claim of having an account part of a group of accounts
-   * @param proofData snark proof backing the claim
-   */
-  function _verifyRequest(
-    Request calldata request,
-    bytes calldata proofData
-  ) internal virtual override {
-    HydraS1ProofData memory snarkProof = abi.decode(proofData, (HydraS1ProofData));
-    HydraS1ProofInput memory snarkInput = snarkProof._input();
-    HydraS1Claim memory claim = request._hydraS1claim();
-
-    // verifies that the proof corresponds to the claim
-    _validateInput(claim, snarkInput);
-    // verifies the proof validity
-    _verifyProof(snarkProof);
-  }
 
   /**
    * @dev Returns the actual attestations constructed from the user request
@@ -119,38 +102,13 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
   function buildAttestations(
     Request calldata request,
     bytes calldata proofData
-  ) public view virtual override(IAttester, Attester) returns (Attestation[] memory) {
-    HydraS1AccountboundClaim memory claim = request._hydraS1Accountboundclaim();
+  ) public view virtual override(IAttester, HydraS1SimpleAttester) returns (Attestation[] memory) {
+    Attestation[] memory attestations = super.buildAttestations(request, proofData);
 
-    Attestation[] memory attestations = new Attestation[](1);
-
-    uint256 attestationCollectionId = AUTHORIZED_COLLECTION_ID_FIRST +
-      claim.groupProperties.groupIndex;
-    if (attestationCollectionId > AUTHORIZED_COLLECTION_ID_LAST)
-      revert CollectionIdOutOfBound(attestationCollectionId);
-
-    // The issuer of attestations is the attester
-    address issuer = address(this);
-    // user sends the nullifier as input in the data
     uint256 nullifier = proofData._getNullifier();
-    NullifierData memory nullifierData = _nullifiersData[nullifier];
-
-    uint16 burnCount = nullifierData.burnCount;
-    // If the attestation is minted on a new destination address
-    // the burnCount encoded in the extraData of the Attestation should be incremented
-    if (
-      nullifierData.destination != address(0) && nullifierData.destination != request.destination
-    ) {
-      burnCount += 1;
-    }
-
-    attestations[0] = Attestation(
-      attestationCollectionId,
-      request.destination,
-      issuer,
-      claim.claimedValue,
-      claim.groupProperties.generationTimestamp,
-      abi.encode(nullifier, burnCount)
+    attestations[0].extraData = abi.encodePacked(
+      attestations[0].extraData,
+      encodeNullifierAndNullifierBurnCount(nullifier, attestations[0].owner)
     );
 
     return (attestations);
@@ -170,20 +128,23 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
     bytes calldata proofData
   ) internal virtual override {
     uint256 nullifier = proofData._getNullifier();
-    NullifierData memory nullifierData = _nullifiersData[nullifier];
+    address nullifierDestination = _getDestinationOfNullifier(nullifier);
+
+    HydraS1Claim memory claim = request._claim();
 
     if (
-      nullifierData.destination != address(0) && nullifierData.destination != request.destination
+      _isCooldownRenewedForNullifier(
+        nullifier,
+        nullifierDestination,
+        claim.destination,
+        claim.groupId
+      )
     ) {
-      HydraS1AccountboundClaim memory claim = request._hydraS1Accountboundclaim();
-      if (_isOnCooldown(nullifierData, claim.groupProperties.cooldownDuration))
-        revert NullifierOnCooldown(nullifierData, claim.groupProperties.cooldownDuration);
-
       // Delete the old Attestation on the account before recording the new one
       address[] memory attestationOwners = new address[](1);
       uint256[] memory attestationCollectionIds = new uint256[](1);
 
-      attestationOwners[0] = nullifierData.destination;
+      attestationOwners[0] = nullifierDestination;
       attestationCollectionIds[0] =
         AUTHORIZED_COLLECTION_ID_FIRST +
         claim.groupProperties.groupIndex;
@@ -193,11 +154,11 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
       emit AttestationDeleted(
         Attestation(
           AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex,
-          nullifierData.destination,
+          nullifierDestination,
           address(this),
           claim.claimedValue,
           claim.groupProperties.generationTimestamp,
-          abi.encode(nullifier, nullifierData.burnCount)
+          abi.encode(nullifier, _getNullifierBurnCount(nullifier))
         )
       );
       _setNullifierOnCooldown(nullifier);
@@ -206,77 +167,104 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Bas
   }
 
   /*******************************************************
-    Hydra-S1 MANDATORY FUNCTIONS FROM Hydra-S1 Base Attester
+    LOGIC FUNCTIONS RELATED TO ACCOUNTBOUND BEHAVIOUR
   *******************************************************/
 
   /**
-   * @dev Returns the external nullifier from a user claim
-   * @param claim user Hydra-S1 claim = have an account with a specific value in a specific group
-   * nullifier = hash(sourceSecretHash, externalNullifier), which is verified inside the snark
-   * users bring sourceSecretHash as private input in snark which guarantees privacy
-   
-   * Here we chose externalNullifier = hash(attesterAddress, claim.GroupId)
-   * Creates one nullifier per group, per user and makes sure no collision with other attester's nullifiers
-  **/
-  function _getExternalNullifierOfClaim(
-    HydraS1Claim memory claim
-  ) internal view override returns (uint256) {
-    uint256 externalNullifier = _encodeInSnarkField(
-      address(this),
-      claim.groupProperties.groupIndex
-    );
-    return externalNullifier;
+   * @dev ABI encodes nullifier and the burn count of the nullifier
+   * @param nullifier user nullifier
+   * @param claimDestination destination referenced in the user claim
+   */
+  function encodeNullifierAndNullifierBurnCount(
+    uint256 nullifier,
+    address claimDestination
+  ) public view virtual returns (bytes memory) {
+    address nullifierDestination = _getDestinationOfNullifier(nullifier);
+    uint16 burnCount = _getNullifierBurnCount(nullifier);
+    // If the attestation is minted on a new destination address
+    // the burnCount that will eencoded in the extraData of the Attestation should be incremented
+    if (nullifierDestination != address(0) && nullifierDestination != claimDestination) {
+      burnCount += 1;
+    }
+    return (abi.encode(nullifier, burnCount));
+  }
+
+  /**
+   * @dev Checks if a nullifier needs to have a cooldown renewed
+   * @param nullifier user nullifier
+   * @param oldDestination destination where the user holds the badge (0x0 if no badge minted)
+   * @param newDestination destination where the user wants to hold the badge in the future
+   * @param groupId id of the group the user claims eligibility
+   */
+  function _isCooldownRenewedForNullifier(
+    uint256 nullifier,
+    address oldDestination,
+    address newDestination,
+    uint256 groupId
+  ) internal virtual returns (bool) {
+    uint16 burnCount = _getNullifierBurnCount(nullifier);
+
+    if (oldDestination != address(0) && oldDestination != newDestination) {
+      uint32 cooldownDuration = _getCooldownDurationForGroupId(groupId);
+      if (_isOnCooldown(nullifier, cooldownDuration))
+        revert NullifierOnCooldown(nullifier, oldDestination, burnCount, cooldownDuration);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * @dev Checks if a nullifier is on cooldown
+   * @param nullifier user nullifier
+   * @param cooldownDuration waiting time before the user can change its badge destination
+   */
+  function _isOnCooldown(uint256 nullifier, uint32 cooldownDuration) internal view returns (bool) {
+    return _getNullifierCooldownStart(nullifier) + cooldownDuration > block.timestamp;
   }
 
   /*******************************************************
-    Hydra-S1 Attester Specific Functions
+        GETTERS AND SETTERS FOR NULLIFIER MAPPINGS
   *******************************************************/
 
-  /**
-   * @dev Getter, returns the last attestation destination of a nullifier
-   * @param nullifier nullifier used
-   **/
-  function getDestinationOfNullifier(uint256 nullifier) external view override returns (address) {
-    return _getDestinationOfNullifier(nullifier);
-  }
-
-  /**
-   * @dev Getter, returns the data linked to a nullifier
-   * @param nullifier nullifier used
-   **/
-  function getNullifierData(
-    uint256 nullifier
-  ) external view override returns (NullifierData memory) {
-    return _getNullifierData(nullifier);
-  }
-
-  function _setDestinationForNullifier(uint256 nullifier, address destination) internal virtual {
-    _nullifiersData[nullifier].destination = destination;
-    emit NullifierDestinationUpdated(nullifier, destination);
-  }
-
   function _setNullifierOnCooldown(uint256 nullifier) internal {
-    _nullifiersData[nullifier].cooldownStart = uint32(block.timestamp);
-    _nullifiersData[nullifier].burnCount += 1;
-    emit NullifierSetOnCooldown(nullifier, _nullifiersData[nullifier].burnCount);
+    _nullifiersCooldownStart[nullifier] = uint32(block.timestamp);
+    _nullifiersBurnCount[nullifier] += 1;
+    emit NullifierSetOnCooldown(nullifier, _nullifiersBurnCount[nullifier]);
   }
 
-  function _getDestinationOfNullifier(uint256 nullifier) internal view returns (address) {
-    return _nullifiersData[nullifier].destination;
+  function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
+    return _getNullifierCooldownStart(nullifier);
   }
 
-  function _isOnCooldown(
-    NullifierData memory nullifierData,
-    uint32 cooldownDuration
-  ) internal view returns (bool) {
-    return nullifierData.cooldownStart + cooldownDuration > block.timestamp;
+  function _getNullifierCooldownStart(uint256 nullifier) internal view returns (uint32) {
+    return _nullifiersCooldownStart[nullifier];
   }
 
-  function _getNullifierData(uint256 nullifier) internal view returns (NullifierData memory) {
-    return _nullifiersData[nullifier];
+  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
+    return _getNullifierBurnCount(nullifier);
   }
 
-  function _encodeInSnarkField(address addr, uint256 nb) internal pure returns (uint256) {
-    return uint256(keccak256(abi.encode(addr, nb))) % HydraS1Lib.SNARK_FIELD;
+  function _getNullifierBurnCount(uint256 nullifier) internal view returns (uint16) {
+    return _nullifiersBurnCount[nullifier];
+  }
+
+  /*******************************************************
+         GETTERS AND SETTERS FOR GROUP ID MAPPING
+  *******************************************************/
+
+  function setCooldownDurationForgroupId(uint256 groupId, uint32 cooldownDuration) external {
+    _groupIdCooldowns[groupId] = cooldownDuration;
+  }
+
+  function getCooldownDurationForGroupId(uint256 groupId) external view returns (uint32) {
+    return _getCooldownDurationForGroupId(groupId);
+  }
+
+  function _getCooldownDurationForGroupId(uint256 groupId) internal view returns (uint32) {
+    uint32 cooldownDuration = _groupIdCooldowns[groupId];
+    if (cooldownDuration == 0) {
+      revert CooldownDurationNotSetForGroupId(groupId);
+    }
+    return cooldownDuration;
   }
 }

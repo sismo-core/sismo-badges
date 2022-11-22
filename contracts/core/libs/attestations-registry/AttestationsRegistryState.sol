@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 
 import {Range} from '../utils/RangeLib.sol';
 import {Attestation, AttestationData} from '../Structs.sol';

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 
 import {Claim, Request} from '../../../core/libs/Structs.sol';
 import {Pythia1Verifier} from '@sismo-core/pythia-1/contracts/Pythia1Verifier.sol';
