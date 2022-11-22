@@ -13,10 +13,9 @@ import {
   DeployAvailableRootsRegistry,
 } from '../unit/periphery/deploy-available-roots-registry.task';
 import {
-  DeployHydraS1AccountboundAttesterArgs,
   DeployedHydraS1AccountboundAttester,
-} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
-import { DeployedHydraS1AccountboundAttesterV2 } from '../unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester-v2.task';
+  DeployHydraS1AccountboundAttesterArgs,
+} from '../unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
 import { DeployOptions, getDeployer } from '../utils';
 import { DeployCoreArgs, DeployedCore } from '../batch/deploy-core.task';
 import { deploymentsConfig } from '../deployments-config';
@@ -31,9 +30,8 @@ import {
   CommitmentMapperRegistry,
   Front,
   HydraS1SimpleAttester,
-  HydraS1AccountboundAttester,
   HydraS1Verifier,
-  HydraS1AccountboundAttesterv2,
+  HydraS1AccountboundAttester,
 } from 'types';
 
 export interface Deployed0 {
@@ -44,7 +42,6 @@ export interface Deployed0 {
   availableRootsRegistry: AvailableRootsRegistry;
   hydraS1SimpleAttester: HydraS1SimpleAttester;
   hydraS1AccountboundAttester: HydraS1AccountboundAttester;
-  hydraS1AccountboundAttesterv2: HydraS1AccountboundAttesterv2;
   hydraS1Verifier: HydraS1Verifier;
 }
 
@@ -107,11 +104,6 @@ async function deploymentAction(
     accountboundArgs
   )) as DeployedHydraS1AccountboundAttester;
 
-  const { hydraS1AccountboundAttesterv2 } = (await hre.run(
-    'deploy-hydra-s1-accountbound-attester-v2',
-    accountboundArgs
-  )) as DeployedHydraS1AccountboundAttesterV2;
-
   // Register an initial root for attester
   if (options.manualConfirm || options.log) {
     console.log(`
@@ -124,26 +116,15 @@ async function deploymentAction(
     root: config.hydraS1SimpleAttester.initialRoot,
     options: getCommonOptions(options),
   });
-  if (options.manualConfirm || options.log) {
-    console.log(`
-    ----------------------------------------------------------------
-    * Register initial root for hydraS1AccountboundAttester attester`);
-  }
-  await hre.run('register-for-attester', {
-    availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1AccountboundAttester.address,
-    root: config.hydraS1AccountboundAttester.initialRoot,
-    options: getCommonOptions(options),
-  });
 
   if (options.manualConfirm || options.log) {
     console.log(`
     ----------------------------------------------------------------
-    * Register initial root for hydraS1AccountboundAttesterV2 attester`);
+    * Register initial root for HydraS1AccountboundAttester attester`);
   }
   await hre.run('register-for-attester', {
     availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1AccountboundAttesterv2.address,
+    attester: hydraS1AccountboundAttester.address,
     root: config.hydraS1AccountboundAttester.initialRoot,
     options: getCommonOptions(options),
   });
@@ -170,19 +151,6 @@ async function deploymentAction(
   await hre.run('attestations-registry-authorize-range', {
     attestationsRegistryAddress: attestationsRegistry.address,
     attesterAddress: hydraS1AccountboundAttester.address,
-    collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
-    collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
-    options: getCommonOptions(options),
-  } as AuthorizeRangeArgs);
-
-  if (options.manualConfirm || options.log) {
-    console.log(`
-    ----------------------------------------------------------------
-    * Authorize HydraS1AccountboundAttesterV2 to record on the AttestationsRegistry`);
-  }
-  await hre.run('attestations-registry-authorize-range', {
-    attestationsRegistryAddress: attestationsRegistry.address,
-    attesterAddress: hydraS1AccountboundAttesterv2.address,
     collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
     collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
     options: getCommonOptions(options),
@@ -288,12 +256,6 @@ async function deploymentAction(
       collectionIdFirst: ${config.hydraS1AccountboundAttester.collectionIdFirst}
       collectionIdLast: ${config.hydraS1AccountboundAttester.collectionIdLast}
     
-    * HydraS1AccountboundAttesterV2:
-      -> proxy: ${(await hre.deployments.all()).HydraS1AccountboundAttester.address}
-      -> implem: ${(await hre.deployments.all()).HydraS1AccountboundAttesterImplem.address}
-      collectionIdFirst: ${config.hydraS1AccountboundAttester.collectionIdFirst}
-      collectionIdLast: ${config.hydraS1AccountboundAttester.collectionIdLast}
-    
     * AvailableRootsRegistry: 
       -> proxy: ${(await hre.deployments.all()).AvailableRootsRegistry.address}
       -> implem: ${(await hre.deployments.all()).AvailableRootsRegistryImplem.address}
@@ -310,7 +272,6 @@ async function deploymentAction(
   return {
     hydraS1SimpleAttester,
     hydraS1AccountboundAttester,
-    hydraS1AccountboundAttesterv2,
     availableRootsRegistry,
     commitmentMapperRegistry,
     front,

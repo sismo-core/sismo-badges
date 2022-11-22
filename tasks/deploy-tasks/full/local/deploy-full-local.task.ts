@@ -8,15 +8,10 @@ import {
   DeployHydraS1SimpleAttesterArgs,
   DeployedHydraS1SimpleAttester,
 } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-simple-attester.task';
-
 import {
   DeployHydraS1AccountboundAttesterArgs,
   DeployedHydraS1AccountboundAttester,
 } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
-import {
-  DeployHydraS1AccountboundAttesterV2Args,
-  DeployedHydraS1AccountboundAttesterV2,
-} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester-v2.task';
 import { EVENT_TRIGGERER_ROLE } from '../../../../utils';
 import {
   DeployAvailableRootsRegistry,
@@ -81,18 +76,6 @@ async function deploymentAction(
     options,
   } as DeployHydraS1AccountboundAttesterArgs)) as DeployedHydraS1AccountboundAttester;
 
-  const { hydraS1AccountboundAttesterv2 } = (await hre.run(
-    'deploy-hydra-s1-accountbound-attester-v2',
-    {
-      collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
-      collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
-      commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
-      availableRootsRegistryAddress: availableRootsRegistry.address,
-      attestationsRegistryAddress: attestationsRegistry.address,
-      options,
-    } as DeployHydraS1AccountboundAttesterV2Args
-  )) as DeployedHydraS1AccountboundAttesterV2;
-
   const { pythia1SimpleAttester } = (await hre.run('deploy-pythia-1-simple-attester', {
     collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
     collectionIdLast: config.synapsPythia1SimpleAttester.collectionIdLast,
@@ -124,7 +107,7 @@ async function deploymentAction(
 
   await (
     await attestationsRegistry.authorizeRange(
-      hydraS1AccountboundAttesterv2.address,
+      hydraS1AccountboundAttester.address,
       config.hydraS1AccountboundAttester.collectionIdFirst,
       config.hydraS1AccountboundAttester.collectionIdLast
     )

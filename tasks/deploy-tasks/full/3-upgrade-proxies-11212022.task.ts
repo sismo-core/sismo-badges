@@ -3,13 +3,13 @@ import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployOptions, getDeployer } from '../utils';
 import {
-  HydraS1AccountboundAttesterv2,
+  HydraS1AccountboundAttester,
   HydraS1Verifier,
   Pythia1SimpleAttester,
   Pythia1Verifier,
 } from 'types';
 import { DeployedPythia1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
-import { DeployedHydraS1AccountboundAttesterV2 } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester-v2.task';
+import { DeployedHydraS1AccountboundAttester } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
 import { DeployedHydraS1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-simple-attester.task';
 import { deploymentsConfig } from '../deployments-config';
 
@@ -18,7 +18,7 @@ export interface Deployed3 {
   hydraS1Verifier: HydraS1Verifier;
   pythia1SimpleAttester: Pythia1SimpleAttester;
   pythia1Verifier: Pythia1Verifier;
-  hydraS1AccountboundAttester: HydraS1AccountboundAttesterv2;
+  hydraS1AccountboundAttester: HydraS1AccountboundAttester;
 }
 
 async function deploymentAction(
@@ -72,8 +72,8 @@ async function deploymentAction(
     })) as DeployedPythia1SimpleAttester;
 
   // Upgrade HydraS1AccountboundAttester
-  const { hydraS1AccountboundAttesterv2: newHydraS1AccountboundAttester } = (await hre.run(
-    'deploy-hydra-s1-accountbound-attester-v2',
+  const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = (await hre.run(
+    'deploy-hydra-s1-accountbound-attester',
     {
       collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
       collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
@@ -87,7 +87,7 @@ async function deploymentAction(
         proxyAddress: config.hydraS1AccountboundAttester.address,
       },
     }
-  )) as DeployedHydraS1AccountboundAttesterV2;
+  )) as DeployedHydraS1AccountboundAttester;
 
   return {
     hydraS1Verifier: newHydraS1Verifier,
