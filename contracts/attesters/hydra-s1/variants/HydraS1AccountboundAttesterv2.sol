@@ -189,6 +189,13 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
     return (abi.encode(nullifier, burnCount));
   }
 
+  /**
+   * @dev Checks if a nullifier needs to have a cooldown renewed
+   * @param nullifier user nullifier
+   * @param oldDestination destination where the user holds the badge (0x0 if no badge minted)
+   * @param newDestination destination where the user wants to hold the badge in the future
+   * @param groupId id of the group the user claims eligibility
+   */
   function _isCooldownRenewedForNullifier(
     uint256 nullifier,
     address oldDestination,
@@ -206,6 +213,11 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
     return false;
   }
 
+  /**
+   * @dev Checks if a nullifier is on cooldown
+   * @param nullifier user nullifier
+   * @param cooldownDuration waiting time before the user can change its badge destination
+   */
   function _isOnCooldown(uint256 nullifier, uint32 cooldownDuration) internal view returns (bool) {
     return _getNullifierCooldownStart(nullifier) + cooldownDuration > block.timestamp;
   }
