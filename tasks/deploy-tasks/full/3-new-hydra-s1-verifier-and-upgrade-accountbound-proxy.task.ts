@@ -14,9 +14,7 @@ import { DeployedHydraS1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters
 import { deploymentsConfig } from '../deployments-config';
 
 export interface Deployed3 {
-  hydraS1SimpleAttester?: HydraS1SimpleAttester;
   hydraS1Verifier: HydraS1Verifier;
-  pythia1SimpleAttester: Pythia1SimpleAttester;
   hydraS1AccountboundAttester: HydraS1AccountboundAttester;
 }
 
@@ -29,19 +27,20 @@ async function deploymentAction(
   options = { ...config.deployOptions, ...options };
 
   if (options.manualConfirm || options.log) {
-    console.log('2-upgrade-proxies: ', hre.network.name);
+    console.log('3-new-hydra-s1-verifier-and-upgrade-accountbound-proxy: ', hre.network.name);
   }
 
   // The following proxies will be updated:
   // - HydraS1Verifier => rename ticket in nullifier
   // - HydraS1SimpleAttester  => rename ticket in nullifier
-  // - Pyhtia1Verifier => rename ticket in nullifier
   // - Pythia1SimpleAttester  => rename ticket in nullifier
   // - HydraS1AccountboundAttester => cooldown duration removed from groupProperties + inherits from HydraS1SimpleAttester
 
-  // Upgrade HydraS1Verifier and HydraS1SimpleAttester
-  const { hydraS1SimpleAttester: newHydraS1SimpleAttester, hydraS1Verifier: newHydraS1Verifier } =
-    (await hre.run('deploy-hydra-s1-simple-attester', {
+  // Upgrade HydraS1Verifier
+  const { hydraS1Verifier: newHydraS1Verifier } = (await hre.run(
+    'deploy-hydra-s1-simple-attester',
+    {
+      enableDeployment: config.hydraS1SimpleAttester.enableDeployment,
       collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
       collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
       commitmentMapperRegistryAddress: config.commitmentMapper.address,
@@ -52,26 +51,8 @@ async function deploymentAction(
         implementationVersion: 3,
         proxyAddress: config.hydraS1SimpleAttester.address,
       },
-    })) as DeployedHydraS1SimpleAttester;
-
-  // Upgrade Pythia1Verifier and Pythia1SimpleAttester
-  const { pythia1SimpleAttester: newPythia1SimpleAttester } = (await hre.run(
-    'deploy-pythia-1-simple-attester',
-    {
-      collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
-      collectionIdLast: config.synapsPythia1SimpleAttester.collectionIdLast,
-      attestationsRegistryAddress: config.attestationsRegistry.address,
-      commitmentSignerPubKeyX: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX,
-      commitmentSignerPubKeyY: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY,
-      owner: config.synapsPythia1SimpleAttester.owner,
-      pythia1Verifier: config.pythia1Verifier.address,
-      options: {
-        ...options,
-        implementationVersion: 2,
-        proxyAddress: config.synapsPythia1SimpleAttester.address,
-      },
     }
-  )) as DeployedPythia1SimpleAttester;
+  )) as DeployedHydraS1SimpleAttester;
 
   // Upgrade HydraS1AccountboundAttester
   const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = (await hre.run(
@@ -93,8 +74,6 @@ async function deploymentAction(
 
   return {
     hydraS1Verifier: newHydraS1Verifier,
-    hydraS1SimpleAttester: newHydraS1SimpleAttester,
-    pythia1SimpleAttester: newPythia1SimpleAttester,
     hydraS1AccountboundAttester: newHydraS1AccountboundAttester,
   };
 }
