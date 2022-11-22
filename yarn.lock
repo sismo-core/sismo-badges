@@ -992,14 +992,14 @@
     ethers "^5.6.1"
     ffjavascript "^0.2.55"
 
-"@sismo-core/hydra-s1@^1.0.2":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@sismo-core/hydra-s1/-/hydra-s1-1.0.5.tgz#3010894b60539bb766b0e6723bd49ada3cf2ab2c"
-  integrity sha512-dIJbnr0VVjbUf/sWTc2FT+StK8XQI+YUWHQ6H9LTtNPdX/3gy7bm6cEPV2ewFasOD7LJzwSj3bU50ONCHmohDQ==
+"@sismo-core/hydra-s1@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@sismo-core/hydra-s1/-/hydra-s1-1.0.6.tgz#57825de244ec4671dc65d558e307a9060ba34c60"
+  integrity sha512-4miMwcWCBJvc1Dsxq3yBwfw433OfYL+695m2g/0NLagy3pXT7vDdvKmpYVNqKrKKEuCXlSxWLmI8BdMQEZ/0rw==
   dependencies:
     "@sismo-core/crypto" "^1.1.4"
     "@sismo-core/kv-merkle-tree" "^1.0.4"
-    snarkjs "^0.4.16"
+    snarkjs "^0.5.0"
 
 "@sismo-core/kv-merkle-tree@^1.0.4":
   version "1.0.4"
@@ -3083,6 +3083,13 @@ circom_runtime@0.1.20:
   dependencies:
     ffjavascript "0.2.55"
 
+circom_runtime@0.1.21:
+  version "0.1.21"
+  resolved "https://registry.yarnpkg.com/circom_runtime/-/circom_runtime-0.1.21.tgz#0ee93bb798b5afb8ecec30725ed14d94587a999b"
+  integrity sha512-qTkud630B/GK8y76hnOaaS1aNuF6prfV0dTrkeRsiJKnlP1ryQbP2FWLgDOPqn6aKyaPlam+Z+DTbBhkEzh8dA==
+  dependencies:
+    ffjavascript "0.2.56"
+
 circomlib@^2.0.3:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/circomlib/-/circomlib-2.0.5.tgz#183c703e53ed7d011811842dbeeeb9819f4cc1d6"
@@ -4962,6 +4969,15 @@ ffjavascript@0.2.55:
     big-integer "^1.6.48"
     wasmbuilder "^0.0.12"
     wasmcurves "0.1.0"
+    web-worker "^1.2.0"
+
+ffjavascript@0.2.56:
+  version "0.2.56"
+  resolved "https://registry.yarnpkg.com/ffjavascript/-/ffjavascript-0.2.56.tgz#3509f98fcbd3e44ea93cd23519071b76d6eae433"
+  integrity sha512-em6G5Lrj7ucIqj4TYEgyoHs/j99Urwwqa4+YxEVY2hggnpRimVj+noX5pZQTxI1pvtiekZI4rG65JBf0xraXrg==
+  dependencies:
+    wasmbuilder "0.0.16"
+    wasmcurves "0.2.0"
     web-worker "^1.2.0"
 
 ffjavascript@^0.2.45, ffjavascript@^0.2.48, ffjavascript@^0.2.55:
@@ -8600,6 +8616,16 @@ r1csfile@0.0.40:
     fastfile "0.0.20"
     ffjavascript "0.2.55"
 
+r1csfile@0.0.41:
+  version "0.0.41"
+  resolved "https://registry.yarnpkg.com/r1csfile/-/r1csfile-0.0.41.tgz#e3d2709d36923156dd1fc2db9858987b30c92948"
+  integrity sha512-Q1WDF3u1vYeAwjHo4YuddkA8Aq0TulbKjmGm99+Atn13Lf5fTsMZBnBV9T741w8iSyPFG6Uh6sapQby77sREqA==
+  dependencies:
+    "@iden3/bigarray" "0.0.2"
+    "@iden3/binfileutils" "0.0.11"
+    fastfile "0.0.20"
+    ffjavascript "0.2.56"
+
 randombytes@^2.0.0, randombytes@^2.0.1, randombytes@^2.0.5, randombytes@^2.0.6, randombytes@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/randombytes/-/randombytes-2.1.0.tgz#df6f84372f0270dc65cdf6291349ab7a473d4f2a"
@@ -9424,6 +9450,22 @@ snarkjs@^0.4.16:
     js-sha3 "^0.8.0"
     logplease "^1.2.15"
     r1csfile "0.0.40"
+
+snarkjs@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/snarkjs/-/snarkjs-0.5.0.tgz#cf26bf1d3835eb16b4b330a438bad9824837d6b0"
+  integrity sha512-KWz8mZ2Y+6wvn6GGkQo6/ZlKwETdAGohd40Lzpwp5TUZCn6N6O4Az1SuX1rw/qREGL6Im+ycb19suCFE8/xaKA==
+  dependencies:
+    "@iden3/binfileutils" "0.0.11"
+    bfj "^7.0.2"
+    blake2b-wasm "^2.4.0"
+    circom_runtime "0.1.21"
+    ejs "^3.1.6"
+    fastfile "0.0.20"
+    ffjavascript "0.2.56"
+    js-sha3 "^0.8.0"
+    logplease "^1.2.15"
+    r1csfile "0.0.41"
 
 solc@0.7.3:
   version "0.7.3"
