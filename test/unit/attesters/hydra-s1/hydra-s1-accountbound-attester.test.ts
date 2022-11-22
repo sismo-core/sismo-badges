@@ -1,4 +1,4 @@
-import { encodeAccountBoundAttestationExtraData } from './../../../utils/hydra-s1-accountbound';
+import { encodeAccountBoundAttestationExtraData } from '../../../utils/hydra-s1-accountbound';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
 import {
@@ -19,24 +19,20 @@ import {
   HydraS1AccountboundAttester,
   HydraS1Verifier,
 } from 'types';
-import {
-  AttestationStruct,
-  AttestationStructOutput,
-  RequestStruct,
-} from 'types/HydraS1SimpleAttester';
+import { RequestStruct } from 'types/HydraS1SimpleAttester';
 import {
   evmRevert,
   evmSnapshot,
-  generateHydraS1AccountboundAttesterGroups,
   generateHydraS1Accounts,
   generateGroups,
   generateExternalNullifier,
   increaseTime,
   toBytes,
-  HydraS1AccountboundGroup,
-  generateHydraS1AccountboundGroupIdFromProperties,
-  encodeHydraS1AccountboundGroupProperties,
   GroupData,
+  generateAttesterGroups,
+  HydraS1SimpleGroup,
+  encodeGroupProperties,
+  generateGroupIdFromProperties,
 } from '../../../utils';
 
 describe('Test HydraS1 Accountbound Attester contract', () => {
@@ -64,8 +60,8 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
   let registryTree: KVMerkleTree;
   let accountsTree: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
-  let group: HydraS1AccountboundGroup;
-  let group2: HydraS1AccountboundGroup;
+  let group: HydraS1SimpleGroup;
+  let group2: HydraS1SimpleGroup;
   let allAvailableGroups: GroupData[];
   let externalNullifier: BigNumber;
   let cooldownDuration: number;
@@ -88,12 +84,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
 
     allAvailableGroups = await generateGroups(hydraS1Accounts);
     cooldownDuration = 10;
-    const { dataFormat, groups } = await generateHydraS1AccountboundAttesterGroups(
-      allAvailableGroups,
-      {
-        cooldownDuration,
-      }
-    );
+    const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups);
 
     registryTree = dataFormat.registryTree;
     [accountsTree, accountsTree2] = dataFormat.accountsTrees;
@@ -156,7 +147,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           {
             groupId: group.id,
             claimedValue: sourceValue,
-            extraData: encodeHydraS1AccountboundGroupProperties(group.properties),
+            extraData: encodeGroupProperties(group.properties),
           },
         ],
         destination: BigNumber.from(destination.identifier).toHexString(),
@@ -179,8 +170,8 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         claims: [
           {
             ...request.claims[0],
-            groupId: generateHydraS1AccountboundGroupIdFromProperties(wrongGroupProperties),
-            extraData: encodeHydraS1AccountboundGroupProperties(wrongGroupProperties),
+            groupId: generateGroupIdFromProperties(wrongGroupProperties),
+            extraData: encodeGroupProperties(wrongGroupProperties),
           },
         ],
       };
@@ -243,7 +234,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
             claims: [
               {
                 ...request.claims[0],
-                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
+                extraData: encodeGroupProperties(wrongExtraData),
               },
             ],
           },
@@ -251,7 +242,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         )
       ).to.be.revertedWith(
         `GroupIdAndPropertiesMismatch(${BigNumber.from(
-          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
+          ethers.utils.keccak256(encodeGroupProperties(wrongExtraData))
         ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
       );
 
@@ -265,7 +256,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
             claims: [
               {
                 ...request.claims[0],
-                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
+                extraData: encodeGroupProperties(wrongExtraData),
               },
             ],
           },
@@ -273,7 +264,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         )
       ).to.be.revertedWith(
         `GroupIdAndPropertiesMismatch(${BigNumber.from(
-          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
+          ethers.utils.keccak256(encodeGroupProperties(wrongExtraData))
         ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
       );
 
@@ -287,7 +278,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
             claims: [
               {
                 ...request.claims[0],
-                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
+                extraData: encodeGroupProperties(wrongExtraData),
               },
             ],
           },
@@ -295,31 +286,11 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         )
       ).to.be.revertedWith(
         `GroupIdAndPropertiesMismatch(${BigNumber.from(
-          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
+          ethers.utils.keccak256(encodeGroupProperties(wrongExtraData))
         ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
       );
 
       wrongExtraData.isScore = group.properties.isScore;
-      wrongExtraData.cooldownDuration = group.properties.cooldownDuration + 1;
-
-      await expect(
-        hydraS1AccountboundAttester.generateAttestations(
-          {
-            ...request,
-            claims: [
-              {
-                ...request.claims[0],
-                extraData: encodeHydraS1AccountboundGroupProperties(wrongExtraData),
-              },
-            ],
-          },
-          proof.toBytes()
-        )
-      ).to.be.revertedWith(
-        `GroupIdAndPropertiesMismatch(${BigNumber.from(
-          ethers.utils.keccak256(encodeHydraS1AccountboundGroupProperties(wrongExtraData))
-        ).mod(SNARK_FIELD)}, ${BigNumber.from(group.id)})`
-      );
     });
 
     it('Should revert if the snark accounts tree value mismatch the claim groupId', async () => {
@@ -346,7 +317,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
               {
                 ...request.claims[0],
                 groupId: group2.id,
-                extraData: encodeHydraS1AccountboundGroupProperties(group2.properties),
+                extraData: encodeGroupProperties(group2.properties),
               },
             ],
           },
@@ -533,10 +504,16 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       ).to.equal(request.destination);
 
       expect(
-        await hydraS1AccountboundAttester.getNullifierData(
+        await hydraS1AccountboundAttester.getNullifierCooldownStart(
           BigNumber.from(inputs.publicInputs.nullifier)
         )
-      ).to.be.eql([BigNumber.from(destination.identifier).toHexString(), 0, 0]);
+      ).to.be.eql(0);
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(0);
 
       // 2 - Checks that the attester recorded the attestation in the registry
       expect(
@@ -549,7 +526,26 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       ).to.be.true;
     });
 
+    it('Should revert if the groupId has no cooldownDuration set', async () => {
+      const newProof = await prover.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+      });
+
+      const newRequest = {
+        ...request,
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
+
+      await expect(
+        hydraS1AccountboundAttester.generateAttestations(newRequest, newProof.toBytes())
+      ).to.be.revertedWith(`CooldownDurationNotSetForGroupId(${BigNumber.from(group.id)}`);
+    });
+
     it('Should be able to change the destination, deleting the old attestation', async () => {
+      // set a cooldown of 1 second for first group
+      await hydraS1AccountboundAttester.setCooldownDurationForgroupId(group.id, 1);
+
       const newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: destination2,
@@ -594,14 +590,16 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       ).to.be.equal(BigNumber.from(destination2.identifier));
 
       expect(
-        await hydraS1AccountboundAttester.getNullifierData(
+        await hydraS1AccountboundAttester.getNullifierCooldownStart(
           BigNumber.from(inputs.publicInputs.nullifier)
         )
-      ).to.be.eql([
-        BigNumber.from(destination2.identifier).toHexString(),
-        await (await ethers.provider.getBlock('latest')).timestamp,
-        1, // the burnCount should be incremented
-      ]);
+      ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(1); // the burnCount should be incremented
 
       // burnCount should be recorded in the attestationsRegistry
       expect(
@@ -657,34 +655,39 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
     });
 
     it('Should revert if the nullifier is in cooldown', async () => {
-      const nullifierData = await hydraS1AccountboundAttester.getNullifierData(
+      const burnCount = await hydraS1AccountboundAttester.getNullifierBurnCount(
         BigNumber.from(inputs.publicInputs.nullifier)
       );
+
+      const destination = await hydraS1AccountboundAttester.getDestinationOfNullifier(
+        BigNumber.from(inputs.publicInputs.nullifier)
+      );
+
+      // set a cooldown of 1 day for first group
+      await hydraS1AccountboundAttester.setCooldownDurationForgroupId(group.id, 60 * 60 * 24);
 
       await expect(
         hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes())
       ).to.be.revertedWith(
-        `NullifierOnCooldown(["${nullifierData[0]}", ${nullifierData[1]}, ${nullifierData[2]}], ${cooldownDuration})`
+        `NullifierOnCooldown(${
+          inputs.publicInputs.nullifier
+        }, "${destination}", ${burnCount}, ${await hydraS1AccountboundAttester.getCooldownDurationForGroupId(
+          group.id
+        )})`
       );
     });
 
     it('Should renew the timestamp even if the nullifier is in cooldown', async () => {
       const evmSnapshotId = await evmSnapshot(hre);
-      const latestCooldownStart = (
-        await hydraS1AccountboundAttester.getNullifierData(
-          BigNumber.from(inputs.publicInputs.nullifier)
-        )
-      ).cooldownStart;
+      const latestCooldownStart = await hydraS1AccountboundAttester.getNullifierCooldownStart(
+        BigNumber.from(inputs.publicInputs.nullifier)
+      );
 
       const renewGenerationTimestamp = group.properties.generationTimestamp + 10;
       // regenerate groups for attester with different timestamp
-      const { dataFormat, groups } = await generateHydraS1AccountboundAttesterGroups(
-        allAvailableGroups,
-        {
-          cooldownDuration,
-          generationTimestamp: renewGenerationTimestamp,
-        }
-      );
+      const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups, {
+        generationTimestamp: renewGenerationTimestamp,
+      });
       // register new registry tree root on chain
       await availableRootsRegistry.registerRootForAttester(
         hydraS1AccountboundAttester.address,
@@ -704,7 +707,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           {
             groupId: groups[0].id,
             claimedValue: sourceValue,
-            extraData: encodeHydraS1AccountboundGroupProperties({
+            extraData: encodeGroupProperties({
               ...group.properties,
               generationTimestamp: renewGenerationTimestamp,
             }),
@@ -736,10 +739,22 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       // A renew should not have changed the nullifierData
       // cooldownStart and burnCount should be the same
       expect(
-        await hydraS1AccountboundAttester.getNullifierData(
+        await hydraS1AccountboundAttester.getDestinationOfNullifier(
           BigNumber.from(inputs.publicInputs.nullifier)
         )
-      ).to.be.eql([BigNumber.from(destination2.identifier).toHexString(), latestCooldownStart, 1]);
+      ).to.be.eql(BigNumber.from(destination2.identifier).toHexString());
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierCooldownStart(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(latestCooldownStart);
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(1);
 
       // 2 - Checks that the attestation in the registry has the new timestamp
       expect(
@@ -757,14 +772,10 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
     it('Should be able to update the claimedValue to zero even if the nullifier is in cooldown', async () => {
       const evmSnapshotId = await evmSnapshot(hre);
       // regenerate groups for attester with different timestamp
-      const { dataFormat, groups } = await generateHydraS1AccountboundAttesterGroups(
-        allAvailableGroups,
-        {
-          cooldownDuration,
-          isScore: true,
-          generationTimestamp: group.properties.generationTimestamp,
-        }
-      );
+      const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups, {
+        isScore: true,
+        generationTimestamp: group.properties.generationTimestamp,
+      });
       // register new registry tree root on chain
       await availableRootsRegistry.registerRootForAttester(
         hydraS1AccountboundAttester.address,
@@ -786,7 +797,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           {
             groupId: groups[0].id,
             claimedValue: 0,
-            extraData: encodeHydraS1AccountboundGroupProperties(groups[0].properties),
+            extraData: encodeGroupProperties(groups[0].properties),
           },
         ],
         destination: BigNumber.from(destination2.identifier).toHexString(),
@@ -826,6 +837,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
     });
 
     it('Should be able to change again the destination after the cooldown period', async () => {
+      await hydraS1AccountboundAttester.setCooldownDurationForgroupId(group.id, cooldownDuration);
       await increaseTime(hre, cooldownDuration);
 
       const generateAttestationsTransaction = hydraS1AccountboundAttester.generateAttestations(
@@ -852,14 +864,16 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       // cooldownStart should be reset to the latest block timestamp
       // and burnCount incremented by 1
       expect(
-        await hydraS1AccountboundAttester.getNullifierData(
+        await hydraS1AccountboundAttester.getNullifierCooldownStart(
           BigNumber.from(inputs.publicInputs.nullifier)
         )
-      ).to.be.eql([
-        BigNumber.from(destination.identifier).toHexString(),
-        await (await ethers.provider.getBlock('latest')).timestamp,
-        2, // burnCount should be incremented
-      ]);
+      ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(2); // burnCount should be incremented
 
       // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
       // 2.1 - Checks that the old destination has not anymore it's attestation

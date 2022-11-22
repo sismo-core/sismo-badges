@@ -10,7 +10,6 @@ import {
   HydraS1AccountboundAttester,
   Pythia1SimpleAttester,
   TransparentUpgradeableProxy__factory,
-  HydraS1AccountboundAttesterv2,
 } from '../../types';
 import { RequestStruct } from 'types/Attester';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -35,9 +34,6 @@ import {
   generateExternalNullifier,
   getEventArgs,
   HydraS1SimpleGroup,
-  encodeHydraS1AccountboundGroupProperties,
-  generateHydraS1AccountboundAttesterGroups,
-  HydraS1AccountboundGroup,
 } from '../utils';
 import { Deployed1 } from 'tasks/deploy-tasks/full/1-deploy-pythia-1-simple.task';
 import {
@@ -55,7 +51,6 @@ describe('Test E2E Protocol', () => {
   // contracts
   let attestationsRegistry: AttestationsRegistry;
   let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
-  let hydraS1AccountboundAttesterv2: HydraS1AccountboundAttesterv2;
   let hydraS1SimpleAttester: HydraS1SimpleAttester;
   let pythia1SimpleAttester: Pythia1SimpleAttester;
   let availableRootsRegistry: AvailableRootsRegistry;
@@ -93,7 +88,7 @@ describe('Test E2E Protocol', () => {
   let accountsTree1: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
   let group1: HydraS1SimpleGroup;
-  let group2: HydraS1AccountboundGroup;
+  let group2: HydraS1SimpleGroup;
 
   // Valid request and proof
   let request1: RequestStruct;
@@ -131,10 +126,7 @@ describe('Test E2E Protocol', () => {
     // 3 - Generate data source
     const allList = generateGroups(hydraS1Accounts);
     const { dataFormat, groups } = await generateAttesterGroups(allList);
-    const { dataFormat: dataFormat2, groups: groups2 } =
-      await generateHydraS1AccountboundAttesterGroups(allList, {
-        cooldownDuration: 10,
-      });
+    const { dataFormat: dataFormat2, groups: groups2 } = await generateAttesterGroups(allList);
 
     registryTree1 = dataFormat.registryTree;
     registryTree2 = dataFormat2.registryTree;
@@ -166,7 +158,6 @@ describe('Test E2E Protocol', () => {
         commitmentMapperRegistry,
         hydraS1SimpleAttester,
         hydraS1AccountboundAttester,
-        hydraS1AccountboundAttesterv2,
         availableRootsRegistry,
       } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
         options: {
@@ -234,7 +225,7 @@ describe('Test E2E Protocol', () => {
           {
             groupId: group2.id,
             claimedValue: source2Value,
-            extraData: encodeHydraS1AccountboundGroupProperties(group2.properties),
+            extraData: encodeGroupProperties(group2.properties),
           },
         ],
         destination: BigNumber.from(destination1.identifier).toHexString(),
@@ -475,8 +466,8 @@ describe('Test E2E Protocol', () => {
     });
 
     it('Should update Hydra S1 Accountbound implementation with V2', async () => {
-      const { hydraS1AccountboundAttesterv2: newHydraS1AccountboundAttester } = await hre.run(
-        'deploy-hydra-s1-accountbound-attester-v2',
+      const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = await hre.run(
+        'deploy-hydra-s1-accountbound-attester',
         {
           collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
           collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
@@ -488,7 +479,7 @@ describe('Test E2E Protocol', () => {
       );
 
       const hydraS1AccountboundAttesterProxy = TransparentUpgradeableProxy__factory.connect(
-        hydraS1AccountboundAttesterv2.address,
+        hydraS1AccountboundAttester.address,
         proxyAdminSigner
       );
 
