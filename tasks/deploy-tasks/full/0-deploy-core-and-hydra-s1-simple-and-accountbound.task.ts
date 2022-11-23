@@ -15,7 +15,7 @@ import {
 import {
   DeployedHydraS1AccountboundAttester,
   DeployHydraS1AccountboundAttesterArgs,
-} from '../unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
+} from '../unit/attesters/hydra-s1/deploy-hydra-s1-accountbound-attester.task';
 import { DeployOptions, getDeployer } from '../utils';
 import { DeployCoreArgs, DeployedCore } from '../batch/deploy-core.task';
 import { deploymentsConfig } from '../deployments-config';
@@ -97,6 +97,7 @@ async function deploymentAction(
     commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
     availableRootsRegistryAddress: availableRootsRegistry.address,
     attestationsRegistryAddress: attestationsRegistry.address,
+    owner: deployer.address,
     options,
   };
 

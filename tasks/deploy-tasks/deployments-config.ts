@@ -81,6 +81,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0x0b9340f0d31232adaec900fbaefc0f6fa3f00bda449dd677fa111b58bc754cc9',
+      owner: SANDBOX_POLYGON_OWNER,
     },
     pythia1Verifier: {
       address: '0xb7b327Eb974706B548F8c18Ec0Eb35f0f0c655ef',
@@ -141,6 +142,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0x163c3224fa82070fbee7692146f505144b0307d668d8e8f803171b6ee7a4cd00',
+      owner: ALPHA_POLYGON_OWNER,
     },
     pythia1Verifier: {
       address: '0x6f3201339b90Eea1CdB13670d5714ca06a49DfaD',
@@ -202,6 +204,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0',
+      owner: ALPHA_MUMBAI_OWNER,
     },
     pythia1Verifier: {
       address: '0x115dFa344C877fF74e970F06BE10FF5A59EAba02',
@@ -263,6 +266,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0',
+      owner: ALPHA_GOERLI_OWNER,
     },
     pythia1Verifier: {
       address: '0xEE077AD7a47e56F075f0C3bd41Cdc1629FdA3a9c',
@@ -324,6 +328,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     pythia1Verifier: {
       address: '0xeF6890243012206C1eE0666e00289AC8a97D1b2B',
@@ -385,6 +390,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     pythia1Verifier: {
       address: '',
