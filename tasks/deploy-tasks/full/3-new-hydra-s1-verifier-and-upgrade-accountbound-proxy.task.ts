@@ -52,7 +52,7 @@ async function deploymentAction(
       hydraS1VerifierAddress: newHydraS1Verifier.address, // reference the new hydraS1Verifier address
       options: {
         ...options,
-        implementationVersion: 3,
+        implementationVersion: 4,
         proxyAddress: config.hydraS1AccountboundAttester.address, // the address referenced here is the old address of the hydraS1SimpleAttester
       },
     }
