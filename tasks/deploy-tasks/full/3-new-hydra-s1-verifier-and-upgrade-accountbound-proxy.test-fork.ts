@@ -69,7 +69,7 @@ import {
 /*********************************** FORK - E2E **************************************/
 /*************************************************************************************/
 
-describe('FORK-Test New Hydra S1 Verifier and Upgrade Accountbound proxy', () => {
+describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () => {
   let chainId: number;
   let snapshotId: string;
 
@@ -716,7 +716,7 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade Accountbound proxy', () =>
     it('Should set the cooldown duration for the groupId', async () => {
       const cooldownDuration = 1; // 1 sec
 
-      await hydraS1AccountboundAttester.setCooldownDurationForgroupId(
+      await hydraS1AccountboundAttester.setCooldownDurationForGroupId(
         BigNumber.from(group1.id),
         BigNumber.from(cooldownDuration)
       );

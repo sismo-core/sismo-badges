@@ -3,15 +3,15 @@
 pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
-import {IHydraS1AccountboundAttester} from '../interfaces/IHydraS1AccountboundAttester.sol';
-import {HydraS1SimpleAttester} from '../HydraS1SimpleAttester.sol';
+import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
+import {HydraS1SimpleAttester} from './HydraS1SimpleAttester.sol';
 
 // Core protocol Protocol imports
-import {Request, Attestation, Claim} from '../../../core/libs/Structs.sol';
-import {IAttester} from '../../../core/Attester.sol';
+import {Request, Attestation, Claim} from '../../core/libs/Structs.sol';
+import {IAttester} from '../../core/Attester.sol';
 
 // Imports related to HydraS1 Proving Scheme
-import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Claim} from '../base/HydraS1Base.sol';
+import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Claim} from './base/HydraS1Base.sol';
 
 /**
  * @title  Hydra-S1 Accountbound Attester
@@ -19,6 +19,9 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  * @notice This attester is part of the family of the Hydra-S1 Attesters.
  * Hydra-S1 attesters enable users to prove they have an account in a group in a privacy preserving way.
  * The Hydra-S1 Simple Attester contract is inherited and holds the complex Hydra S1 verification logic.
+ * Request verification alongside proof verification is already implemented in the inherited HydraS1SimpleAttester, along with the buildAttestations logic.
+ * However, we override the buildAttestations function to encode the nullifier and its burn count in the user attestation.
+ * The _beforeRecordAttestations is also overrided to fit the Accountbound logic.
  * We invite readers to refer to:
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
@@ -55,6 +58,9 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
 
   // Mapping to store cooldown value for each groupId
   mapping(uint256 => uint32) internal _groupIdCooldowns;
+
+  // keeping some space for future config logics
+  uint256[15] private _placeHoldersHydraS1Accountbound;
 
   // mappings to store the state related to a specific nullifier (its cooldownStart and its burnCount)
   mapping(uint256 => uint32) internal _nullifiersCooldownStart;
@@ -99,10 +105,13 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData snark public input as well as snark proof
    */
-  function buildAttestations(
-    Request calldata request,
-    bytes calldata proofData
-  ) public view virtual override(IAttester, HydraS1SimpleAttester) returns (Attestation[] memory) {
+  function buildAttestations(Request calldata request, bytes calldata proofData)
+    public
+    view
+    virtual
+    override(IAttester, HydraS1SimpleAttester)
+    returns (Attestation[] memory)
+  {
     Attestation[] memory attestations = super.buildAttestations(request, proofData);
 
     uint256 nullifier = proofData._getNullifier();
@@ -123,23 +132,24 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _beforeRecordAttestations(
-    Request calldata request,
-    bytes calldata proofData
-  ) internal virtual override {
+  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
+    internal
+    virtual
+    override
+  {
     uint256 nullifier = proofData._getNullifier();
     address nullifierDestination = _getDestinationOfNullifier(nullifier);
 
     HydraS1Claim memory claim = request._claim();
 
-    if (
-      _isCooldownRenewedForNullifier(
-        nullifier,
-        nullifierDestination,
-        claim.destination,
-        claim.groupId
-      )
-    ) {
+    // check if the nullifier has already been used previously, if so it may be on cooldown
+    if (nullifierDestination != address(0) && nullifierDestination != claim.destination) {
+      uint32 cooldownDuration = _getCooldownDurationForGroupId(claim.groupId);
+      if (_isOnCooldown(nullifier, cooldownDuration)) {
+        uint16 burnCount = _getNullifierBurnCount(nullifier);
+        revert NullifierOnCooldown(nullifier, nullifierDestination, burnCount, cooldownDuration);
+      }
+
       // Delete the old Attestation on the account before recording the new one
       address[] memory attestationOwners = new address[](1);
       uint256[] memory attestationCollectionIds = new uint256[](1);
@@ -175,10 +185,12 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
    * @param nullifier user nullifier
    * @param claimDestination destination referenced in the user claim
    */
-  function encodeNullifierAndNullifierBurnCount(
-    uint256 nullifier,
-    address claimDestination
-  ) public view virtual returns (bytes memory) {
+  function encodeNullifierAndNullifierBurnCount(uint256 nullifier, address claimDestination)
+    public
+    view
+    virtual
+    returns (bytes memory)
+  {
     address nullifierDestination = _getDestinationOfNullifier(nullifier);
     uint16 burnCount = _getNullifierBurnCount(nullifier);
     // If the attestation is minted on a new destination address
@@ -187,30 +199,6 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
       burnCount += 1;
     }
     return (abi.encode(nullifier, burnCount));
-  }
-
-  /**
-   * @dev Checks if a nullifier needs to have a cooldown renewed
-   * @param nullifier user nullifier
-   * @param oldDestination destination where the user holds the badge (0x0 if no badge minted)
-   * @param newDestination destination where the user wants to hold the badge in the future
-   * @param groupId id of the group the user claims eligibility
-   */
-  function _isCooldownRenewedForNullifier(
-    uint256 nullifier,
-    address oldDestination,
-    address newDestination,
-    uint256 groupId
-  ) internal virtual returns (bool) {
-    uint16 burnCount = _getNullifierBurnCount(nullifier);
-
-    if (oldDestination != address(0) && oldDestination != newDestination) {
-      uint32 cooldownDuration = _getCooldownDurationForGroupId(groupId);
-      if (_isOnCooldown(nullifier, cooldownDuration))
-        revert NullifierOnCooldown(nullifier, oldDestination, burnCount, cooldownDuration);
-      return true;
-    }
-    return false;
   }
 
   /**
@@ -252,7 +240,7 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
          GETTERS AND SETTERS FOR GROUP ID MAPPING
   *******************************************************/
 
-  function setCooldownDurationForgroupId(uint256 groupId, uint32 cooldownDuration) external {
+  function setCooldownDurationForGroupId(uint256 groupId, uint32 cooldownDuration) external {
     _groupIdCooldowns[groupId] = cooldownDuration;
   }
 

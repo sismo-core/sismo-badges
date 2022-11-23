@@ -157,10 +157,11 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @param request users request. Claim of beiing part of a group.
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _beforeRecordAttestations(
-    Request calldata request,
-    bytes calldata proofData
-  ) internal virtual override {
+  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
+    internal
+    virtual
+    override
+  {
     // we get the ticket used from the snark input in the data provided
     uint256 userTicket = proofData._getTicket();
     address currentDestination = _getDestinationOfTicket(userTicket);
@@ -186,9 +187,12 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * Here we chose ticketIdentifier = hash(attesterAddress, claim.GroupId)
    * Creates one ticket per group, per user and makes sure no collision with other attester's tickets
   **/
-  function _getTicketIdentifierOfClaim(
-    Pythia1Claim memory claim
-  ) internal view override returns (uint256) {
+  function _getTicketIdentifierOfClaim(Pythia1Claim memory claim)
+    internal
+    view
+    override
+    returns (uint256)
+  {
     uint256 ticketIdentifier = _encodeInSnarkField(
       address(this),
       claim.groupProperties.internalCollectionId

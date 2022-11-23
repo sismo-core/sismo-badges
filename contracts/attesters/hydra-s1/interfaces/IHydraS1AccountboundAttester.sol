@@ -51,7 +51,7 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
    * @param groupId Id of the group
    * @param cooldownDuration cooldown duration we want to set for the groupId
    **/
-  function setCooldownDurationForgroupId(uint256 groupId, uint32 cooldownDuration) external;
+  function setCooldownDurationForGroupId(uint256 groupId, uint32 cooldownDuration) external;
 
   /**
    * @dev Getter, get the cooldown duration of a groupId
