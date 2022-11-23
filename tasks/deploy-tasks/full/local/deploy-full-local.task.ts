@@ -11,7 +11,7 @@ import {
 import {
   DeployHydraS1AccountboundAttesterArgs,
   DeployedHydraS1AccountboundAttester,
-} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
+} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-accountbound-attester.task';
 import { EVENT_TRIGGERER_ROLE } from '../../../../utils';
 import {
   DeployAvailableRootsRegistry,

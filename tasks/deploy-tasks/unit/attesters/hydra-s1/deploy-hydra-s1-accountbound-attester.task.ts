@@ -8,13 +8,13 @@ import {
   customDeployContract,
   wrapCommonDeployOptions,
   DeployOptions,
-} from '../../../../utils';
+} from '../../../utils';
 import {
   HydraS1AccountboundAttester,
   HydraS1AccountboundAttester__factory,
   HydraS1Verifier,
   HydraS1Verifier__factory,
-} from '../../../../../../types';
+} from '../../../../../types';
 import { BigNumber, BigNumberish } from 'ethers';
 
 export interface DeployHydraS1AccountboundAttesterArgs {
@@ -30,6 +30,7 @@ export interface DeployHydraS1AccountboundAttesterArgs {
   attestationsRegistryAddress: string;
   collectionIdFirst: BigNumberish;
   collectionIdLast: BigNumberish;
+  owner: string;
   options?: DeployOptions;
 }
 
@@ -48,6 +49,7 @@ async function deploymentAction(
     attestationsRegistryAddress,
     collectionIdFirst,
     collectionIdLast,
+    owner,
     options,
   }: DeployHydraS1AccountboundAttesterArgs,
   hre: HardhatRuntimeEnvironment
@@ -72,11 +74,15 @@ async function deploymentAction(
     commitmentMapperRegistryAddress,
     BigNumber.from(collectionIdFirst),
     BigNumber.from(collectionIdLast),
+    owner || deployer.address,
   ];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
-  const initData = '0x';
+  const initData = new HydraS1AccountboundAttester__factory().interface.encodeFunctionData(
+    'initialize',
+    [owner || deployer.address]
+  );
 
   const deployed = await customDeployContract(
     hre,
