@@ -22,7 +22,7 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  * The Hydra-S1 Simple Attester contract is inherited and holds the complex Hydra S1 verification logic.
  * Request verification alongside proof verification is already implemented in the inherited HydraS1SimpleAttester, along with the buildAttestations logic.
  * However, we override the buildAttestations function to encode the nullifier and its burn count in the user attestation.
- * The _beforeRecordAttestations is also overrided to fit the Accountbound logic.
+ * The _beforeRecordAttestations is also overriden to fit the Accountbound logic.
  * We invite readers to refer to:
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
@@ -229,7 +229,7 @@ contract HydraS1AccountboundAttester is
 
     emit AttestationDeleted(
       Attestation(
-        AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex,
+        attestationCollectionIds[0],
         nullifierDestination,
         address(this),
         claim.claimedValue,
