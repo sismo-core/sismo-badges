@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
 import {HydraS1SimpleAttester} from './HydraS1SimpleAttester.sol';
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../core/libs/Structs.sol';
@@ -51,13 +52,17 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   A nullifier can actually be reused as long as the destination of the attestation remains the same
  *   It enables users to renew or update their attestations
  **/
-contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1SimpleAttester {
+contract HydraS1AccountboundAttester is
+  IHydraS1AccountboundAttester,
+  HydraS1SimpleAttester,
+  Ownable
+{
   using HydraS1Lib for HydraS1ProofData;
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
 
-  // Mapping to store cooldown value for each groupId
-  mapping(uint256 => uint32) internal _groupIdCooldowns;
+  // Mapping to store cooldown value for each groupIndex
+  mapping(uint256 => uint32) internal _groupIndexCooldowns;
 
   // keeping some space for future config logics
   uint256[15] private _placeHoldersHydraS1Accountbound;
@@ -84,7 +89,8 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
     address availableRootsRegistryAddress,
     address commitmentMapperAddress,
     uint256 collectionIdFirst,
-    uint256 collectionIdLast
+    uint256 collectionIdLast,
+    address _owner
   )
     HydraS1SimpleAttester(
       attestationsRegistryAddress,
@@ -94,7 +100,17 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
       collectionIdFirst,
       collectionIdLast
     )
-  {}
+  {
+    initialize(_owner);
+  }
+
+  /**
+   * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
+   * @param _owner Owner of the contract, can update public key and address
+   */
+  function initialize(address _owner) public initializer {
+    _transferOwnership(_owner);
+  }
 
   /*******************************************************
     MANDATORY FUNCTIONS TO OVERRIDE FROM ATTESTER.SOL
@@ -144,33 +160,18 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
 
     // check if the nullifier has already been used previously, if so it may be on cooldown
     if (nullifierDestination != address(0) && nullifierDestination != claim.destination) {
-      uint32 cooldownDuration = _getCooldownDurationForGroupId(claim.groupId);
+      uint32 cooldownDuration = _getCooldownDurationForGroupIndex(claim.groupProperties.groupIndex);
+      if (cooldownDuration == 0) {
+        revert CooldownDurationNotSetForGroupIndex(claim.groupProperties.groupIndex);
+      }
       if (_isOnCooldown(nullifier, cooldownDuration)) {
         uint16 burnCount = _getNullifierBurnCount(nullifier);
         revert NullifierOnCooldown(nullifier, nullifierDestination, burnCount, cooldownDuration);
       }
 
-      // Delete the old Attestation on the account before recording the new one
-      address[] memory attestationOwners = new address[](1);
-      uint256[] memory attestationCollectionIds = new uint256[](1);
+      // Delete the old Attestation linked to the nullifier before recording the new one (accountbound behaviour)
+      _deletePreviousAttestation(nullifier, claim);
 
-      attestationOwners[0] = nullifierDestination;
-      attestationCollectionIds[0] =
-        AUTHORIZED_COLLECTION_ID_FIRST +
-        claim.groupProperties.groupIndex;
-
-      ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
-
-      emit AttestationDeleted(
-        Attestation(
-          AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex,
-          nullifierDestination,
-          address(this),
-          claim.claimedValue,
-          claim.groupProperties.generationTimestamp,
-          abi.encode(nullifier, _getNullifierBurnCount(nullifier))
-        )
-      );
       _setNullifierOnCooldown(nullifier);
     }
     _setDestinationForNullifier(nullifier, request.destination);
@@ -210,6 +211,34 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
     return _getNullifierCooldownStart(nullifier) + cooldownDuration > block.timestamp;
   }
 
+  /**
+   * @dev Delete the previous attestation created with this nullifier
+   * @param nullifier user nullifier
+   * @param claim user claim
+   */
+  function _deletePreviousAttestation(uint256 nullifier, HydraS1Claim memory claim) internal {
+    address[] memory attestationOwners = new address[](1);
+    uint256[] memory attestationCollectionIds = new uint256[](1);
+
+    address nullifierDestination = _getDestinationOfNullifier(nullifier);
+
+    attestationOwners[0] = nullifierDestination;
+    attestationCollectionIds[0] = AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex;
+
+    ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
+
+    emit AttestationDeleted(
+      Attestation(
+        AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex,
+        nullifierDestination,
+        address(this),
+        claim.claimedValue,
+        claim.groupProperties.generationTimestamp,
+        abi.encode(nullifier, _getNullifierBurnCount(nullifier))
+      )
+    );
+  }
+
   /*******************************************************
         GETTERS AND SETTERS FOR NULLIFIER MAPPINGS
   *******************************************************/
@@ -240,19 +269,18 @@ contract HydraS1AccountboundAttester is IHydraS1AccountboundAttester, HydraS1Sim
          GETTERS AND SETTERS FOR GROUP ID MAPPING
   *******************************************************/
 
-  function setCooldownDurationForGroupId(uint256 groupId, uint32 cooldownDuration) external {
-    _groupIdCooldowns[groupId] = cooldownDuration;
+  function setCooldownDurationForGroupIndex(uint256 groupIndex, uint32 cooldownDuration)
+    external
+    onlyOwner
+  {
+    _groupIndexCooldowns[groupIndex] = cooldownDuration;
   }
 
-  function getCooldownDurationForGroupId(uint256 groupId) external view returns (uint32) {
-    return _getCooldownDurationForGroupId(groupId);
+  function getCooldownDurationForGroupIndex(uint256 groupIndex) external view returns (uint32) {
+    return _getCooldownDurationForGroupIndex(groupIndex);
   }
 
-  function _getCooldownDurationForGroupId(uint256 groupId) internal view returns (uint32) {
-    uint32 cooldownDuration = _groupIdCooldowns[groupId];
-    if (cooldownDuration == 0) {
-      revert CooldownDurationNotSetForGroupId(groupId);
-    }
-    return cooldownDuration;
+  function _getCooldownDurationForGroupIndex(uint256 groupIndex) internal view returns (uint32) {
+    return _groupIndexCooldowns[groupIndex];
   }
 }

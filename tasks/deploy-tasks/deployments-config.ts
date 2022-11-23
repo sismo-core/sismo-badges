@@ -292,7 +292,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
   },
   local: {
     deployOptions: {
-      manualConfirm: false,
+      manualConfirm: true,
       log: true,
       behindProxy: true,
       // account 18 of shared mnemonic
@@ -310,7 +310,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0x4C54CB97F6A07e7fAd03F646F5AfEbc6a9E0421e',
+      address: '0xe52EB1f52349F98c09a5B11B0E3fA7f269268Add',
     },
     hydraS1SimpleAttester: {
       enableDeployment: false,

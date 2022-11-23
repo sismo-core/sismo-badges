@@ -29,10 +29,10 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
   );
 
   /**
-   * @dev Error when the cooldown duration for a given groupId is equal to zero.
+   * @dev Error when the cooldown duration for a given groupIndex is equal to zero.
    * The HydraS1AccountboundAttester behaves like the HydraS1SimpleAttester.
    **/
-  error CooldownDurationNotSetForGroupId(uint256 groupId);
+  error CooldownDurationNotSetForGroupIndex(uint256 groupIndex);
 
   /**
    * @dev Getter, returns the cooldown start of a nullifier
@@ -47,15 +47,15 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
   function getNullifierBurnCount(uint256 nullifier) external view returns (uint16);
 
   /**
-   * @dev Setter, sets the cooldown duration of a groupId
-   * @param groupId Id of the group
-   * @param cooldownDuration cooldown duration we want to set for the groupId
+   * @dev Setter, sets the cooldown duration of a groupIndex
+   * @param groupIndex internal collection id
+   * @param cooldownDuration cooldown duration we want to set for the groupIndex
    **/
-  function setCooldownDurationForGroupId(uint256 groupId, uint32 cooldownDuration) external;
+  function setCooldownDurationForGroupIndex(uint256 groupIndex, uint32 cooldownDuration) external;
 
   /**
-   * @dev Getter, get the cooldown duration of a groupId
-   * @param groupId Id of the group
+   * @dev Getter, get the cooldown duration of a groupIndex
+   * @param groupIndex internal collection id
    **/
-  function getCooldownDurationForGroupId(uint256 groupId) external view returns (uint32);
+  function getCooldownDurationForGroupIndex(uint256 groupIndex) external view returns (uint32);
 }
