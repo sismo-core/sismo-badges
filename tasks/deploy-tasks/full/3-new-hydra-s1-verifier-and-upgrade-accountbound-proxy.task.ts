@@ -32,40 +32,28 @@ async function deploymentAction(
 
   // The following proxies will be updated:
   // - HydraS1Verifier => rename ticket in nullifier
-  // - HydraS1AccountboundAttester => cooldown duration removed from groupProperties + inherits from HydraS1SimpleAttester
+  // - HydraS1SimpleAttester implementation will be replaced by the HydraS1AccountboundAttester implementation => cooldown duration removed from groupProperties + inherits from HydraS1SimpleAttester
 
   // Upgrade HydraS1Verifier
-  const { hydraS1Verifier: newHydraS1Verifier } = (await hre.run(
-    'deploy-hydra-s1-simple-attester',
-    {
-      enableDeployment: config.hydraS1SimpleAttester.enableDeployment,
-      collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
-      collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
-      commitmentMapperRegistryAddress: config.commitmentMapper.address,
-      availableRootsRegistryAddress: config.availableRootsRegistry.address,
-      attestationsRegistryAddress: config.attestationsRegistry.address,
-      options: {
-        ...options,
-        implementationVersion: 3,
-        proxyAddress: config.hydraS1SimpleAttester.address,
-      },
-    }
-  )) as DeployedHydraS1SimpleAttester;
+  const { hydraS1Verifier: newHydraS1Verifier } = await hre.run('deploy-hydra-s1-verifier', {
+    options,
+  });
 
   // Upgrade HydraS1AccountboundAttester
   const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = (await hre.run(
     'deploy-hydra-s1-accountbound-attester',
     {
+      // the collectionIds referenced are the ones used by the previous HydraS1SImpleAttester
       collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
       collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
       commitmentMapperRegistryAddress: config.commitmentMapper.address,
       availableRootsRegistryAddress: config.availableRootsRegistry.address,
       attestationsRegistryAddress: config.attestationsRegistry.address,
-      hydraS1VerifierAddress: newHydraS1Verifier.address,
+      hydraS1VerifierAddress: newHydraS1Verifier.address, // reference the new hydraS1Verifier address
       options: {
         ...options,
         implementationVersion: 3,
-        proxyAddress: config.hydraS1AccountboundAttester.address,
+        proxyAddress: config.hydraS1AccountboundAttester.address, // the address referenced here is the old address of the hydraS1SimpleAttester
       },
     }
   )) as DeployedHydraS1AccountboundAttester;

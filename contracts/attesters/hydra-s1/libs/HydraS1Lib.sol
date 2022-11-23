@@ -84,12 +84,15 @@ library HydraS1Lib {
     return (HydraS1Claim(claim.groupId, claim.claimedValue, self.destination, groupProperties));
   }
 
-  function _toCircomFormat(
-    HydraS1ProofData memory self
-  )
+  function _toCircomFormat(HydraS1ProofData memory self)
     internal
     pure
-    returns (uint256[2] memory, uint256[2][2] memory, uint256[2] memory, uint256[10] memory)
+    returns (
+      uint256[2] memory,
+      uint256[2][2] memory,
+      uint256[2] memory,
+      uint256[10] memory
+    )
   {
     return (self.proof.a, self.proof.b, self.proof.c, self.input);
   }
@@ -102,9 +105,11 @@ library HydraS1Lib {
     return self.input[1];
   }
 
-  function _getCommitmentMapperPubKey(
-    HydraS1ProofData memory self
-  ) internal pure returns (uint256[2] memory) {
+  function _getCommitmentMapperPubKey(HydraS1ProofData memory self)
+    internal
+    pure
+    returns (uint256[2] memory)
+  {
     return [self.input[2], self.input[3]];
   }
 
@@ -112,9 +117,11 @@ library HydraS1Lib {
     return self.input[4];
   }
 
-  function _getExpectedExternalNullifier(
-    HydraS1ProofData memory self
-  ) internal pure returns (uint256) {
+  function _getExpectedExternalNullifier(HydraS1ProofData memory self)
+    internal
+    pure
+    returns (uint256)
+  {
     return self.input[5];
   }
 
@@ -151,9 +158,11 @@ library HydraS1Lib {
       );
   }
 
-  function _generateGroupIdFromEncodedProperties(
-    bytes memory encodedProperties
-  ) internal pure returns (uint256) {
+  function _generateGroupIdFromEncodedProperties(bytes memory encodedProperties)
+    internal
+    pure
+    returns (uint256)
+  {
     return uint256(keccak256(encodedProperties)) % HydraS1Lib.SNARK_FIELD;
   }
 

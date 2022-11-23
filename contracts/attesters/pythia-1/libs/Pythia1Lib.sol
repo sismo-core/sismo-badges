@@ -78,12 +78,15 @@ library Pythia1Lib {
     return (Pythia1Claim(claim.groupId, claim.claimedValue, self.destination, groupProperties));
   }
 
-  function _toCircomFormat(
-    Pythia1ProofData memory self
-  )
+  function _toCircomFormat(Pythia1ProofData memory self)
     internal
     pure
-    returns (uint256[2] memory, uint256[2][2] memory, uint256[2] memory, uint256[9] memory)
+    returns (
+      uint256[2] memory,
+      uint256[2][2] memory,
+      uint256[2] memory,
+      uint256[9] memory
+    )
   {
     return (self.proof.a, self.proof.b, self.proof.c, self.input);
   }
@@ -96,9 +99,11 @@ library Pythia1Lib {
     return self.input[1];
   }
 
-  function _getCommitmentMapperPubKey(
-    Pythia1ProofData memory self
-  ) internal pure returns (uint256[2] memory) {
+  function _getCommitmentMapperPubKey(Pythia1ProofData memory self)
+    internal
+    pure
+    returns (uint256[2] memory)
+  {
     return [self.input[2], self.input[3]];
   }
 
@@ -106,9 +111,11 @@ library Pythia1Lib {
     return self.input[4];
   }
 
-  function _getExpectedExternalNullifier(
-    Pythia1ProofData memory self
-  ) internal pure returns (uint256) {
+  function _getExpectedExternalNullifier(Pythia1ProofData memory self)
+    internal
+    pure
+    returns (uint256)
+  {
     return self.input[5];
   }
 
@@ -130,24 +137,28 @@ library Pythia1Lib {
     return userTicket;
   }
 
-  function _generateGroupIdFromProperties(
-    uint128 internalCollectionId,
-    bool isScore
-  ) internal pure returns (uint256) {
+  function _generateGroupIdFromProperties(uint128 internalCollectionId, bool isScore)
+    internal
+    pure
+    returns (uint256)
+  {
     return
       _generateGroupIdFromEncodedProperties(_encodeGroupProperties(internalCollectionId, isScore));
   }
 
-  function _generateGroupIdFromEncodedProperties(
-    bytes memory encodedProperties
-  ) internal pure returns (uint256) {
+  function _generateGroupIdFromEncodedProperties(bytes memory encodedProperties)
+    internal
+    pure
+    returns (uint256)
+  {
     return uint256(keccak256(encodedProperties)) % Pythia1Lib.SNARK_FIELD;
   }
 
-  function _encodeGroupProperties(
-    uint128 internalCollectionId,
-    bool isScore
-  ) internal pure returns (bytes memory) {
+  function _encodeGroupProperties(uint128 internalCollectionId, bool isScore)
+    internal
+    pure
+    returns (bytes memory)
+  {
     return abi.encode(internalCollectionId, isScore);
   }
 

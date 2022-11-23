@@ -42,9 +42,11 @@ library HydraS1AccountboundLib {
     );
   }
 
-  function _hydraS1Accountboundclaim(
-    Request memory self
-  ) internal pure returns (HydraS1AccountboundClaim memory) {
+  function _hydraS1Accountboundclaim(Request memory self)
+    internal
+    pure
+    returns (HydraS1AccountboundClaim memory)
+  {
     Claim memory claim = self.claims[0];
     _validateClaim(claim);
 
@@ -63,9 +65,11 @@ library HydraS1AccountboundLib {
     );
   }
 
-  function _generateGroupIdFromEncodedProperties(
-    bytes memory encodedProperties
-  ) internal pure returns (uint256) {
+  function _generateGroupIdFromEncodedProperties(bytes memory encodedProperties)
+    internal
+    pure
+    returns (uint256)
+  {
     return uint256(keccak256(encodedProperties)) % HydraS1Lib.SNARK_FIELD;
   }
 

@@ -19,10 +19,11 @@ contract MockAttester is IAttester, Attester {
     ATTESTATION_ID_MAX = collectionIdLast;
   }
 
-  function _verifyRequest(
-    Request calldata request,
-    bytes calldata proofData
-  ) internal virtual override {}
+  function _verifyRequest(Request calldata request, bytes calldata proofData)
+    internal
+    virtual
+    override
+  {}
 
   function buildAttestations(
     Request calldata request,

@@ -40,10 +40,10 @@ interface IAttestationsRegistry is IAttestationsRegistryConfigLogic {
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationData(
-    uint256 collectionId,
-    address owner
-  ) external view returns (AttestationData memory);
+  function getAttestationData(uint256 collectionId, address owner)
+    external
+    view
+    returns (AttestationData memory);
 
   /**
    * @dev Getter of the value of a specific attestation
@@ -57,58 +57,63 @@ interface IAttestationsRegistry is IAttestationsRegistryConfigLogic {
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationDataTuple(
-    uint256 collectionId,
-    address owner
-  ) external view returns (address, uint256, uint32, bytes memory);
+  function getAttestationDataTuple(uint256 collectionId, address owner)
+    external
+    view
+    returns (
+      address,
+      uint256,
+      uint32,
+      bytes memory
+    );
 
   /**
    * @dev Getter of the extraData of a specific attestation
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationExtraData(
-    uint256 collectionId,
-    address owner
-  ) external view returns (bytes memory);
+  function getAttestationExtraData(uint256 collectionId, address owner)
+    external
+    view
+    returns (bytes memory);
 
   /**
    * @dev Getter of the issuer of a specific attestation
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationIssuer(
-    uint256 collectionId,
-    address owner
-  ) external view returns (address);
+  function getAttestationIssuer(uint256 collectionId, address owner)
+    external
+    view
+    returns (address);
 
   /**
    * @dev Getter of the timestamp of a specific attestation
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationTimestamp(
-    uint256 collectionId,
-    address owner
-  ) external view returns (uint32);
+  function getAttestationTimestamp(uint256 collectionId, address owner)
+    external
+    view
+    returns (uint32);
 
   /**
    * @dev Getter of the data of specific attestations
    * @param collectionIds Collection identifiers of the targeted attestations
    * @param owners Owners of the targeted attestations
    */
-  function getAttestationDataBatch(
-    uint256[] memory collectionIds,
-    address[] memory owners
-  ) external view returns (AttestationData[] memory);
+  function getAttestationDataBatch(uint256[] memory collectionIds, address[] memory owners)
+    external
+    view
+    returns (AttestationData[] memory);
 
   /**
    * @dev Getter of the values of specific attestations
    * @param collectionIds Collection identifiers of the targeted attestations
    * @param owners Owners of the targeted attestations
    */
-  function getAttestationValueBatch(
-    uint256[] memory collectionIds,
-    address[] memory owners
-  ) external view returns (uint256[] memory);
+  function getAttestationValueBatch(uint256[] memory collectionIds, address[] memory owners)
+    external
+    view
+    returns (uint256[] memory);
 }

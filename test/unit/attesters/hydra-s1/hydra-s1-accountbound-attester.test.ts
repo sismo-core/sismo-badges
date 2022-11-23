@@ -544,7 +544,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
 
     it('Should be able to change the destination, deleting the old attestation', async () => {
       // set a cooldown of 1 second for first group
-      await hydraS1AccountboundAttester.setCooldownDurationForgroupId(group.id, 1);
+      await hydraS1AccountboundAttester.setCooldownDurationForGroupId(group.id, 1);
 
       const newProof = await prover.generateSnarkProof({
         ...userParams,
@@ -664,7 +664,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       );
 
       // set a cooldown of 1 day for first group
-      await hydraS1AccountboundAttester.setCooldownDurationForgroupId(group.id, 60 * 60 * 24);
+      await hydraS1AccountboundAttester.setCooldownDurationForGroupId(group.id, 60 * 60 * 24);
 
       await expect(
         hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes())
@@ -837,7 +837,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
     });
 
     it('Should be able to change again the destination after the cooldown period', async () => {
-      await hydraS1AccountboundAttester.setCooldownDurationForgroupId(group.id, cooldownDuration);
+      await hydraS1AccountboundAttester.setCooldownDurationForGroupId(group.id, cooldownDuration);
       await increaseTime(hre, cooldownDuration);
 
       const generateAttestationsTransaction = hydraS1AccountboundAttester.generateAttestations(
