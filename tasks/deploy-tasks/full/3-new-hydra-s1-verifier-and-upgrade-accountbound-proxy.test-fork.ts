@@ -22,6 +22,8 @@ import {
   HydraS1AccountboundGroup,
   HydraS1SimpleGroup,
   impersonateAddress,
+  increaseTime,
+  GroupData,
 } from '../../../test/utils';
 import { deploymentsConfig } from '../deployments-config';
 import {
@@ -48,6 +50,7 @@ import {
   EddsaPublicKey,
   HydraS1Account,
   HydraS1Prover,
+  Inputs,
   KVMerkleTree,
   SnarkProof,
 } from '@sismo-core/hydra-s1';
@@ -132,6 +135,8 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
   let request2: RequestStruct;
   let request3: RequestStruct;
   let request4: RequestStruct;
+  let inputs1: Inputs;
+  let userParams1;
   let proofRequest1: string;
   let proofRequest2: string;
   let proofRequest3: string;
@@ -144,6 +149,8 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
   let attestationsRequested3: AttestationStructOutput[];
   let attestationsRequested4: AttestationStructOutput[];
   let poseidon;
+  let cooldownDuration: number;
+  let allList: GroupData[];
 
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
 
@@ -212,7 +219,7 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
     destination2 = hydraS1Accounts[3];
 
     // 3 - Generate data source
-    const allList = generateGroups(hydraS1Accounts);
+    allList = generateGroups(hydraS1Accounts);
     const { dataFormat, groups } = await generateAttesterGroups(allList);
     const { dataFormat: dataFormat2, groups: groups2 } = await generateAttesterGroups(allList);
     const { dataFormat: dataFormatAccountBound, groups: groupsAccountBound } =
@@ -243,6 +250,8 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
       commitmentMapperPubKey
     );
     pythia1Prover = new Pythia1Prover();
+
+    cooldownDuration = 60 * 60 * 24; // 1 day
   });
 
   /*************************************************************************************/
@@ -581,17 +590,19 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
         destination: BigNumber.from(destination1.identifier).toHexString(),
       };
 
-      proofRequest1 = (
-        await hydraS1Prover1.generateSnarkProof({
-          source: source1,
-          destination: destination1,
-          claimedValue: source1Value,
-          chainId: chainId,
-          accountsTree: accountsTree1,
-          externalNullifier: externalNullifier1,
-          isStrict: !group1.properties.isScore,
-        })
-      ).toBytes();
+      userParams1 = {
+        source: source1,
+        destination: destination1,
+        claimedValue: source1Value,
+        chainId: chainId,
+        accountsTree: accountsTree1,
+        externalNullifier: externalNullifier1,
+        isStrict: !group1.properties.isScore,
+      };
+
+      inputs1 = await hydraS1Prover1.generateInputs(userParams1);
+
+      proofRequest1 = (await hydraS1Prover1.generateSnarkProof(userParams1)).toBytes();
 
       // change destination in the request
       request2 = {
@@ -710,23 +721,32 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
         front.generateAttestations(hydraS1AccountboundAttester.address, request2, proofRequest2, {
           gasLimit: 800000,
         })
-      ).to.be.revertedWith(`CooldownDurationNotSetForGroupId(${BigNumber.from(group1.id)}`);
+      ).to.be.revertedWith(
+        `CooldownDurationNotSetForGroupIndex(${BigNumber.from(group1.properties.groupIndex)})`
+      );
     });
 
     it('Should set the cooldown duration for the groupId', async () => {
-      const cooldownDuration = 1; // 1 sec
-
-      await hydraS1AccountboundAttester.setCooldownDurationForGroupId(
-        BigNumber.from(group1.id),
-        BigNumber.from(cooldownDuration)
+      const hydraS1AccountboundAttesterOwner = await impersonateAddress(
+        hre,
+        await hydraS1AccountboundAttester.owner(),
+        true
       );
 
+      await hydraS1AccountboundAttester
+        .connect(hydraS1AccountboundAttesterOwner)
+        .setCooldownDurationForGroupIndex(group1.properties.groupIndex, cooldownDuration, {
+          gasLimit: 100000,
+        });
+
       expect(
-        await hydraS1AccountboundAttester.getCooldownDurationForGroupId(BigNumber.from(group1.id))
+        await hydraS1AccountboundAttester.getCooldownDurationForGroupIndex(
+          BigNumber.from(group1.properties.groupIndex)
+        )
       ).to.be.eql(cooldownDuration);
     });
 
-    it('Should allow the minting of the attestation on another destination address (accountbound property)', async () => {
+    it('Should allow the minting of the attestation on another destination address (accountbound property), it should set the cooldown', async () => {
       const tx = await front.generateAttestations(
         hydraS1AccountboundAttester.address,
         request2,
@@ -754,6 +774,87 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
       const expectedBalances = expectedAttestationsValues;
 
       expect(balances).to.be.eql(expectedBalances);
+
+      expect(
+        await hydraS1AccountboundAttester.getCooldownDurationForGroupIndex(
+          group1.properties.groupIndex
+        )
+      ).to.be.equal(cooldownDuration);
+    });
+
+    it('Should revert because the cooldown period is not yet finished', async () => {
+      // not yet the end of the cooldown period
+      await increaseTime(hre, cooldownDuration - 10);
+
+      await expect(
+        hydraS1AccountboundAttester.generateAttestations(request1, proofRequest1)
+      ).to.be.revertedWith(
+        `NullifierOnCooldown(${
+          inputs1.publicInputs.nullifier
+        }, "${await hydraS1AccountboundAttester.getDestinationOfNullifier(
+          BigNumber.from(inputs1.publicInputs.nullifier)
+        )}", ${1}, ${cooldownDuration})`
+      );
+    });
+
+    it('Should allow the minting of the attestation on another destination address, after the cooldown period (with a renewed group)', async () => {
+      await increaseTime(hre, cooldownDuration);
+      const latestCooldownStart = await hydraS1AccountboundAttester.getNullifierCooldownStart(
+        BigNumber.from(inputs1.publicInputs.nullifier)
+      );
+      const renewGenerationTimestamp = group1.properties.generationTimestamp + cooldownDuration;
+      // regenerate groups for attester with different timestamp
+      const { dataFormat, groups } = await generateAttesterGroups(allList, {
+        generationTimestamp: renewGenerationTimestamp,
+      });
+      // register new registry tree root on chain
+      await availableRootsRegistry.registerRootForAttester(
+        hydraS1AccountboundAttester.address,
+        dataFormat.registryTree.getRoot()
+      );
+
+      // create new prover using the new registryTree
+      const renewProver = new HydraS1Prover(dataFormat.registryTree, commitmentMapperPubKey);
+      const renewProof = await renewProver.generateSnarkProof({
+        ...userParams1,
+        destination: destination1,
+        accountsTree: dataFormat.accountsTrees[0],
+      });
+
+      const renewRequest = {
+        claims: [
+          {
+            groupId: groups[0].id,
+            claimedValue: source1Value,
+            extraData: encodeGroupProperties({
+              ...group1.properties,
+              generationTimestamp: renewGenerationTimestamp,
+            }),
+          },
+        ],
+        destination: BigNumber.from(destination1.identifier).toHexString(),
+      };
+
+      const tx = await front.generateAttestations(
+        hydraS1AccountboundAttester.address,
+        renewRequest,
+        renewProof.toBytes(),
+        { gasLimit: 800000 }
+      );
+
+      expect(
+        await hydraS1AccountboundAttester.getDestinationOfNullifier(
+          BigNumber.from(inputs1.publicInputs.nullifier)
+        )
+      ).to.be.eql(BigNumber.from(destination1.identifier).toHexString());
+
+      // the burnCount is 2 since we changed from destination1 to destination2 previously (setting the burnCOunt to 1 and setting the cooldown)
+      // and in this test we just changed back from destination2 to destination1 (setting the burnCount to 2 and a new cooldownStart)
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs1.publicInputs.nullifier)
+        )
+      ).to.be.eql(2);
     });
   });
 });
