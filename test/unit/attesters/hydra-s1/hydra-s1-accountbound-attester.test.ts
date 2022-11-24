@@ -546,6 +546,11 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       );
     });
 
+    it('Should setup the owner', async () => {
+      await hydraS1AccountboundAttester.setOwner();
+      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
+    });
+
     it('Should revert if a signer different from contract owner wants to set a cooldown duration for a groupIndex', async () => {
       expect(await hydraS1AccountboundAttester.owner()).not.to.be.eql(randomSigner.address);
 
@@ -557,14 +562,14 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
     });
 
     it('Should set a cooldown duration for a groupIndex', async () => {
-      // we need to set owner manually
-      await hydraS1AccountboundAttester.setOwner();
       // set a cooldown of 1 day for first group
-      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
-
-      await hydraS1AccountboundAttester
+      const setCooldownDurationTransaction = await hydraS1AccountboundAttester
         .connect(deployer)
         .setCooldownDurationForGroupIndex(group.properties.groupIndex, cooldownDuration);
+
+      await expect(setCooldownDurationTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'CooldownDurationSetForGroupIndex')
+        .withArgs(group.properties.groupIndex, cooldownDuration);
 
       expect(
         await hydraS1AccountboundAttester.getCooldownDurationForGroupIndex(
@@ -573,7 +578,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       ).to.be.eql(cooldownDuration);
     });
 
-    it('Should be able to change the destination, deleting the old attestation', async () => {
+    it('Should be able to change the destination, deleting the old attestation (since the cooldown duration is zero)', async () => {
       const newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: destination2,
@@ -646,22 +651,6 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
 
       // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
       // 2.1 - Checks that the old destination has not anymore it's attestation
-      await expect(generateAttestationsTransaction)
-        .to.emit(hydraS1AccountboundAttester, 'AttestationDeleted')
-        .withArgs([
-          (
-            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-          ).add(group.properties.groupIndex),
-          destinationSigner.address,
-          hydraS1AccountboundAttester.address,
-          sourceValue,
-          group.properties.generationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 0,
-          }),
-        ]);
-
       expect(
         await attestationsRegistry.hasAttestation(
           (
@@ -917,22 +906,6 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
 
       // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
       // 2.1 - Checks that the old destination has not anymore it's attestation
-      await expect(generateAttestationsTransaction)
-        .to.emit(hydraS1AccountboundAttester, 'AttestationDeleted')
-        .withArgs([
-          (
-            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-          ).add(group.properties.groupIndex),
-          destination2Signer.address,
-          hydraS1AccountboundAttester.address,
-          sourceValue,
-          group.properties.generationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 1,
-          }),
-        ]);
-
       expect(
         await attestationsRegistry.hasAttestation(
           (
@@ -954,13 +927,11 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       evmRevert(hre, evmSnapshotId);
     });
 
-    it('Should be able to change again the destination after the recomputation of the group and the cooldown period', async () => {
+    it('Should be able to change again the destination after the cooldown period with a recomputed group', async () => {
       const evmSnapshotId = await evmSnapshot(hre);
-      const latestCooldownStart = await hydraS1AccountboundAttester.getNullifierCooldownStart(
-        BigNumber.from(inputs.publicInputs.nullifier)
-      );
+      await increaseTime(hre, cooldownDuration);
 
-      const renewGenerationTimestamp = group.properties.generationTimestamp + cooldownDuration + 1;
+      const renewGenerationTimestamp = group.properties.generationTimestamp + 10;
       // regenerate groups for attester with different timestamp
       const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups, {
         generationTimestamp: renewGenerationTimestamp,
@@ -975,7 +946,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       const renewProver = new HydraS1Prover(dataFormat.registryTree, commitmentMapperPubKey);
       const renewProof = await renewProver.generateSnarkProof({
         ...userParams,
-        destination: destination2,
+        destination: destination,
         accountsTree: dataFormat.accountsTrees[0],
       });
 
@@ -990,59 +961,62 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
             }),
           },
         ],
-        destination: BigNumber.from(destination2.identifier).toHexString(),
+        destination: BigNumber.from(destination.identifier).toHexString(),
       };
 
       const generateAttestationsTransaction =
         await hydraS1AccountboundAttester.generateAttestations(renewRequest, renewProof.toBytes());
 
-      // 0 - Checks that the transaction emitted the event with the new timestamp
+      // 0 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
         .withArgs([
           await (
             await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
-          renewRequest.destination,
-          hydraS1AccountboundAttester.address,
-          sourceValue,
-          renewGenerationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 1,
-          }),
         ]);
 
-      // A renew should not have changed the nullifierData
-      // cooldownStart and burnCount should be the same
+      // 1 - Checks that the nullifier information were successfully updated
       expect(
         await hydraS1AccountboundAttester.getDestinationOfNullifier(
           BigNumber.from(inputs.publicInputs.nullifier)
         )
-      ).to.be.eql(BigNumber.from(destination2.identifier).toHexString());
+      ).to.be.equal(destination.identifier);
 
+      // cooldownStart should be reset to the latest block timestamp
+      // and burnCount incremented by 1
       expect(
         await hydraS1AccountboundAttester.getNullifierCooldownStart(
           BigNumber.from(inputs.publicInputs.nullifier)
         )
-      ).to.be.eql(latestCooldownStart);
+      ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
 
       expect(
         await hydraS1AccountboundAttester.getNullifierBurnCount(
           BigNumber.from(inputs.publicInputs.nullifier)
         )
-      ).to.be.eql(1);
+      ).to.be.eql(2); // burnCount should be incremented
 
-      // 2 - Checks that the attestation in the registry has the new timestamp
+      // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
+      // 2.1 - Checks that the old destination has not anymore it's attestation
       expect(
-        await attestationsRegistry.getAttestationTimestamp(
+        await attestationsRegistry.hasAttestation(
           (
             await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
           ).add(group.properties.groupIndex),
           destination2Signer.address
         )
-      ).to.equal(renewGenerationTimestamp);
+      ).to.be.false;
 
+      // 2.2 - Checks that the new destination has it's attestation
+      expect(
+        await attestationsRegistry.hasAttestation(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          destinationSigner.address
+        )
+      ).to.be.true;
       evmRevert(hre, evmSnapshotId);
     });
   });

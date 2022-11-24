@@ -243,17 +243,6 @@ contract HydraS1AccountboundAttester is
     attestationCollectionIds[0] = AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex;
 
     ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
-
-    emit AttestationDeleted(
-      Attestation(
-        attestationCollectionIds[0],
-        previousNullifierDestination,
-        address(this),
-        claim.claimedValue,
-        claim.groupProperties.generationTimestamp,
-        abi.encode(nullifier, _getNullifierBurnCount(nullifier))
-      )
-    );
   }
 
   function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
