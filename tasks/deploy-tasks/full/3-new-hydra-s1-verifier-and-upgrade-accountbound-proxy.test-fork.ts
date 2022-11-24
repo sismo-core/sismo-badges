@@ -539,6 +539,10 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
         }
       ));
 
+      // mandatory function to trigger to update owner in proxy's state
+      // we don't use initialize because the proxy is already deployed and no owner was set previously
+      await hydraS1AccountboundAttester.setOwner();
+
       await (
         await availableRootsRegistry.registerRootForAttester(
           hydraS1AccountboundAttester.address,
