@@ -12,10 +12,19 @@ import {IHydraS1SimpleAttester} from '././IHydraS1SimpleAttester.sol';
  **/
 interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
   /**
+   * @dev Event emitted when the duration of the cooldown duration for a group index (internal collection id) has been set
+   * @param groupIndex internal collection id
+   * @param cooldownDuration the duration of the cooldown period
+   **/
+  event CooldownDurationSetForGroupIndex(uint256 indexed groupIndex, uint32 cooldownDuration);
+
+  /**
    * @dev Event emitted when the nullifier has been set on cooldown. This happens when the
    * attestation destination of a nullifier has been changed
+   * @param nullifier user nullifier
+   * @param burnCount the number of times the attestation destination of a nullifier has been changed
    **/
-  event NullifierSetOnCooldown(uint256 nullifier, uint16 burnCount);
+  event NullifierSetOnCooldown(uint256 indexed nullifier, uint16 burnCount);
 
   /**
    * @dev Error when the nullifier is on cooldown. The user have to wait the cooldownDuration

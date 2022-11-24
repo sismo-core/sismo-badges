@@ -296,7 +296,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
   },
   local: {
     deployOptions: {
-      manualConfirm: true,
+      manualConfirm: false,
       log: true,
       behindProxy: true,
       // account 18 of shared mnemonic
