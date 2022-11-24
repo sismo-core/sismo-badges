@@ -50,6 +50,7 @@ async function deploymentAction(
       availableRootsRegistryAddress: config.availableRootsRegistry.address,
       attestationsRegistryAddress: config.attestationsRegistry.address,
       hydraS1VerifierAddress: newHydraS1Verifier.address, // reference the new hydraS1Verifier address
+      owner: config.hydraS1AccountboundAttester.owner, // set the owner referenced in the config
       options: {
         ...options,
         implementationVersion: 4,
