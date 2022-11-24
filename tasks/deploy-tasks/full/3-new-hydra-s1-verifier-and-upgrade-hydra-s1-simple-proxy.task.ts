@@ -1,16 +1,8 @@
-import { HydraS1SimpleAttester } from '../../../types/HydraS1SimpleAttester';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployOptions, getDeployer } from '../utils';
-import {
-  HydraS1AccountboundAttester,
-  HydraS1Verifier,
-  Pythia1SimpleAttester,
-  Pythia1Verifier,
-} from 'types';
-import { DeployedPythia1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
+import { HydraS1AccountboundAttester, HydraS1Verifier } from 'types';
 import { DeployedHydraS1AccountboundAttester } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-accountbound-attester.task';
-import { DeployedHydraS1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-simple-attester.task';
 import { deploymentsConfig } from '../deployments-config';
 
 export interface Deployed3 {
@@ -22,7 +14,6 @@ async function deploymentAction(
   { options }: { options: DeployOptions },
   hre: HardhatRuntimeEnvironment
 ): Promise<Deployed3> {
-  const deployer = await getDeployer(hre);
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
   options = { ...config.deployOptions, ...options };
 
@@ -39,11 +30,11 @@ async function deploymentAction(
     options,
   });
 
-  // Upgrade HydraS1AccountboundAttester
+  // Upgrade proxy implementation from HydraS1SimpleAttester to HydraS1AccountboundAttester
   const { hydraS1AccountboundAttester: newHydraS1AccountboundAttester } = (await hre.run(
     'deploy-hydra-s1-accountbound-attester',
     {
-      // the collectionIds referenced are the ones used by the previous HydraS1SImpleAttester
+      // the collectionIds referenced are the ones used by the previous HydraS1SimpleAttester
       collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
       collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
       commitmentMapperRegistryAddress: config.commitmentMapper.address,
@@ -65,4 +56,4 @@ async function deploymentAction(
   };
 }
 
-task('3-new-hydra-s1-verifier-and-upgrade-accountbound-proxy').setAction(deploymentAction);
+task('3-new-hydra-s1-verifier-and-upgrade-hydra-s1-simple-proxy').setAction(deploymentAction);

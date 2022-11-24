@@ -533,7 +533,7 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
     it('Should run the upgrade script', async () => {
       // deploy new verifiers for hydraS1 and Pythia1 and upgrade attester proxies
       ({ hydraS1Verifier, hydraS1AccountboundAttester } = await hre.run(
-        '3-new-hydra-s1-verifier-and-upgrade-accountbound-proxy',
+        '3-new-hydra-s1-verifier-and-upgrade-hydra-s1-simple-proxy',
         {
           options: { manualConfirm: false, log: false },
         }
