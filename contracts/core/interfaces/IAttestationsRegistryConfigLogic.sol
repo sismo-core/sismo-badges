@@ -21,27 +21,36 @@ interface IAttestationsRegistryConfigLogic {
   error TagAlreadyExists(uint8 tagIndex);
   error ArgsLengthDoesNotMatch();
 
-  event NewTagInserted(uint8 tagIndex, bytes32 tagName);
-  event TagNameUpdated(uint8 tagIndex, bytes32 tagName);
-  event TagDeleted(uint8 tagIndex);
+  event NewTagCreated(uint8 tagIndex, bytes32 tagName);
+  event TagNameUpdated(uint8 tagIndex, bytes32 newTagName, bytes32 previousTagName);
+  event TagDeleted(uint8 tagIndex, bytes32 deletedTagName);
 
-  event AttestationsCollectionTagRegistered(uint256 collectionId, uint8 tagIndex, uint8 tagPower);
-  event AttestationsCollectionTagUnregistered(uint256 collectionId, uint8 tagIndex);
+  event AttestationsCollectionTagSet(uint256 collectionId, uint8 tagIndex, uint8 tagPower);
+  event AttestationsCollectionTagRemoved(uint256 collectionId, uint8 tagIndex);
 
   event IssuerAuthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
   event IssuerUnauthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
+
+  /**
+   * @dev Returns all the tags (in the form of a bitmap) for a specific attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   */
+  function getTagsBitmapForAttestationsCollection(uint256 collectionId)
+    external
+    view
+    returns (uint256);
 
   /**
    * @dev Returns whether an attestationsCollection has a specific tag referenced by its index
    * @param collectionId Collection Id of the targeted attestationsCollection
    * @param tagIndex Index of the tag. Can go from 0 to 63.
    */
-  function hasAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex)
+  function attestationsCollectionHasTag(uint256 collectionId, uint8 tagIndex)
     external
     view
     returns (bool);
 
-  function hasAttestationsCollectionTags(uint256 collectionId, uint8[] memory tagIndex)
+  function attestationsCollectionHasTags(uint256 collectionId, uint8[] memory tagIndex)
     external
     view
     returns (bool);
@@ -51,42 +60,42 @@ interface IAttestationsRegistryConfigLogic {
    * @param collectionId Collection Id of the targeted attestationsCollection
    * @param tagIndex Index of the tag. Can go from 0 to 63.
    */
-  function getAttestationsCollectionTagPower(uint256 collectionId, uint8 tagIndex)
+  function getTagPowerForAttestationsCollection(uint256 collectionId, uint8 tagIndex)
     external
     view
     returns (uint8);
 
-  function getAttestationsCollectionTagsPower(uint256 collectionId, uint8[] memory tagIndex)
+  function getTagsPowersForAttestationsCollection(uint256 collectionId, uint8[] memory tagIndex)
     external
     view
     returns (uint8[] memory);
 
   /**
-   * @dev Register a tag for an attestationsCollection. The tag should be already created.
+   * @dev Set a tag for an attestationsCollection. The tag should be already created.
    * @param collectionId Collection Id of the targeted attestationsCollection
    * @param tagIndex Index of the tag
    * @param tagPower Power associated to the tag. Can take the value 1 to 7
    */
-  function registerAttestationsCollectionTag(
+  function setTagForAttestationsCollection(
     uint256 collectionId,
     uint8 tagIndex,
     uint8 tagPower
   ) external;
 
-  function registerAttestationsCollectionTags(
+  function setTagsForAttestationsCollection(
     uint256[] memory collectionIds,
     uint8[] memory tagIndices,
     uint8[] memory tagPowers
   ) external;
 
   /**
-   * @dev Unregister a tag for an attestationsCollection
+   * @dev Remove a tag for an attestationsCollection
    * @param collectionId Collection Id of the targeted attestationsCollection
    * @param tagIndex Index of the tag
    */
-  function unregisterAttestationsCollectionTag(uint256 collectionId, uint8 tagIndex) external;
+  function removeTagForAttestationsCollection(uint256 collectionId, uint8 tagIndex) external;
 
-  function unregisterAttestationsCollectionTags(
+  function removeTagsForAttestationsCollection(
     uint256[] memory collectionIds,
     uint8[] memory tagIndices
   ) external;
@@ -168,7 +177,7 @@ interface IAttestationsRegistryConfigLogic {
    */
   function updateTagName(uint8 tagIndex, bytes32 newTagName) external;
 
-  function updateTagNames(uint8[] memory tagIndices, bytes32[] memory newTagNames) external;
+  function updateTagsName(uint8[] memory tagIndices, bytes32[] memory newTagNames) external;
 
   /**
    * @dev Delete an existing tag

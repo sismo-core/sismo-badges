@@ -11,7 +11,7 @@ contract AttestationsRegistryState {
   bool internal _paused;
   address internal _owner;
   // Storing the tag name for each tags index
-  mapping(uint256 => bytes32) internal _tags;
+  mapping(uint8 => bytes32) internal _tags;
   // keeping some space for future
   uint256[14] private _placeHolders;
 

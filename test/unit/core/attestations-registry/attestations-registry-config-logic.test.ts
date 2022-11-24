@@ -537,6 +537,10 @@ describe('Test Attestations Registry Config Logic contract', () => {
     });
   });
 
+  /***********************************************************************/
+  /******************************** TAGS *********************************/
+  /***********************************************************************/
+
   describe('Tags', async () => {
     let TAGS = {
       CURATED: 1,
@@ -558,13 +562,35 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
+      it('Should revert when creating new tags as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .createNewTags(
+              [TAGS.TEST_INSERTION, TAGS.CURATED],
+              [formatBytes32String('TEST_INSERTION'), formatBytes32String('CURATED')]
+            )
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when creating new tags as with different arguments length', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .createNewTags(
+              [TAGS.TEST_INSERTION],
+              [formatBytes32String('TEST_INSERTION'), formatBytes32String('CURATED')]
+            )
+        ).to.be.revertedWith('ArgsLengthDoesNotMatch()');
+      });
+
       it('Should create a new tag as an owner', async () => {
         const tagInserted = await attestationsRegistry
           .connect(deployer)
           .createNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
 
         await expect(tagInserted)
-          .to.emit(attestationsRegistry, 'NewTagInserted')
+          .to.emit(attestationsRegistry, 'NewTagCreated')
           .withArgs(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
       });
 
@@ -574,7 +600,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('TagIndexOutOfBounds(64)');
       });
 
-      it('Should revert when trying to re-creating a tag for the same index', async () => {
+      it('Should revert when trying to create again a tag for the same index', async () => {
         await expect(
           attestationsRegistry.createNewTag(TAGS.TEST_INSERTION, formatBytes32String('OTHER TAG'))
         ).to.be.revertedWith('TagAlreadyExists(10)');
@@ -590,7 +616,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when trying to update update a tag name that does not exists', async () => {
+      it('Should revert when trying to update a tag name that does not exists', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
@@ -605,7 +631,11 @@ describe('Test Attestations Registry Config Logic contract', () => {
 
         await expect(tagUpdated)
           .to.emit(attestationsRegistry, 'TagNameUpdated')
-          .withArgs(TAGS.TEST_INSERTION, formatBytes32String('CURATED2'));
+          .withArgs(
+            TAGS.TEST_INSERTION,
+            formatBytes32String('CURATED2'),
+            formatBytes32String('TEST_INSERTION')
+          );
       });
     });
 
@@ -616,10 +646,10 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when trying to update update a tag name that does not exists', async () => {
+      it('Should revert when trying to delete a tag name that does not exists', async () => {
         await expect(
-          attestationsRegistry.connect(notOwner).deleteTag(TAGS.NOT_CREATED)
-        ).to.be.revertedWith('Ownable: caller is not the owner');
+          attestationsRegistry.connect(deployer).deleteTag(TAGS.NOT_CREATED)
+        ).to.be.revertedWith('TagDoesNotExist(50)');
       });
 
       it('Should delete a tag', async () => {
@@ -628,11 +658,11 @@ describe('Test Attestations Registry Config Logic contract', () => {
           .deleteTag(TAGS.TEST_INSERTION);
         await expect(tagDeleted)
           .to.emit(attestationsRegistry, 'TagDeleted')
-          .withArgs(TAGS.TEST_INSERTION);
+          .withArgs(TAGS.TEST_INSERTION, formatBytes32String('CURATED2'));
       });
     });
 
-    describe('Register AttestationsCollection Tags', async () => {
+    describe('Create AttestationsCollection Tags', async () => {
       before(async () => {
         // Register the tag we will use during the tests
         await attestationsRegistry
@@ -640,81 +670,77 @@ describe('Test Attestations Registry Config Logic contract', () => {
           .createNewTag(TAGS.CURATED, formatBytes32String('CURATED'));
       });
 
-      it('Should revert when registering a tag as a non-owner', async () => {
+      it('Should revert when setting a tag as a non-owner', async () => {
         await expect(
-          attestationsRegistry
-            .connect(notOwner)
-            .registerAttestationsCollectionTag(1, TAGS.CURATED, 1)
+          attestationsRegistry.connect(notOwner).setTagForAttestationsCollection(1, TAGS.CURATED, 1)
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when registering a tag to an AttestationsCollection and the tag is not already created', async () => {
+      it('Should revert when setting a tag to an AttestationsCollection and the tag is not already created', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .registerAttestationsCollectionTag(1, TAGS.NOT_CREATED, 1)
+            .setTagForAttestationsCollection(1, TAGS.NOT_CREATED, 1)
         ).to.be.revertedWith('TagDoesNotExist(50)');
       });
 
-      it('Should register a tag to an AttestationsCollection with power 1', async () => {
-        const tagRegistered = await attestationsRegistry
+      it('Should set a tag to an AttestationsCollection with power 1', async () => {
+        const tagSet = await attestationsRegistry
           .connect(deployer)
-          .registerAttestationsCollectionTag(1, TAGS.CURATED, 1);
+          .setTagForAttestationsCollection(1, TAGS.CURATED, 1);
 
-        await expect(tagRegistered)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagRegistered')
+        await expect(tagSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
           .withArgs(1, TAGS.CURATED, 1);
 
-        expect(await attestationsRegistry.hasAttestationsCollectionTag(1, TAGS.CURATED)).to.be.true;
+        expect(await attestationsRegistry.attestationsCollectionHasTag(1, TAGS.CURATED)).to.be.true;
         expect(
-          await attestationsRegistry.getAttestationsCollectionTagPower(1, TAGS.CURATED)
+          await attestationsRegistry.getTagPowerForAttestationsCollection(1, TAGS.CURATED)
         ).to.be.eq(1);
       });
 
-      it('Should register a tag to an AttestationsCollection and increase the power', async () => {
-        const tagRegistered = await attestationsRegistry
+      it('Should set a tag to an AttestationsCollection and increase the power', async () => {
+        const tagSet = await attestationsRegistry
           .connect(deployer)
-          .registerAttestationsCollectionTag(1, TAGS.CURATED, 5);
+          .setTagForAttestationsCollection(1, TAGS.CURATED, 5);
 
-        await expect(tagRegistered)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagRegistered')
+        await expect(tagSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
           .withArgs(1, TAGS.CURATED, 5);
 
-        expect(await attestationsRegistry.hasAttestationsCollectionTag(1, TAGS.CURATED)).to.be.true;
+        expect(await attestationsRegistry.attestationsCollectionHasTag(1, TAGS.CURATED)).to.be.true;
         expect(
-          await attestationsRegistry.getAttestationsCollectionTagPower(1, TAGS.CURATED)
+          await attestationsRegistry.getTagPowerForAttestationsCollection(1, TAGS.CURATED)
         ).to.be.eq(5);
       });
 
-      it('Should revert to register a tag to an AttestationsCollection with power > 7', async () => {
+      it('Should revert to set a tag to an AttestationsCollection with power > 15', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .registerAttestationsCollectionTag(1, TAGS.CURATED, 8)
-        ).to.be.revertedWith('TagPowerOutOfBounds(8)');
+            .setTagForAttestationsCollection(1, TAGS.CURATED, 16)
+        ).to.be.revertedWith('TagPowerOutOfBounds(16)');
       });
 
-      it('Should revert when unregistering a tag as a non-owner', async () => {
+      it('Should revert when removing a tag as a non-owner', async () => {
         await expect(
-          attestationsRegistry
-            .connect(notOwner)
-            .unregisterAttestationsCollectionTag(1, TAGS.CURATED)
+          attestationsRegistry.connect(notOwner).removeTagForAttestationsCollection(1, TAGS.CURATED)
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should unregister tag to an AttestationsCollection', async () => {
-        const tagRegistered = await attestationsRegistry
+      it('Should remove tag to an AttestationsCollection', async () => {
+        const tagRemoved = await attestationsRegistry
           .connect(deployer)
-          .unregisterAttestationsCollectionTag(1, TAGS.CURATED);
+          .removeTagForAttestationsCollection(1, TAGS.CURATED);
 
-        await expect(tagRegistered)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagUnregistered')
+        await expect(tagRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagRemoved')
           .withArgs(1, TAGS.CURATED);
 
-        expect(await attestationsRegistry.hasAttestationsCollectionTag(1, TAGS.CURATED)).to.be
+        expect(await attestationsRegistry.attestationsCollectionHasTag(1, TAGS.CURATED)).to.be
           .false;
         expect(
-          await attestationsRegistry.getAttestationsCollectionTagPower(1, TAGS.CURATED)
+          await attestationsRegistry.getTagPowerForAttestationsCollection(1, TAGS.CURATED)
         ).to.be.eq(0);
       });
     });

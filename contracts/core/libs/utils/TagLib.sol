@@ -33,10 +33,9 @@ library TagLib {
    */
   function _hasTag(uint256 self, uint8 tagIndex) internal pure returns (bool hashTag) {
     uint256 currentTags = self;
-    // Get the tag's first bit by shifting the tagIndex to the right
-    uint256 tagFirstBit = currentTags >> (4 * tagIndex + 3);
-    // Check if the tag is enabled
-    return (tagFirstBit & 1) == 1;
+    uint8 tagPower = _getTagPower(currentTags, tagIndex);
+    // Check if the power of the tag is above 0, if yes the tag is enabled
+    return (tagPower) > 0;
   }
 
   /**
@@ -47,8 +46,8 @@ library TagLib {
     uint256 currentTags = self;
     // Get the tag's 4 bits by shifting the tagIndex to the right
     uint256 shifted = currentTags >> (4 * tagIndex);
-    // Get the tag power by masking the 3 bits encoding the power
-    return uint8(shifted & (2**3 - 1));
+    // Get the tag power by masking the 4 bits encoding the power
+    return uint8(shifted & (2**4 - 1));
   }
 
   /**
@@ -66,7 +65,7 @@ library TagLib {
 
     uint256 currentTags = self;
     // Create the tag's 4 bits and shift them to the left to the tagIndex position
-    uint256 tagMask = uint256(2**3 + tagPower) << (4 * tagIndex);
+    uint256 tagMask = uint256(tagPower) << (4 * tagIndex);
     // Apply an OR operation between the currentTags number and the tagMask
     return currentTags | tagMask;
   }
@@ -98,11 +97,11 @@ library TagLib {
   }
 
   /**
-   * @dev Check if a tagPower is valid (is between 1 and 7)
+   * @dev Check if a tagPower is valid (is between 0 and 15)
    * @param tagPower index of the tag
    */
   function _checkTagPowerIsValid(uint8 tagPower) internal pure {
-    if (tagPower == 0 || tagPower > 7) {
+    if (tagPower > 15) {
       revert TagPowerOutOfBounds(tagPower);
     }
   }
