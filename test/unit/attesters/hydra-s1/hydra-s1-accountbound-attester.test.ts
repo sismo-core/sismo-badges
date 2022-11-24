@@ -557,6 +557,8 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
     });
 
     it('Should set a cooldown duration for a groupIndex', async () => {
+      // we need to set owner manually
+      await hydraS1AccountboundAttester.setOwner();
       // set a cooldown of 1 day for first group
       expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
 

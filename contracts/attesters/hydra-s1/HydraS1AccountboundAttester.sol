@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
+import 'hardhat/console.sol';
 
 import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
 import {HydraS1SimpleAttester} from './HydraS1SimpleAttester.sol';
@@ -38,15 +39,18 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
 
  * - Nullified
  *   Each source account gets one nullifier per claim (i.e only one attestation per source account per claim)
- *   For people used to semaphore/ tornado cash people:
- *   nullifier = hash(sourceSecret, externalNullifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
- 
+ *   While semaphore/ tornado cash are using the following notations: nullifierHash = hash(IdNullifier, externalNullifier)
+ *   We prefered to use the naming 'nullifier' instead of 'nullifierHash' in our contracts and documentation.
+ *   We also renamed 'IdNullifier' in 'sourceSecret' (the secret tied to a source account) and we kept the 'externalNullifier' notation.
+ *   Finally, here is our notations at Sismo: nullifier = hash(sourceSecret, externalNullifier)
+
  * - Accountbound (with cooldown period)
  *   Users can choose to delete or generate attestations to a new destination using their source account.
  *   The attestation is "Accountbound" to the source account.
- *   When deleting/ sending to a new destination, the nullifier will enter a cooldown period, so it remains occasional
- *   User will need to wait until the end of the cooldown period before being able to delete or switch destination again
- *   One can however know that the former and the new destinations were created using the same nullifier
+ *   When deleting/ sending to a new destination, the nullifier will enter a cooldown period, so it remains occasional.
+ *   The duration of the cooldown period is different for each group, if the cooldown duration = 0 then the group does not allow accountbound attestations.
+ *   If the cooldown duration > 0, the user will need to wait until the end of the cooldown period before being able to delete or switch destination again.
+ *   One can however know that the former and the new destinations were created using the same nullifier.
  
  * - Renewable
  *   A nullifier can actually be reused as long as the destination of the attestation remains the same
@@ -61,13 +65,15 @@ contract HydraS1AccountboundAttester is
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
 
-  // Mapping to store cooldown value for each groupIndex
-  mapping(uint256 => uint32) internal _groupIndexCooldowns;
+  // immutable only used for setting up owner during proxy upgrade
+  address private immutable OWNER;
+
+  // cooldown durations for each groupIndex
+  mapping(uint256 => uint32) internal _cooldownDurations;
 
   // keeping some space for future config logics
   uint256[15] private _placeHoldersHydraS1Accountbound;
 
-  // mappings to store the state related to a specific nullifier (its cooldownStart and its burnCount)
   mapping(uint256 => uint32) internal _nullifiersCooldownStart;
   mapping(uint256 => uint16) internal _nullifiersBurnCount;
 
@@ -101,15 +107,14 @@ contract HydraS1AccountboundAttester is
       collectionIdLast
     )
   {
-    initialize(_owner);
+    OWNER = _owner;
   }
 
-  /**
-   * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
-   * @param _owner Owner of the contract, can update public key and address
+  /*
+   * TODO remove the function after updating proxy's state
    */
-  function initialize(address _owner) public initializer {
-    _transferOwnership(_owner);
+  function setOwner() public {
+    _transferOwnership(OWNER);
   }
 
   /*******************************************************
@@ -133,7 +138,7 @@ contract HydraS1AccountboundAttester is
     uint256 nullifier = proofData._getNullifier();
     attestations[0].extraData = abi.encodePacked(
       attestations[0].extraData,
-      encodeNullifierAndNullifierBurnCount(nullifier, attestations[0].owner)
+      generateAccountboundExtraData(nullifier, attestations[0].owner)
     );
 
     return (attestations);
@@ -154,25 +159,33 @@ contract HydraS1AccountboundAttester is
     override
   {
     uint256 nullifier = proofData._getNullifier();
-    address nullifierDestination = _getDestinationOfNullifier(nullifier);
+    address previousNullifierDestination = _getDestinationOfNullifier(nullifier);
 
     HydraS1Claim memory claim = request._claim();
 
     // check if the nullifier has already been used previously, if so it may be on cooldown
-    if (nullifierDestination != address(0) && nullifierDestination != claim.destination) {
+    if (
+      previousNullifierDestination != address(0) &&
+      previousNullifierDestination != claim.destination
+    ) {
       uint32 cooldownDuration = _getCooldownDurationForGroupIndex(claim.groupProperties.groupIndex);
       if (cooldownDuration == 0) {
         revert CooldownDurationNotSetForGroupIndex(claim.groupProperties.groupIndex);
       }
       if (_isOnCooldown(nullifier, cooldownDuration)) {
         uint16 burnCount = _getNullifierBurnCount(nullifier);
-        revert NullifierOnCooldown(nullifier, nullifierDestination, burnCount, cooldownDuration);
+        revert NullifierOnCooldown(
+          nullifier,
+          previousNullifierDestination,
+          burnCount,
+          cooldownDuration
+        );
       }
 
       // Delete the old Attestation linked to the nullifier before recording the new one (accountbound behaviour)
-      _deletePreviousAttestation(nullifier, claim);
+      _deletePreviousAttestation(nullifier, claim, previousNullifierDestination);
 
-      _setNullifierOnCooldown(nullifier);
+      _setNullifierOnCooldownAndIncrementBurnCount(nullifier);
     }
     _setDestinationForNullifier(nullifier, request.destination);
   }
@@ -182,21 +195,23 @@ contract HydraS1AccountboundAttester is
   *******************************************************/
 
   /**
-   * @dev ABI encodes nullifier and the burn count of the nullifier
+   * @dev ABI-encodes nullifier and the burn count of the nullifier
    * @param nullifier user nullifier
    * @param claimDestination destination referenced in the user claim
    */
-  function encodeNullifierAndNullifierBurnCount(uint256 nullifier, address claimDestination)
+  function generateAccountboundExtraData(uint256 nullifier, address claimDestination)
     public
     view
     virtual
     returns (bytes memory)
   {
-    address nullifierDestination = _getDestinationOfNullifier(nullifier);
+    address previousNullifierDestination = _getDestinationOfNullifier(nullifier);
     uint16 burnCount = _getNullifierBurnCount(nullifier);
     // If the attestation is minted on a new destination address
-    // the burnCount that will eencoded in the extraData of the Attestation should be incremented
-    if (nullifierDestination != address(0) && nullifierDestination != claimDestination) {
+    // the burnCount that will be encoded in the extraData of the Attestation should be incremented
+    if (
+      previousNullifierDestination != address(0) && previousNullifierDestination != claimDestination
+    ) {
       burnCount += 1;
     }
     return (abi.encode(nullifier, burnCount));
@@ -216,13 +231,15 @@ contract HydraS1AccountboundAttester is
    * @param nullifier user nullifier
    * @param claim user claim
    */
-  function _deletePreviousAttestation(uint256 nullifier, HydraS1Claim memory claim) internal {
+  function _deletePreviousAttestation(
+    uint256 nullifier,
+    HydraS1Claim memory claim,
+    address previousNullifierDestination
+  ) internal {
     address[] memory attestationOwners = new address[](1);
     uint256[] memory attestationCollectionIds = new uint256[](1);
 
-    address nullifierDestination = _getDestinationOfNullifier(nullifier);
-
-    attestationOwners[0] = nullifierDestination;
+    attestationOwners[0] = previousNullifierDestination;
     attestationCollectionIds[0] = AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex;
 
     ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
@@ -230,7 +247,7 @@ contract HydraS1AccountboundAttester is
     emit AttestationDeleted(
       Attestation(
         attestationCollectionIds[0],
-        nullifierDestination,
+        previousNullifierDestination,
         address(this),
         claim.claimedValue,
         claim.groupProperties.generationTimestamp,
@@ -239,41 +256,37 @@ contract HydraS1AccountboundAttester is
     );
   }
 
-  /*******************************************************
-        GETTERS AND SETTERS FOR NULLIFIER MAPPINGS
-  *******************************************************/
-
-  function _setNullifierOnCooldown(uint256 nullifier) internal {
-    _nullifiersCooldownStart[nullifier] = uint32(block.timestamp);
-    _nullifiersBurnCount[nullifier] += 1;
-    emit NullifierSetOnCooldown(nullifier, _nullifiersBurnCount[nullifier]);
-  }
-
   function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
     return _getNullifierCooldownStart(nullifier);
-  }
-
-  function _getNullifierCooldownStart(uint256 nullifier) internal view returns (uint32) {
-    return _nullifiersCooldownStart[nullifier];
   }
 
   function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
     return _getNullifierBurnCount(nullifier);
   }
 
+  function _setNullifierOnCooldownAndIncrementBurnCount(uint256 nullifier) internal {
+    _nullifiersCooldownStart[nullifier] = uint32(block.timestamp);
+    _nullifiersBurnCount[nullifier] += 1;
+    emit NullifierSetOnCooldown(nullifier, _nullifiersBurnCount[nullifier]);
+  }
+
+  function _getNullifierCooldownStart(uint256 nullifier) internal view returns (uint32) {
+    return _nullifiersCooldownStart[nullifier];
+  }
+
   function _getNullifierBurnCount(uint256 nullifier) internal view returns (uint16) {
     return _nullifiersBurnCount[nullifier];
   }
 
-  /*******************************************************
-         GETTERS AND SETTERS FOR GROUP ID MAPPING
-  *******************************************************/
-
+  /*****************************************
+        GROUP CONFIGURATION LOGIC
+  ******************************************/
   function setCooldownDurationForGroupIndex(uint256 groupIndex, uint32 cooldownDuration)
     external
     onlyOwner
   {
-    _groupIndexCooldowns[groupIndex] = cooldownDuration;
+    _cooldownDurations[groupIndex] = cooldownDuration;
+    emit CooldownDurationSetForGroupIndex(groupIndex, cooldownDuration);
   }
 
   function getCooldownDurationForGroupIndex(uint256 groupIndex) external view returns (uint32) {
@@ -281,6 +294,7 @@ contract HydraS1AccountboundAttester is
   }
 
   function _getCooldownDurationForGroupIndex(uint256 groupIndex) internal view returns (uint32) {
-    return _groupIndexCooldowns[groupIndex];
+    // if cooldownDuration == 0, the accountbound behaviour is prohibited
+    return _cooldownDurations[groupIndex];
   }
 }
