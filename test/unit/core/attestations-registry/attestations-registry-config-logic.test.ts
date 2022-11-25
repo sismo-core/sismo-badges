@@ -813,7 +813,10 @@ describe('Test Attestations Registry Config Logic contract', () => {
         // Register the tag we will use during the tests
         await attestationsRegistry
           .connect(deployer)
-          .createNewTag(TAGS.CURATED, formatBytes32String('CURATED'));
+          .createNewTags(
+            [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+            [formatBytes32String('CURATED'), formatBytes32String('SYBIL_RESISTANCE')]
+          );
       });
 
       it('Should revert when setting a tag as a non-owner', async () => {
@@ -822,11 +825,51 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
+      it('Should revert when setting tags as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [1, 2])
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when setting tags with invalid args length', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).setTagsForAttestationsCollection(
+            [1], //missing arg
+            [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+            [1, 2]
+          )
+        ).to.be.revertedWith('ArgsLengthDoesNotMatch');
+      });
+
+      it('Should revert when setting a tag with an index > 63', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).setTagForAttestationsCollection(1, 64, 1)
+        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+      });
+
+      it('Should revert when setting tags with one of them having an index > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, 64], [1, 2])
+        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+      });
+
       it('Should revert when setting a tag to an AttestationsCollection and the tag is not already created', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
             .setTagForAttestationsCollection(1, TAGS.NOT_CREATED, 1)
+        ).to.be.revertedWith('TagDoesNotExist(50)');
+      });
+
+      it('Should revert when setting tags to an AttestationsCollection and one of the tags is not already created', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.NOT_CREATED], [1, 2])
         ).to.be.revertedWith('TagDoesNotExist(50)');
       });
 
@@ -845,7 +888,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.eq(1);
       });
 
-      it('Should set a tag to an AttestationsCollection and increase the power', async () => {
+      it('Should set a tag to an AttestationsCollection and change the power', async () => {
         const tagSet = await attestationsRegistry
           .connect(deployer)
           .setTagForAttestationsCollection(1, TAGS.CURATED, 5);
@@ -870,24 +913,127 @@ describe('Test Attestations Registry Config Logic contract', () => {
 
       it('Should revert when removing a tag as a non-owner', async () => {
         await expect(
-          attestationsRegistry.connect(notOwner).removeTagForAttestationsCollection(1, TAGS.CURATED)
+          attestationsRegistry.connect(notOwner).setTagForAttestationsCollection(1, TAGS.CURATED, 0)
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
       it('Should remove tag to an AttestationsCollection', async () => {
         const tagRemoved = await attestationsRegistry
           .connect(deployer)
-          .removeTagForAttestationsCollection(1, TAGS.CURATED);
+          .setTagForAttestationsCollection(1, TAGS.CURATED, 0);
 
         await expect(tagRemoved)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagRemoved')
-          .withArgs(1, TAGS.CURATED);
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+          .withArgs(1, TAGS.CURATED, 0);
 
         expect(await attestationsRegistry.attestationsCollectionHasTag(1, TAGS.CURATED)).to.be
           .false;
         expect(
           await attestationsRegistry.getTagPowerForAttestationsCollection(1, TAGS.CURATED)
         ).to.be.eq(0);
+      });
+
+      it('Should set tags to two AttestationsCollection with power 1 and 2', async () => {
+        const tagsSet = await attestationsRegistry
+          .connect(deployer)
+          .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [1, 2]);
+
+        await expect(tagsSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+          .withArgs(1, TAGS.CURATED, 1);
+
+        await expect(tagsSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+          .withArgs(1, TAGS.SYBIL_RESISTANCE, 2);
+
+        expect(
+          await attestationsRegistry.attestationsCollectionHasTags(1, [
+            TAGS.CURATED,
+            TAGS.SYBIL_RESISTANCE,
+          ])
+        ).to.be.true;
+
+        expect(
+          await attestationsRegistry.getTagsPowerForAttestationsCollection(1, [
+            TAGS.CURATED,
+            TAGS.SYBIL_RESISTANCE,
+          ])
+        ).to.be.eql([1, 2]);
+      });
+
+      it('Should set tags to AttestationsCollection and change the power', async () => {
+        const tagsSet = await attestationsRegistry
+          .connect(deployer)
+          .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [6, 11]);
+
+        await expect(tagsSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+          .withArgs(1, TAGS.CURATED, 6);
+
+        await expect(tagsSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+          .withArgs(1, TAGS.SYBIL_RESISTANCE, 11);
+
+        expect(
+          await attestationsRegistry.attestationsCollectionHasTags(1, [
+            TAGS.CURATED,
+            TAGS.SYBIL_RESISTANCE,
+          ])
+        ).to.be.true;
+        expect(
+          await attestationsRegistry.getTagsPowerForAttestationsCollection(1, [
+            TAGS.CURATED,
+            TAGS.SYBIL_RESISTANCE,
+          ])
+        ).to.be.eql([6, 11]);
+      });
+
+      it('Should revert to set tags to an AttestationsCollection with one of them having a power > 15', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setTagsForAttestationsCollection(
+              [1, 1],
+              [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+              [6, 16]
+            )
+        ).to.be.revertedWith('TagPowerOutOfBounds(16)');
+      });
+
+      it('Should revert when removing tags as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [0, 0])
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should remove tags to an AttestationsCollection', async () => {
+        const tagsRemoved = await attestationsRegistry
+          .connect(deployer)
+          .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [0, 0]);
+
+        await expect(tagsRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+          .withArgs(1, TAGS.CURATED, 0);
+
+        await expect(tagsRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+          .withArgs(1, TAGS.SYBIL_RESISTANCE, 0);
+
+        expect(
+          await attestationsRegistry.attestationsCollectionHasTags(1, [
+            TAGS.CURATED,
+            TAGS.SYBIL_RESISTANCE,
+          ])
+        ).to.be.false;
+
+        expect(
+          await attestationsRegistry.getTagsPowerForAttestationsCollection(1, [
+            TAGS.CURATED,
+            TAGS.SYBIL_RESISTANCE,
+          ])
+        ).to.be.eql([0, 0]);
       });
     });
   });

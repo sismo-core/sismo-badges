@@ -2,21 +2,19 @@
 pragma solidity ^0.8.14;
 
 /*
- * Each tag is encoded on 4 bits.
- * The first bit indicates whether the tag is enabled or disabled.
- * The next 3 bits encode the tag's power (from 1 to 7)
+ * Each tag is encoded on 4 bits in the 256-bit bitmap.
+ * The 4 bits encode the tag's power (from 0 to 15) 
+ * If the power is 0, the tag is disabled. 
 
      tag63               tag2         tag1         tag0
    ┌────────────┐      ┌────────────┬────────────┬────────────┐
    │ 1  1  1  1 │ .... │ 1  0  1  1 │ 0  0  0  0 │ 1  0  0  1 │
-   └─▲──────────┘      └─▲──────────┴─▲──────────┴─▲──────────┘
-     │  power 7          │  power 3   │  power 0   │  power 1
-     │                   │            │            │
-     enabled             enabled      disabled     enabled
+   └────────────┘      └────────────┴────────────┴────────────┘
+      power 15             power 11     power 0      power 1
     
   * There is a total of 64 tags.
   * The tag index must be between 0 and 63.
-  * The tag power must be between 1 and 7.
+  * The tag power must be between 0 and 15.
   * An enabled tag will always have a power greater than 0.
   * A disabled tag will always have a power equal to 0.
  **/
@@ -53,7 +51,7 @@ library TagLib {
   /**
    * @dev Add a tag to a uint256 number
    * @param tagIndex index of the tag. Can be between 0 and 63
-   * @param tagPower power of the tag. Can be between 1 and 7
+   * @param tagPower power of the tag. Can be between 0 and 15
    */
   function _addTag(
     uint256 self,
@@ -64,10 +62,12 @@ library TagLib {
     _checkTagPowerIsValid(tagPower);
 
     uint256 currentTags = self;
+    // first we need to remove the current tag power
+    uint256 newTags = _removeTag(currentTags, tagIndex);
     // Create the tag's 4 bits and shift them to the left to the tagIndex position
     uint256 tagMask = uint256(tagPower) << (4 * tagIndex);
-    // Apply an OR operation between the currentTags number and the tagMask
-    return currentTags | tagMask;
+    // Apply an OR operation between the currentTags number and the tagMask to reference new power
+    return newTags | tagMask;
   }
 
   /**
@@ -78,7 +78,7 @@ library TagLib {
     _checkTagIndexIsValid(tagIndex);
 
     uint256 currentTags = self;
-    // Shift 4 bits to 1 to the left to the tagIndex position
+    // Shift 4 bits (1111 mask) to the left to the tagIndex position
     uint256 tagMask = (2**4 - 1) << (4 * tagIndex);
     // Apply a XOR operation to a have a mask with all bits set to 1 except the tag bits to remove
     uint256 negativeTagMask = MAX_INT ^ tagMask;

@@ -35,46 +35,23 @@ contract AttestationsRegistryConfigLogic is
    *****************************************/
 
   /**
-   * @dev Returns the tag's power (from 0 to 15) of an attestationsCollection
-   * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag. Can go from 0 to 63.
-   */
-  function getTagPowerForAttestationsCollection(uint256 collectionId, uint8 tagIndex)
-    external
-    view
-    returns (uint8)
-  {
-    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
-    return currentTags._getTagPower(tagIndex);
-  }
-
-  function getTagsPowersForAttestationsCollection(uint256 collectionId, uint8[] memory tagIndex)
-    external
-    view
-    returns (uint8[] memory)
-  {
-    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
-    uint8[] memory tagsPower = new uint8[](tagIndex.length);
-    for (uint256 i = 0; i < tagIndex.length; i++) {
-      tagsPower[i] = currentTags._getTagPower(tagIndex[i]);
-    }
-    return tagsPower;
-  }
-
-  /**
    * @dev Set a tag for an attestationsCollection. The tag should be already created.
    * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag
-   * @param tagPower Power associated to the tag. Can take the value 1 to 7
+   * @param tagIndex Index of the tag (must be between 0 and 63)
+   * @param tagPower Power associated to the tag. Can take the value 0 to 15
+   * @notice You should pass a tagPower of zero if you want to remove a tag at tagIndex
    */
   function setTagForAttestationsCollection(
     uint256 collectionId,
     uint8 tagIndex,
     uint8 tagPower
-  ) external onlyOwner {
-    if (_getTagName(tagIndex) == 0) {
+  ) public onlyOwner {
+    tagIndex._checkTagIndexIsValid();
+
+    if (!_isTagCreated(tagIndex)) {
       revert TagDoesNotExist(tagIndex);
     }
+
     _setTagForAttestationsCollection(collectionId, tagIndex, tagPower);
   }
 
@@ -87,33 +64,34 @@ contract AttestationsRegistryConfigLogic is
       revert ArgsLengthDoesNotMatch();
     }
     for (uint256 i = 0; i < collectionIds.length; i++) {
-      this.setTagForAttestationsCollection(collectionIds[i], tagIndices[i], tagPowers[i]);
+      setTagForAttestationsCollection(collectionIds[i], tagIndices[i], tagPowers[i]);
     }
   }
 
   /**
-   * @dev Remove a tag for an attestationsCollection
+   * @dev Returns the tag's power (from 0 to 15) of an attestationsCollection
    * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag
+   * @param tagIndex Index of the tag. Can go from 0 to 63.
    */
-  function removeTagForAttestationsCollection(uint256 collectionId, uint8 tagIndex)
-    external
-    onlyOwner
+  function getTagPowerForAttestationsCollection(uint256 collectionId, uint8 tagIndex)
+    public
+    view
+    returns (uint8)
   {
-    _removeTagForAttestationsCollection(collectionId, tagIndex);
+    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
+    return currentTags._getTagPower(tagIndex);
   }
 
-  function removeTagsForAttestationsCollection(
-    uint256[] memory collectionIds,
-    uint8[] memory tagIndices
-  ) external onlyOwner {
-    if (collectionIds.length != tagIndices.length) {
-      revert ArgsLengthDoesNotMatch();
+  function getTagsPowerForAttestationsCollection(uint256 collectionId, uint8[] memory tagIndex)
+    external
+    view
+    returns (uint8[] memory)
+  {
+    uint8[] memory tagsPower = new uint8[](tagIndex.length);
+    for (uint256 i = 0; i < tagIndex.length; i++) {
+      tagsPower[i] = getTagPowerForAttestationsCollection(collectionId, tagIndex[i]);
     }
-
-    for (uint256 i = 0; i < collectionIds.length; i++) {
-      _removeTagForAttestationsCollection(collectionIds[i], tagIndices[i]);
-    }
+    return tagsPower;
   }
 
   /**
@@ -122,7 +100,7 @@ contract AttestationsRegistryConfigLogic is
    * @param tagIndex Index of the tag. Can go from 0 to 63.
    */
   function attestationsCollectionHasTag(uint256 collectionId, uint8 tagIndex)
-    external
+    public
     view
     returns (bool)
   {
@@ -135,9 +113,8 @@ contract AttestationsRegistryConfigLogic is
     view
     returns (bool)
   {
-    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
     for (uint256 i = 0; i < tagIndex.length; i++) {
-      if (!currentTags._hasTag(tagIndex[i])) {
+      if (!attestationsCollectionHasTag(collectionId, tagIndex[i])) {
         return false;
       }
     }
@@ -374,14 +351,6 @@ contract AttestationsRegistryConfigLogic is
     _attestationsCollectionTagsBitmap[collectionId] = currentTags._addTag(tagIndex, tagPower);
 
     emit AttestationsCollectionTagSet(collectionId, tagIndex, tagPower);
-  }
-
-  function _removeTagForAttestationsCollection(uint256 collectionId, uint8 tagIndex) internal {
-    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
-
-    _attestationsCollectionTagsBitmap[collectionId] = currentTags._removeTag(tagIndex);
-
-    emit AttestationsCollectionTagRemoved(collectionId, tagIndex);
   }
 
   function _getTagsBitmapForAttestationsCollection(uint256 collectionId)

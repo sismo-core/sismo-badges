@@ -26,7 +26,6 @@ interface IAttestationsRegistryConfigLogic {
   event TagDeleted(uint8 tagIndex, bytes32 deletedTagName);
 
   event AttestationsCollectionTagSet(uint256 collectionId, uint8 tagIndex, uint8 tagPower);
-  event AttestationsCollectionTagRemoved(uint256 collectionId, uint8 tagIndex);
 
   event IssuerAuthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
   event IssuerUnauthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
@@ -65,7 +64,7 @@ interface IAttestationsRegistryConfigLogic {
     view
     returns (uint8);
 
-  function getTagsPowersForAttestationsCollection(uint256 collectionId, uint8[] memory tagIndex)
+  function getTagsPowerForAttestationsCollection(uint256 collectionId, uint8[] memory tagIndex)
     external
     view
     returns (uint8[] memory);
@@ -86,18 +85,6 @@ interface IAttestationsRegistryConfigLogic {
     uint256[] memory collectionIds,
     uint8[] memory tagIndices,
     uint8[] memory tagPowers
-  ) external;
-
-  /**
-   * @dev Remove a tag for an attestationsCollection
-   * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag
-   */
-  function removeTagForAttestationsCollection(uint256 collectionId, uint8 tagIndex) external;
-
-  function removeTagsForAttestationsCollection(
-    uint256[] memory collectionIds,
-    uint8[] memory tagIndices
   ) external;
 
   /**
