@@ -246,7 +246,7 @@ contract AttestationsRegistryConfigLogic is
    * @param tagIndex Index of the tag. Can go from 0 to 63.
    * @param tagName Name in bytes32 of the tag
    */
-  function createNewTag(uint8 tagIndex, bytes32 tagName) external onlyOwner {
+  function createNewTag(uint8 tagIndex, bytes32 tagName) public onlyOwner {
     tagIndex._checkTagIndexIsValid();
     if (_isTagCreated(tagIndex)) {
       revert TagAlreadyExists(tagIndex);
@@ -260,7 +260,7 @@ contract AttestationsRegistryConfigLogic is
     }
 
     for (uint256 i = 0; i < tagIndices.length; i++) {
-      this.createNewTag(tagIndices[i], tagNames[i]);
+      createNewTag(tagIndices[i], tagNames[i]);
     }
   }
 
@@ -269,7 +269,7 @@ contract AttestationsRegistryConfigLogic is
    * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
    * @param newTagName new name in bytes32 of the tag
    */
-  function updateTagName(uint8 tagIndex, bytes32 newTagName) external onlyOwner {
+  function updateTagName(uint8 tagIndex, bytes32 newTagName) public onlyOwner {
     tagIndex._checkTagIndexIsValid();
     if (!_isTagCreated(tagIndex)) {
       revert TagDoesNotExist(tagIndex);
@@ -286,7 +286,7 @@ contract AttestationsRegistryConfigLogic is
     }
 
     for (uint256 i = 0; i < tagIndices.length; i++) {
-      this.updateTagName(tagIndices[i], newTagNames[i]);
+      updateTagName(tagIndices[i], newTagNames[i]);
     }
   }
 
@@ -294,7 +294,7 @@ contract AttestationsRegistryConfigLogic is
    * @dev Delete an existing tag
    * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
    */
-  function deleteTag(uint8 tagIndex) external onlyOwner {
+  function deleteTag(uint8 tagIndex) public onlyOwner {
     tagIndex._checkTagIndexIsValid();
     if (!_isTagCreated(tagIndex)) {
       revert TagDoesNotExist(tagIndex);
@@ -304,7 +304,7 @@ contract AttestationsRegistryConfigLogic is
 
   function deleteTags(uint8[] memory tagIndices) external onlyOwner {
     for (uint256 i = 0; i < tagIndices.length; i++) {
-      this.deleteTag(tagIndices[i]);
+      deleteTag(tagIndices[i]);
     }
   }
 

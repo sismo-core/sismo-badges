@@ -573,15 +573,32 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when creating new tags as with different arguments length', async () => {
+      it('Should revert when creating new tags with different arguments length', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).createNewTags(
+            [TAGS.TEST_INSERTION], // missing one argument
+            [formatBytes32String('TEST_INSERTION'), formatBytes32String('CURATED')]
+          )
+        ).to.be.revertedWith('ArgsLengthDoesNotMatch()');
+      });
+
+      it('Should revert when creating a tag with index > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .createNewTag(64, formatBytes32String('TAG_OVERFLOW'))
+        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+      });
+
+      it('Should revert when creating new tags with index of one of them > 63', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
             .createNewTags(
-              [TAGS.TEST_INSERTION],
-              [formatBytes32String('TEST_INSERTION'), formatBytes32String('CURATED')]
+              [TAGS.CURATED, 64],
+              [formatBytes32String('CURATED'), formatBytes32String('TAG_OVERFLOW')]
             )
-        ).to.be.revertedWith('ArgsLengthDoesNotMatch()');
+        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
       });
 
       it('Should create a new tag as an owner', async () => {
@@ -594,16 +611,36 @@ describe('Test Attestations Registry Config Logic contract', () => {
           .withArgs(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
       });
 
-      it('Should revert when creating a tag with index > 63', async () => {
-        await expect(
-          attestationsRegistry.createNewTag(64, formatBytes32String('TAG_OVERFLOW'))
-        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
-      });
-
       it('Should revert when trying to create again a tag for the same index', async () => {
         await expect(
           attestationsRegistry.createNewTag(TAGS.TEST_INSERTION, formatBytes32String('OTHER TAG'))
         ).to.be.revertedWith('TagAlreadyExists(10)');
+      });
+
+      it('Should revert when creating new tags with one of them already existing', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).createNewTags(
+            [TAGS.CURATED, TAGS.TEST_INSERTION], // TEST_INSERTION already created
+            [formatBytes32String('CURATED'), formatBytes32String('TEST_INSERTION')]
+          )
+        ).to.be.revertedWith('TagAlreadyExists(10)');
+      });
+
+      it('Should create new tags as an owner', async () => {
+        const tagsInserted = await attestationsRegistry
+          .connect(deployer)
+          .createNewTags(
+            [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+            [formatBytes32String('CURATED'), formatBytes32String('SYBIL_RESISTANCE')]
+          );
+
+        await expect(tagsInserted)
+          .to.emit(attestationsRegistry, 'NewTagCreated')
+          .withArgs(TAGS.CURATED, formatBytes32String('CURATED'));
+
+        await expect(tagsInserted)
+          .to.emit(attestationsRegistry, 'NewTagCreated')
+          .withArgs(TAGS.SYBIL_RESISTANCE, formatBytes32String('SYBIL_RESISTANCE'));
       });
     });
 
@@ -616,6 +653,45 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
+      it('Should revert when updating tags as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .updateTagsName(
+              [TAGS.TEST_INSERTION, TAGS.CURATED],
+              [formatBytes32String('TEST_INSERTION2'), formatBytes32String('CURATED2')]
+            )
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when updating new tags with different arguments length', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).updateTagsName(
+            [TAGS.TEST_INSERTION], // missing one argument
+            [formatBytes32String('TEST_INSERTION2'), formatBytes32String('CURATED2')]
+          )
+        ).to.be.revertedWith('ArgsLengthDoesNotMatch()');
+      });
+
+      it('Should revert when updating a tag with index > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .updateTagName(64, formatBytes32String('TAG_OVERFLOW'))
+        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+      });
+
+      it('Should revert when updating new tags with index of one of them > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .updateTagsName(
+              [TAGS.CURATED, 64],
+              [formatBytes32String('CURATED2'), formatBytes32String('TAG_OVERFLOW')]
+            )
+        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+      });
+
       it('Should revert when trying to update a tag name that does not exists', async () => {
         await expect(
           attestationsRegistry
@@ -624,17 +700,49 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('TagDoesNotExist(50)');
       });
 
+      it('Should revert when trying to update tags name with one of them that does not exists', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .updateTagsName(
+              [TAGS.CURATED, TAGS.NOT_CREATED],
+              [formatBytes32String('CURATED2'), formatBytes32String('NOT_INSERTED')]
+            )
+        ).to.be.revertedWith('TagDoesNotExist(50)');
+      });
+
       it('Should update a tag name', async () => {
         const tagUpdated = await attestationsRegistry
           .connect(deployer)
-          .updateTagName(TAGS.TEST_INSERTION, formatBytes32String('CURATED2'));
+          .updateTagName(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION2'));
 
         await expect(tagUpdated)
           .to.emit(attestationsRegistry, 'TagNameUpdated')
           .withArgs(
             TAGS.TEST_INSERTION,
-            formatBytes32String('CURATED2'),
+            formatBytes32String('TEST_INSERTION2'),
             formatBytes32String('TEST_INSERTION')
+          );
+      });
+
+      it('Should update tags name', async () => {
+        const tagsUpdated = await attestationsRegistry
+          .connect(deployer)
+          .updateTagsName(
+            [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+            [formatBytes32String('CURATED2'), formatBytes32String('SYBIL_RESISTANCE2')]
+          );
+
+        await expect(tagsUpdated)
+          .to.emit(attestationsRegistry, 'TagNameUpdated')
+          .withArgs(TAGS.CURATED, formatBytes32String('CURATED2'), formatBytes32String('CURATED'));
+
+        await expect(tagsUpdated)
+          .to.emit(attestationsRegistry, 'TagNameUpdated')
+          .withArgs(
+            TAGS.SYBIL_RESISTANCE,
+            formatBytes32String('SYBIL_RESISTANCE2'),
+            formatBytes32String('SYBIL_RESISTANCE')
           );
       });
     });
@@ -646,9 +754,33 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when trying to delete a tag name that does not exists', async () => {
+      it('Should revert when deleting tags as a non-owner', async () => {
+        await expect(
+          attestationsRegistry.connect(notOwner).deleteTags([TAGS.NOT_CREATED, TAGS.TEST_INSERTION])
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when trying to delete a tag with index > 63', async () => {
+        await expect(attestationsRegistry.connect(deployer).deleteTag(64)).to.be.revertedWith(
+          'TagIndexOutOfBounds(64)'
+        );
+      });
+
+      it('Should revert when trying to delete tags with index of one of them > 63', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).deleteTags([TAGS.CURATED, 64])
+        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+      });
+
+      it('Should revert when trying to delete a tag that does not exists', async () => {
         await expect(
           attestationsRegistry.connect(deployer).deleteTag(TAGS.NOT_CREATED)
+        ).to.be.revertedWith('TagDoesNotExist(50)');
+      });
+
+      it('Should revert when trying to delete tags with one of them that does not exists', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).deleteTags([TAGS.CURATED, TAGS.NOT_CREATED])
         ).to.be.revertedWith('TagDoesNotExist(50)');
       });
 
@@ -658,7 +790,21 @@ describe('Test Attestations Registry Config Logic contract', () => {
           .deleteTag(TAGS.TEST_INSERTION);
         await expect(tagDeleted)
           .to.emit(attestationsRegistry, 'TagDeleted')
-          .withArgs(TAGS.TEST_INSERTION, formatBytes32String('CURATED2'));
+          .withArgs(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION2'));
+      });
+
+      it('Should delete tags', async () => {
+        const tagsDeleted = await attestationsRegistry
+          .connect(deployer)
+          .deleteTags([TAGS.CURATED, TAGS.SYBIL_RESISTANCE]);
+
+        await expect(tagsDeleted)
+          .to.emit(attestationsRegistry, 'TagDeleted')
+          .withArgs(TAGS.CURATED, formatBytes32String('CURATED2'));
+
+        await expect(tagsDeleted)
+          .to.emit(attestationsRegistry, 'TagDeleted')
+          .withArgs(TAGS.SYBIL_RESISTANCE, formatBytes32String('SYBIL_RESISTANCE2'));
       });
     });
 
