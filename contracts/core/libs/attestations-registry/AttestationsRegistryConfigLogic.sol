@@ -247,6 +247,10 @@ contract AttestationsRegistryConfigLogic is
    * @param tagName Name in bytes32 of the tag
    */
   function createNewTag(uint8 tagIndex, bytes32 tagName) external onlyOwner {
+    tagIndex._checkTagIndexIsValid();
+    if (_isTagCreated(tagIndex)) {
+      revert TagAlreadyExists(tagIndex);
+    }
     _createNewTag(tagIndex, tagName);
   }
 
@@ -256,7 +260,7 @@ contract AttestationsRegistryConfigLogic is
     }
 
     for (uint256 i = 0; i < tagIndices.length; i++) {
-      _createNewTag(tagIndices[i], tagNames[i]);
+      this.createNewTag(tagIndices[i], tagNames[i]);
     }
   }
 
@@ -266,6 +270,10 @@ contract AttestationsRegistryConfigLogic is
    * @param newTagName new name in bytes32 of the tag
    */
   function updateTagName(uint8 tagIndex, bytes32 newTagName) external onlyOwner {
+    tagIndex._checkTagIndexIsValid();
+    if (!_isTagCreated(tagIndex)) {
+      revert TagDoesNotExist(tagIndex);
+    }
     _updateTagName(tagIndex, newTagName);
   }
 
@@ -278,7 +286,7 @@ contract AttestationsRegistryConfigLogic is
     }
 
     for (uint256 i = 0; i < tagIndices.length; i++) {
-      _updateTagName(tagIndices[i], newTagNames[i]);
+      this.updateTagName(tagIndices[i], newTagNames[i]);
     }
   }
 
@@ -287,12 +295,16 @@ contract AttestationsRegistryConfigLogic is
    * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
    */
   function deleteTag(uint8 tagIndex) external onlyOwner {
+    tagIndex._checkTagIndexIsValid();
+    if (!_isTagCreated(tagIndex)) {
+      revert TagDoesNotExist(tagIndex);
+    }
     _deleteTag(tagIndex);
   }
 
   function deleteTags(uint8[] memory tagIndices) external onlyOwner {
     for (uint256 i = 0; i < tagIndices.length; i++) {
-      _deleteTag(tagIndices[i]);
+      this.deleteTag(tagIndices[i]);
     }
   }
 
@@ -381,21 +393,12 @@ contract AttestationsRegistryConfigLogic is
   }
 
   function _createNewTag(uint8 tagIndex, bytes32 tagName) internal {
-    if (_isTagCreated(tagIndex)) {
-      revert TagAlreadyExists(tagIndex);
-    }
-    tagIndex._checkTagIndexIsValid();
-
     _tags[tagIndex] = tagName;
 
     emit NewTagCreated(tagIndex, tagName);
   }
 
   function _updateTagName(uint8 tagIndex, bytes32 newtagName) internal {
-    if (!_isTagCreated(tagIndex)) {
-      revert TagDoesNotExist(tagIndex);
-    }
-    tagIndex._checkTagIndexIsValid();
     bytes32 previousTagName = _getTagName(tagIndex);
 
     _tags[tagIndex] = newtagName;
@@ -404,9 +407,6 @@ contract AttestationsRegistryConfigLogic is
   }
 
   function _deleteTag(uint8 tagIndex) internal {
-    if (!_isTagCreated(tagIndex)) {
-      revert TagDoesNotExist(tagIndex);
-    }
     bytes32 deletedTagName = _getTagName(tagIndex);
 
     delete _tags[tagIndex];
