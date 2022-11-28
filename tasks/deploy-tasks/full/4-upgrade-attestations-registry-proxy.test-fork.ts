@@ -239,7 +239,7 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with tags', () => {
     });
   });
 
-  describe('Get Attestation Data (after proxy update)', () => {
+  describe('Verify Attestations Data (after proxy update)', () => {
     it('Should return the right data', async () => {
       expect(
         await attestationsRegistry.getAttestationData(
@@ -265,9 +265,7 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with tags', () => {
         ethers.utils.hexlify(attestations.second.extraData),
       ]);
     });
-  });
 
-  describe('Record new Attestation Data after minting again (after proxy update)', () => {
     it('Should update the value when recording again attestations', async () => {
       const recordAttestationsTransaction = await attestationsRegistry
         .connect(await impersonateAddress(hre, issuer.address))
@@ -302,9 +300,7 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with tags', () => {
           ethers.utils.hexlify(attestations.second.extraData),
         ]);
     });
-  });
 
-  describe('Get Attestation Data after minting again', () => {
     it('Should return the right data', async () => {
       expect(
         await attestationsRegistry.getAttestationData(

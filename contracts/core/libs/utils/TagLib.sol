@@ -53,7 +53,7 @@ library TagLib {
    * @param tagIndex index of the tag. Can be between 0 and 63
    * @param tagPower power of the tag. Can be between 0 and 15
    */
-  function _addTag(
+  function _setTag(
     uint256 self,
     uint8 tagIndex,
     uint8 tagPower

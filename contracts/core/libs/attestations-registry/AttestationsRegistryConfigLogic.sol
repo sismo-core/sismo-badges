@@ -371,7 +371,7 @@ contract AttestationsRegistryConfigLogic is
   ) internal {
     uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
 
-    _attestationsCollectionTagsBitmap[collectionId] = currentTags._addTag(tagIndex, tagPower);
+    _attestationsCollectionTagsBitmap[collectionId] = currentTags._setTag(tagIndex, tagPower);
 
     emit AttestationsCollectionTagSet(collectionId, tagIndex, tagPower);
   }
