@@ -86,6 +86,29 @@ library TagLib {
     return currentTags & negativeTagMask;
   }
 
+  function _getEnabledTagsAndPowers(uint256 self)
+    internal
+    view
+    returns (
+      uint8[] memory,
+      uint8[] memory,
+      uint8
+    )
+  {
+    uint8[] memory enabledTagsIndex = new uint8[](64);
+    uint8[] memory powers = new uint8[](64);
+    uint8 nbOfEnabledTags = 0;
+    for (uint8 i = 0; i < 63; i++) {
+      uint8 tagPower = _getTagPower(self, i);
+      if (tagPower > 0) {
+        enabledTagsIndex[nbOfEnabledTags] = i;
+        powers[nbOfEnabledTags] = tagPower;
+        nbOfEnabledTags++;
+      }
+    }
+    return (enabledTagsIndex, powers, nbOfEnabledTags);
+  }
+
   /**
    * @dev Check if a tagIndex is valid (is between 0 and 63)
    * @param tagIndex index of the tag

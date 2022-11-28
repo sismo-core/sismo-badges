@@ -988,6 +988,18 @@ describe('Test Attestations Registry Config Logic contract', () => {
         ).to.be.eql([6, 11]);
       });
 
+      it('Should get tags names and powers for the attestationsCollection referenced', async () => {
+        const res = await attestationsRegistry
+          .connect(deployer)
+          .getTagsNamesAndPowersForAttestationsCollection(1);
+
+        // we should have only 2 tags enabled
+        expect(res[0].length).to.be.eql(2);
+        expect(ethers.utils.parseBytes32String(res[0][0])).to.be.eql('CURATED');
+        expect(ethers.utils.parseBytes32String(res[0][1])).to.be.eql('SYBIL_RESISTANCE');
+        expect(res[1]).to.be.eql([6, 11]);
+      });
+
       it('Should revert to set tags to an AttestationsCollection with one of them having a power > 15', async () => {
         await expect(
           attestationsRegistry

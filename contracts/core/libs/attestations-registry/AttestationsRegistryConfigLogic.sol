@@ -133,6 +133,25 @@ contract AttestationsRegistryConfigLogic is
     return _getTagsBitmapForAttestationsCollection(collectionId);
   }
 
+  function getTagsNamesAndPowersForAttestationsCollection(uint256 collectionId)
+    public
+    view
+    returns (bytes32[] memory, uint8[] memory)
+  {
+    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
+    (uint8[] memory enabledTagsIndex, uint8[] memory powers, uint8 nbOfEnabledTags) = currentTags
+      ._getEnabledTagsAndPowers();
+
+    bytes32[] memory tagsNames = new bytes32[](nbOfEnabledTags);
+    uint8[] memory tagsPowers = new uint8[](nbOfEnabledTags);
+    for (uint8 i = 0; i < nbOfEnabledTags; i++) {
+      tagsNames[i] = getTagName(enabledTagsIndex[i]);
+      tagsPowers[i] = powers[i];
+    }
+
+    return (tagsNames, tagsPowers);
+  }
+
   /**
    * @dev Authorize an issuer for a specific range
    * @param issuer Issuer that will be authorized
@@ -289,7 +308,7 @@ contract AttestationsRegistryConfigLogic is
    * @dev Get the name of an existing tag
    * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
    */
-  function getTagName(uint8 tagIndex) external view returns (bytes32) {
+  function getTagName(uint8 tagIndex) public view returns (bytes32) {
     return _getTagName(tagIndex);
   }
 
