@@ -8,7 +8,7 @@ import {
   Badges,
   TransparentUpgradeableProxy__factory,
 } from '../../../../types';
-import { formatBytes32String } from 'ethers/lib/utils';
+import { formatBytes32String, parseBytes32String } from 'ethers/lib/utils';
 import { evmRevert, evmSnapshot } from '../../../../test/utils';
 
 describe('Test Attestations Registry Config Logic contract', () => {
@@ -995,8 +995,8 @@ describe('Test Attestations Registry Config Logic contract', () => {
 
         // we should have only 2 tags enabled
         expect(res[0].length).to.be.eql(2);
-        expect(ethers.utils.parseBytes32String(res[0][0])).to.be.eql('CURATED');
-        expect(ethers.utils.parseBytes32String(res[0][1])).to.be.eql('SYBIL_RESISTANCE');
+        expect(parseBytes32String(res[0][0])).to.be.eql('CURATED');
+        expect(parseBytes32String(res[0][1])).to.be.eql('SYBIL_RESISTANCE');
         expect(res[1]).to.be.eql([6, 11]);
       });
 

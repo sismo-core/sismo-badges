@@ -10,7 +10,7 @@ pragma solidity ^0.8.14;
    ┌────────────┐      ┌────────────┬────────────┬────────────┐
    │ 1  1  1  1 │ .... │ 1  0  1  1 │ 0  0  0  0 │ 1  0  0  1 │
    └────────────┘      └────────────┴────────────┴────────────┘
-      power 15             power 11     power 0      power 1
+      power 15            power 11     power 0      power 1
     
   * There is a total of 64 tags.
   * The tag index must be between 0 and 63.

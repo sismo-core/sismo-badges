@@ -31,15 +31,6 @@ interface IAttestationsRegistryConfigLogic {
   event IssuerUnauthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
 
   /**
-   * @dev Returns all the tags (in the form of a bitmap) for a specific attestationsCollection
-   * @param collectionId Collection Id of the targeted attestationsCollection
-   */
-  function getTagsBitmapForAttestationsCollection(uint256 collectionId)
-    external
-    view
-    returns (uint256);
-
-  /**
    * @dev Returns whether an attestationsCollection has a specific tag referenced by its index
    * @param collectionId Collection Id of the targeted attestationsCollection
    * @param tagIndex Index of the tag. Can go from 0 to 63.
@@ -86,6 +77,24 @@ interface IAttestationsRegistryConfigLogic {
     uint8[] memory tagIndices,
     uint8[] memory tagPowers
   ) external;
+
+  /**
+   * @dev Returns all the tags (in the form of a bitmap) for a specific attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   */
+  function getTagsBitmapForAttestationsCollection(uint256 collectionId)
+    external
+    view
+    returns (uint256);
+
+  /**
+   * @dev Returns all the enabled tags names and their powers for a specific attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   */
+  function getTagsNamesAndPowersForAttestationsCollection(uint256 collectionId)
+    external
+    view
+    returns (bytes32[] memory, uint8[] memory);
 
   /**
    * @dev Authorize an issuer for a specific range

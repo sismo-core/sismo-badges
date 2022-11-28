@@ -133,6 +133,10 @@ contract AttestationsRegistryConfigLogic is
     return _getTagsBitmapForAttestationsCollection(collectionId);
   }
 
+  /**
+   * @dev Returns all the enabled tags names and their powers for a specific attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   */
   function getTagsNamesAndPowersForAttestationsCollection(uint256 collectionId)
     public
     view
