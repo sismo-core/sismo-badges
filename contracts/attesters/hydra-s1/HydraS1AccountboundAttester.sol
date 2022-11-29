@@ -48,7 +48,8 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   Users can choose to delete or generate attestations to a new destination using their source account.
  *   The attestation is "Accountbound" to the source account.
  *   When deleting/ sending to a new destination, the nullifier will enter a cooldown period, so it remains occasional.
- *   The duration of the cooldown period is different for each group, if the cooldown duration = 0 then the group does not allow accountbound attestations.
+ *   Each group has its own cooldown duration, set by the admin of the attester.
+ *   A group that has its cooldown duration set to 0 means it has been configured to not feature accountbound attestations, attestations can not be transferred
  *   If the cooldown duration > 0, the user will need to wait until the end of the cooldown period before being able to delete or switch destination again.
  *   One can however know that the former and the new destinations were created using the same nullifier.
  
@@ -56,6 +57,7 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   A nullifier can actually be reused as long as the destination of the attestation remains the same
  *   It enables users to renew or update their attestations
  **/
+
 contract HydraS1AccountboundAttester is
   IHydraS1AccountboundAttester,
   HydraS1SimpleAttester,
@@ -126,13 +128,10 @@ contract HydraS1AccountboundAttester is
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData snark public input as well as snark proof
    */
-  function buildAttestations(Request calldata request, bytes calldata proofData)
-    public
-    view
-    virtual
-    override(IAttester, HydraS1SimpleAttester)
-    returns (Attestation[] memory)
-  {
+  function buildAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) public view virtual override(IAttester, HydraS1SimpleAttester) returns (Attestation[] memory) {
     Attestation[] memory attestations = super.buildAttestations(request, proofData);
 
     uint256 nullifier = proofData._getNullifier();
@@ -153,11 +152,10 @@ contract HydraS1AccountboundAttester is
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _beforeRecordAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     uint256 nullifier = proofData._getNullifier();
     address previousNullifierDestination = _getDestinationOfNullifier(nullifier);
 
@@ -183,7 +181,7 @@ contract HydraS1AccountboundAttester is
       }
 
       // Delete the old Attestation linked to the nullifier before recording the new one (accountbound behaviour)
-      _deletePreviousAttestation(nullifier, claim, previousNullifierDestination);
+      _deletePreviousAttestation(claim, previousNullifierDestination);
 
       _setNullifierOnCooldownAndIncrementBurnCount(nullifier);
     }
@@ -199,12 +197,10 @@ contract HydraS1AccountboundAttester is
    * @param nullifier user nullifier
    * @param claimDestination destination referenced in the user claim
    */
-  function generateAccountboundExtraData(uint256 nullifier, address claimDestination)
-    public
-    view
-    virtual
-    returns (bytes memory)
-  {
+  function generateAccountboundExtraData(
+    uint256 nullifier,
+    address claimDestination
+  ) public view virtual returns (bytes memory) {
     address previousNullifierDestination = _getDestinationOfNullifier(nullifier);
     uint16 burnCount = _getNullifierBurnCount(nullifier);
     // If the attestation is minted on a new destination address
@@ -217,6 +213,10 @@ contract HydraS1AccountboundAttester is
     return (abi.encode(nullifier, burnCount));
   }
 
+  function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
+    return _getNullifierCooldownStart(nullifier);
+  }
+
   /**
    * @dev Checks if a nullifier is on cooldown
    * @param nullifier user nullifier
@@ -226,13 +226,16 @@ contract HydraS1AccountboundAttester is
     return _getNullifierCooldownStart(nullifier) + cooldownDuration > block.timestamp;
   }
 
+  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
+    return _getNullifierBurnCount(nullifier);
+  }
+
   /**
    * @dev Delete the previous attestation created with this nullifier
-   * @param nullifier user nullifier
    * @param claim user claim
+   * @param previousNullifierDestination previous destination chosen for this user nullifier
    */
   function _deletePreviousAttestation(
-    uint256 nullifier,
     HydraS1Claim memory claim,
     address previousNullifierDestination
   ) internal {
@@ -243,14 +246,6 @@ contract HydraS1AccountboundAttester is
     attestationCollectionIds[0] = AUTHORIZED_COLLECTION_ID_FIRST + claim.groupProperties.groupIndex;
 
     ATTESTATIONS_REGISTRY.deleteAttestations(attestationOwners, attestationCollectionIds);
-  }
-
-  function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
-    return _getNullifierCooldownStart(nullifier);
-  }
-
-  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
-    return _getNullifierBurnCount(nullifier);
   }
 
   function _setNullifierOnCooldownAndIncrementBurnCount(uint256 nullifier) internal {
@@ -270,10 +265,10 @@ contract HydraS1AccountboundAttester is
   /*****************************************
         GROUP CONFIGURATION LOGIC
   ******************************************/
-  function setCooldownDurationForGroupIndex(uint256 groupIndex, uint32 cooldownDuration)
-    external
-    onlyOwner
-  {
+  function setCooldownDurationForGroupIndex(
+    uint256 groupIndex,
+    uint32 cooldownDuration
+  ) external onlyOwner {
     _cooldownDurations[groupIndex] = cooldownDuration;
     emit CooldownDurationSetForGroupIndex(groupIndex, cooldownDuration);
   }

@@ -36,11 +36,12 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
   // Registry storing the Registry Tree Roots of the Attester's available ClaimData
   IAvailableRootsRegistry immutable AVAILABLE_ROOTS_REGISTRY;
 
-  /**
+  /**********************************
    *
-   * INITIALIZATION FUNCTIONS
+   *    INITIALIZATION FUNCTIONS
    *
-   */
+   **********************************/
+
   /**
    * @dev Constructor. Initializes the contract
    * @param hydraS1VerifierAddress ZK Snark Verifier contract
@@ -78,11 +79,11 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
     return AVAILABLE_ROOTS_REGISTRY;
   }
 
-  /**
+  /**********************************
    *
-   * Hydra-S1 SPECIFIC FUNCTIONS
+   *   Hydra-S1 SPECIFIC FUNCTIONS
    *
-   */
+   **********************************/
 
   /**
    * @dev MANDATORY: must be implemented to return the external nullifier from a user request
@@ -99,22 +100,19 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
    * Take a look at Hydra-S1 Simple Attester for an example
    * @param claim user claim: part of a group of accounts, with a claimedValue for their account
    */
-  function _getExternalNullifierOfClaim(HydraS1Claim memory claim)
-    internal
-    view
-    virtual
-    returns (uint256);
+  function _getExternalNullifierOfClaim(
+    HydraS1Claim memory claim
+  ) internal view virtual returns (uint256);
 
   /**
    * @dev Checks whether the user claim and the snark public input are a match
    * @param claim user claim
    * @param input snark public input
    */
-  function _validateInput(HydraS1Claim memory claim, HydraS1ProofInput memory input)
-    internal
-    view
-    virtual
-  {
+  function _validateInput(
+    HydraS1Claim memory claim,
+    HydraS1ProofInput memory input
+  ) internal view virtual {
     if (input.accountsTreeValue != claim.groupId) {
       revert AccountsTreeValueMismatch(claim.groupId, input.accountsTreeValue);
     }
@@ -166,13 +164,9 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
       if (!success) revert InvalidGroth16Proof('');
     } catch Error(string memory reason) {
       revert InvalidGroth16Proof(reason);
-    } catch Panic(
-      uint256 /*errorCode*/
-    ) {
+    } catch Panic(uint256 /*errorCode*/) {
       revert InvalidGroth16Proof('');
-    } catch (
-      bytes memory /*lowLevelData*/
-    ) {
+    } catch (bytes memory /*lowLevelData*/) {
       revert InvalidGroth16Proof('');
     }
   }
