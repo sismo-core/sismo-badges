@@ -9,9 +9,9 @@ import {IAttester} from '../../interfaces/IAttester.sol';
 
 import {Request} from '../Structs.sol';
 
-contract SismoGated is Ownable {
+contract SismoGated {
   IBadges public immutable BADGES;
-  IAttestationsRegistry public immutable ATTESTATIONS_REGISTRY;
+  IAttester public immutable ATTESTER;
 
   uint256[] public gatedBadges;
 
@@ -21,9 +21,9 @@ contract SismoGated is Ownable {
    * @dev Constructor
    * @param badgesAddress Badges contract address
    */
-  constructor(address badgesAddress, uint256[] memory _gatedBadges) {
+  constructor(address badgesAddress, address attesterAddress, uint256[] memory _gatedBadges) {
     BADGES = IBadges(badgesAddress);
-    ATTESTATIONS_REGISTRY = IAttestationsRegistry(BADGES.getAttestationsRegistry());
+    ATTESTER = IAttester(attesterAddress);
     gatedBadges = _gatedBadges;
   }
 
@@ -32,23 +32,17 @@ contract SismoGated is Ownable {
    */
   modifier onlyBadgesOwner() {
     for (uint256 i = 0; i < gatedBadges.length; i++) {
-      if (!ATTESTATIONS_REGISTRY.hasAttestation(gatedBadges[i], msg.sender)) {
+      if (BADGES.balanceOf(msg.sender, gatedBadges[i]) == 0) {
         revert UserIsNotOwnerOfBadge(gatedBadges[i]);
       }
     }
     _;
   }
 
-  // function setGatedBadges(uint256[] memory collectionIds) public onlyOwner {
-  //   for (uint256 i = 0; i < collectionIds.length; i++) {}
-  // }
+  function _proveWithSismo(bytes calldata data) internal {
+    (Request memory request, bytes memory proofData) = abi.decode(data, (Request, bytes));
 
-  function _proveWithSismo(
-    address attesterAddress,
-    Request memory request,
-    bytes memory proofData
-  ) internal {
-    IAttester(attesterAddress).generateAttestations(request, proofData);
+    ATTESTER.generateAttestations(request, proofData);
   }
 
   // function proveAndMintERC721(address to, uint256 tokenId, bytes calldata proofData) {}
