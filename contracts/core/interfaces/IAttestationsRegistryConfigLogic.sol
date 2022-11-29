@@ -17,84 +17,82 @@ interface IAttestationsRegistryConfigLogic {
     uint256 FirstId,
     uint256 lastCollectionId
   );
-  error TagDoesNotExist(uint8 tagIndex);
-  error TagAlreadyExists(uint8 tagIndex);
+  error AttributeDoesNotExist(uint8 attributeIndex);
+  error AttributeAlreadyExists(uint8 attributeIndex);
   error ArgsLengthDoesNotMatch();
 
-  event NewTagCreated(uint8 tagIndex, bytes32 tagName);
-  event TagNameUpdated(uint8 tagIndex, bytes32 newTagName, bytes32 previousTagName);
-  event TagDeleted(uint8 tagIndex, bytes32 deletedTagName);
+  event NewAttributeCreated(uint8 attributeIndex, bytes32 attributeName);
+  event AttributeNameUpdated(
+    uint8 attributeIndex,
+    bytes32 newAttributeName,
+    bytes32 previousAttributeName
+  );
+  event AttributeDeleted(uint8 attributeIndex, bytes32 deletedAttributeName);
 
-  event AttestationsCollectionTagSet(uint256 collectionId, uint8 tagIndex, uint8 tagPower);
+  event AttestationsCollectionAttributeSet(
+    uint256 collectionId,
+    uint8 attributeIndex,
+    uint8 attributeValue
+  );
 
   event IssuerAuthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
   event IssuerUnauthorized(address issuer, uint256 firstCollectionId, uint256 lastCollectionId);
 
   /**
-   * @dev Returns whether an attestationsCollection has a specific tag referenced by its index
+   * @dev Returns whether an attestationsCollection has a specific attribute referenced by its index
    * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag. Can go from 0 to 63.
+   * @param index Index of the attribute. Can go from 0 to 63.
    */
-  function attestationsCollectionHasTag(uint256 collectionId, uint8 tagIndex)
-    external
-    view
-    returns (bool);
-
-  function attestationsCollectionHasTags(uint256 collectionId, uint8[] memory tagIndex)
-    external
-    view
-    returns (bool);
-
-  /**
-   * @dev Returns the tag's power (from 1 to 7) of an attestationsCollection
-   * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag. Can go from 0 to 63.
-   */
-  function getTagPowerForAttestationsCollection(uint256 collectionId, uint8 tagIndex)
-    external
-    view
-    returns (uint8);
-
-  function getTagsPowerForAttestationsCollection(uint256 collectionId, uint8[] memory tagIndex)
-    external
-    view
-    returns (uint8[] memory);
-
-  /**
-   * @dev Set a tag for an attestationsCollection. The tag should be already created.
-   * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag
-   * @param tagPower Power associated to the tag. Can take the value 1 to 7
-   */
-  function setTagForAttestationsCollection(
+  function attestationsCollectionHasAttribute(
     uint256 collectionId,
-    uint8 tagIndex,
-    uint8 tagPower
+    uint8 index
+  ) external view returns (bool);
+
+  function attestationsCollectionHasAttributes(
+    uint256 collectionId,
+    uint8[] memory indices
+  ) external view returns (bool);
+
+  /**
+   * @dev Returns the attribute's value (from 1 to 15) of an attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param attributeIndex Index of the attribute. Can go from 0 to 63.
+   */
+  function getAttributeValueForAttestationsCollection(
+    uint256 collectionId,
+    uint8 attributeIndex
+  ) external view returns (uint8);
+
+  function getAttributesValuesForAttestationsCollection(
+    uint256 collectionId,
+    uint8[] memory indices
+  ) external view returns (uint8[] memory);
+
+  /**
+   * @dev Set a value for an attribute of an attestationsCollection. The attribute should already be created.
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param index Index of the attribute (must be between 0 and 63)
+   * @param value Value of the attribute we want to set for this attestationsCollection. Can take the value 0 to 15
+   */
+  function setAttributeValueForAttestationsCollection(
+    uint256 collectionId,
+    uint8 index,
+    uint8 value
   ) external;
 
-  function setTagsForAttestationsCollection(
+  function setAttributesValuesForAttestationsCollections(
     uint256[] memory collectionIds,
-    uint8[] memory tagIndices,
-    uint8[] memory tagPowers
+    uint8[] memory indices,
+    uint8[] memory values
   ) external;
 
   /**
-   * @dev Returns all the tags (in the form of a bitmap) for a specific attestationsCollection
+   * @dev Returns all the enabled attributes names and their values for a specific attestationsCollection
    * @param collectionId Collection Id of the targeted attestationsCollection
    */
-  function getTagsBitmapForAttestationsCollection(uint256 collectionId)
-    external
-    view
-    returns (uint256);
-
-  /**
-   * @dev Returns all the enabled tags names and their powers for a specific attestationsCollection
-   * @param collectionId Collection Id of the targeted attestationsCollection
-   */
-  function getTagsNamesAndPowersForAttestationsCollection(uint256 collectionId)
-    external
-    view
-    returns (bytes32[] memory, uint8[] memory);
+  function getAttributesNamesAndValuesForAttestationsCollection(
+    uint256 collectionId
+  ) external view returns (bytes32[] memory, uint8[] memory);
 
   /**
    * @dev Authorize an issuer for a specific range
@@ -158,28 +156,28 @@ interface IAttestationsRegistryConfigLogic {
   function unpause() external;
 
   /**
-   * @dev Create a new tag.
-   * @param tagIndex Index of the tag. Can go from 0 to 63.
-   * @param tagName Name in bytes32 of the tag
+   * @dev Create a new attribute.
+   * @param index Index of the attribute. Can go from 0 to 63.
+   * @param name Name in bytes32 of the attribute
    */
-  function createNewTag(uint8 tagIndex, bytes32 tagName) external;
+  function createNewAttribute(uint8 index, bytes32 name) external;
 
-  function createNewTags(uint8[] memory tagIndices, bytes32[] memory tagNames) external;
+  function createNewAttributes(uint8[] memory indices, bytes32[] memory names) external;
 
   /**
-   * @dev Update the name of an existing tag
-   * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
-   * @param newTagName new name in bytes32 of the tag
+   * @dev Update the name of an existing attribute
+   * @param index Index of the attribute. Can go from 0 to 63. The attribute must exist
+   * @param newName new name in bytes32 of the attribute
    */
-  function updateTagName(uint8 tagIndex, bytes32 newTagName) external;
+  function updateAttributeName(uint8 index, bytes32 newName) external;
 
-  function updateTagsName(uint8[] memory tagIndices, bytes32[] memory newTagNames) external;
+  function updateAttributesName(uint8[] memory indices, bytes32[] memory names) external;
 
   /**
-   * @dev Delete an existing tag
-   * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
+   * @dev Delete an existing attribute
+   * @param index Index of the attribute. Can go from 0 to 63. The attribute must exist
    */
-  function deleteTag(uint8 tagIndex) external;
+  function deleteAttribute(uint8 index) external;
 
-  function deleteTags(uint8[] memory tagIndices) external;
+  function deleteAttributes(uint8[] memory indices) external;
 }

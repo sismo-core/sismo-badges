@@ -21,7 +21,7 @@ import { AttestationStruct } from 'types/AttestationsRegistry';
 // Launch with command
 // FORK=true FORK_NETWORK=goerli npx hardhat test ./tasks/deploy-tasks/full/4-upgrade-attestations-registry-proxy.test-fork.ts
 
-describe('FORK-Test Upgrade AttestationsRegistry contract with tags', () => {
+describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () => {
   let deployer: SignerWithAddress;
   let randomSigner: SignerWithAddress;
   let secondDeployer: SignerWithAddress;
@@ -193,7 +193,7 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with tags', () => {
       expect(
         attestationsRegistry
           .connect(deployer)
-          .createNewTags(
+          .createNewAttributes(
             [0, 1],
             [formatBytes32String('CURATED'), formatBytes32String('SYBIL_RESISTANCE')],
             { gasLimit: 50000 }
@@ -201,37 +201,41 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with tags', () => {
       ).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
-    it('Should create new tags', async () => {
-      const tagsCreated = await attestationsRegistry
+    it('Should create new attributes', async () => {
+      const attributesCreated = await attestationsRegistry
         .connect(await impersonateAddress(hre, config.attestationsRegistry.owner, true))
-        .createNewTags(
+        .createNewAttributes(
           [0, 1],
           [formatBytes32String('CURATED'), formatBytes32String('SYBIL RESISTANCE')],
           { gasLimit: 100000 }
         );
 
-      await expect(tagsCreated)
-        .to.emit(attestationsRegistry, 'NewTagCreated')
+      await expect(attributesCreated)
+        .to.emit(attestationsRegistry, 'NewAttributeCreated')
         .withArgs(0, formatBytes32String('CURATED'));
 
-      await expect(tagsCreated)
-        .to.emit(attestationsRegistry, 'NewTagCreated')
+      await expect(attributesCreated)
+        .to.emit(attestationsRegistry, 'NewAttributeCreated')
         .withArgs(1, formatBytes32String('SYBIL RESISTANCE'));
     });
 
-    it('Should set new tags to attestationsCollection 11 with powers 1 and 15', async () => {
-      const tagsSet = await attestationsRegistry
+    it('Should set new attributes to attestationsCollection 11 with values 1 and 15', async () => {
+      const attributesSet = await attestationsRegistry
         .connect(await impersonateAddress(hre, config.attestationsRegistry.owner))
-        .setTagsForAttestationsCollection([11, 11], [0, 1], [1, 15], { gasLimit: 100000 });
+        .setAttributesValuesForAttestationsCollections([11, 11], [0, 1], [1, 15], {
+          gasLimit: 100000,
+        });
 
-      await expect(tagsSet)
-        .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+      await expect(attributesSet)
+        .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
         .withArgs(11, 0, 1);
 
-      await expect(tagsSet)
-        .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
+      await expect(attributesSet)
+        .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
         .withArgs(11, 1, 15);
-      const res = await attestationsRegistry.getTagsNamesAndPowersForAttestationsCollection(11);
+      const res = await attestationsRegistry.getAttributesNamesAndValuesForAttestationsCollection(
+        11
+      );
       expect([
         ['CURATED', 'SYBIL RESISTANCE'],
         [1, 15],

@@ -10,7 +10,7 @@ import './InitializableLogic.sol';
 import './AttestationsRegistryState.sol';
 import {IAttestationsRegistryConfigLogic} from './../../interfaces/IAttestationsRegistryConfigLogic.sol';
 import {Range, RangeUtils} from '../utils/RangeLib.sol';
-import {TagLib} from '../utils/TagLib.sol';
+import {Bitmap256Bit} from '../utils/Bitmap256Bit.sol';
 
 /**
  * @title Attestations Registry Config Logic contract
@@ -25,8 +25,8 @@ contract AttestationsRegistryConfigLogic is
   InitializableLogic
 {
   using RangeUtils for Range[];
-  using TagLib for uint256;
-  using TagLib for uint8;
+  using Bitmap256Bit for uint256;
+  using Bitmap256Bit for uint8;
 
   /******************************************
    *
@@ -35,86 +35,85 @@ contract AttestationsRegistryConfigLogic is
    *****************************************/
 
   /**
-   * @dev Set a tag for an attestationsCollection. The tag should be already created.
+   * @dev Set a value for an attribute of an attestationsCollection. The attribute should already be created.
    * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag (must be between 0 and 63)
-   * @param tagPower Power associated to the tag. Can take the value 0 to 15
-   * @notice You should pass a tagPower of zero if you want to remove a tag at tagIndex
+   * @param index Index of the attribute (must be between 0 and 63)
+   * @param value Value of the attribute we want to set for this attestationsCollection. Can take the value 0 to 15
    */
-  function setTagForAttestationsCollection(
+  function setAttributeValueForAttestationsCollection(
     uint256 collectionId,
-    uint8 tagIndex,
-    uint8 tagPower
+    uint8 index,
+    uint8 value
   ) public onlyOwner {
-    tagIndex._checkTagIndexIsValid();
+    index._checkIndexIsValid();
 
-    if (!_isTagCreated(tagIndex)) {
-      revert TagDoesNotExist(tagIndex);
+    if (!_isAttributeCreated(index)) {
+      revert AttributeDoesNotExist(index);
     }
 
-    _setTagForAttestationsCollection(collectionId, tagIndex, tagPower);
+    _setAttributeForAttestationsCollection(collectionId, index, value);
   }
 
-  function setTagsForAttestationsCollection(
+  function setAttributesValuesForAttestationsCollections(
     uint256[] memory collectionIds,
-    uint8[] memory tagIndices,
-    uint8[] memory tagPowers
+    uint8[] memory indices,
+    uint8[] memory values
   ) external onlyOwner {
-    if (collectionIds.length != tagIndices.length || collectionIds.length != tagPowers.length) {
+    if (collectionIds.length != indices.length || collectionIds.length != values.length) {
       revert ArgsLengthDoesNotMatch();
     }
     for (uint256 i = 0; i < collectionIds.length; i++) {
-      setTagForAttestationsCollection(collectionIds[i], tagIndices[i], tagPowers[i]);
+      setAttributeValueForAttestationsCollection(collectionIds[i], indices[i], values[i]);
     }
   }
 
   /**
-   * @dev Returns the tag's power (from 0 to 15) of an attestationsCollection
+   * @dev Returns the attribute's value (from 0 to 15) of an attestationsCollection
    * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag. Can go from 0 to 63.
+   * @param index Index of the attribute. Can go from 0 to 63.
    */
-  function getTagPowerForAttestationsCollection(uint256 collectionId, uint8 tagIndex)
-    public
-    view
-    returns (uint8)
-  {
-    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
-    return currentTags._getTagPower(tagIndex);
+  function getAttributeValueForAttestationsCollection(
+    uint256 collectionId,
+    uint8 index
+  ) public view returns (uint8) {
+    uint256 currentAttributesValues = _getAttributesValuesBitmapForAttestationsCollection(
+      collectionId
+    );
+    return currentAttributesValues._get(index);
   }
 
-  function getTagsPowerForAttestationsCollection(uint256 collectionId, uint8[] memory tagIndex)
-    external
-    view
-    returns (uint8[] memory)
-  {
-    uint8[] memory tagsPower = new uint8[](tagIndex.length);
-    for (uint256 i = 0; i < tagIndex.length; i++) {
-      tagsPower[i] = getTagPowerForAttestationsCollection(collectionId, tagIndex[i]);
+  function getAttributesValuesForAttestationsCollection(
+    uint256 collectionId,
+    uint8[] memory indices
+  ) external view returns (uint8[] memory) {
+    uint8[] memory attributesValues = new uint8[](indices.length);
+    for (uint256 i = 0; i < indices.length; i++) {
+      attributesValues[i] = getAttributeValueForAttestationsCollection(collectionId, indices[i]);
     }
-    return tagsPower;
+    return attributesValues;
   }
 
   /**
-   * @dev Returns whether an attestationsCollection has a specific tag referenced by its index
+   * @dev Returns whether an attestationsCollection has a specific attribute referenced by its index
    * @param collectionId Collection Id of the targeted attestationsCollection
-   * @param tagIndex Index of the tag. Can go from 0 to 63.
+   * @param index Index of the attribute. Can go from 0 to 63.
    */
-  function attestationsCollectionHasTag(uint256 collectionId, uint8 tagIndex)
-    public
-    view
-    returns (bool)
-  {
-    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
-    return currentTags._hasTag(tagIndex);
+  function attestationsCollectionHasAttribute(
+    uint256 collectionId,
+    uint8 index
+  ) public view returns (bool) {
+    uint256 currentAttributeValues = _getAttributesValuesBitmapForAttestationsCollection(
+      collectionId
+    );
+    return currentAttributeValues._get(index) > 0;
   }
 
-  function attestationsCollectionHasTags(uint256 collectionId, uint8[] memory tagIndex)
-    external
-    view
-    returns (bool)
-  {
-    for (uint256 i = 0; i < tagIndex.length; i++) {
-      if (!attestationsCollectionHasTag(collectionId, tagIndex[i])) {
+  function attestationsCollectionHasAttributes(
+    uint256 collectionId,
+    uint8[] memory indices
+  ) external view returns (bool) {
+    for (uint256 i = 0; i < indices.length; i++) {
+      if (!attestationsCollectionHasAttribute(collectionId, indices[i])) {
         return false;
       }
     }
@@ -122,38 +121,30 @@ contract AttestationsRegistryConfigLogic is
   }
 
   /**
-   * @dev Returns all the tags (in the form of a bitmap) for a specific attestationsCollection
+   * @dev Returns all the enabled attributes names and their values for a specific attestationsCollection
    * @param collectionId Collection Id of the targeted attestationsCollection
    */
-  function getTagsBitmapForAttestationsCollection(uint256 collectionId)
-    external
-    view
-    returns (uint256)
-  {
-    return _getTagsBitmapForAttestationsCollection(collectionId);
-  }
+  function getAttributesNamesAndValuesForAttestationsCollection(
+    uint256 collectionId
+  ) public view returns (bytes32[] memory, uint8[] memory) {
+    uint256 currentAttributesValues = _getAttributesValuesBitmapForAttestationsCollection(
+      collectionId
+    );
 
-  /**
-   * @dev Returns all the enabled tags names and their powers for a specific attestationsCollection
-   * @param collectionId Collection Id of the targeted attestationsCollection
-   */
-  function getTagsNamesAndPowersForAttestationsCollection(uint256 collectionId)
-    public
-    view
-    returns (bytes32[] memory, uint8[] memory)
-  {
-    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
-    (uint8[] memory enabledTagsIndex, uint8[] memory powers, uint8 nbOfEnabledTags) = currentTags
-      ._getEnabledTagsAndPowers();
+    (
+      uint8[] memory indices,
+      uint8[] memory values,
+      uint8 nbOfNonZeroValues
+    ) = currentAttributesValues._getAllNonZeroValues();
 
-    bytes32[] memory tagsNames = new bytes32[](nbOfEnabledTags);
-    uint8[] memory tagsPowers = new uint8[](nbOfEnabledTags);
-    for (uint8 i = 0; i < nbOfEnabledTags; i++) {
-      tagsNames[i] = getTagName(enabledTagsIndex[i]);
-      tagsPowers[i] = powers[i];
+    bytes32[] memory attributesNames = new bytes32[](nbOfNonZeroValues);
+    uint8[] memory attributesValues = new uint8[](nbOfNonZeroValues);
+    for (uint8 i = 0; i < nbOfNonZeroValues; i++) {
+      attributesNames[i] = _attributesNames[indices[i]];
+      attributesValues[i] = values[i];
     }
 
-    return (tagsNames, tagsPowers);
+    return (attributesNames, attributesValues);
   }
 
   /**
@@ -237,83 +228,75 @@ contract AttestationsRegistryConfigLogic is
 
   /*****************************
    *
-   *      TAGS CORE LOGIC
+   *   ATTRIBUTES CORE LOGIC
    *
    *****************************/
 
   /**
-   * @dev Create a new tag.
-   * @param tagIndex Index of the tag. Can go from 0 to 63.
-   * @param tagName Name in bytes32 of the tag
+   * @dev Create a new attribute.
+   * @param index Index of the attribute. Can go from 0 to 63.
+   * @param name Name in bytes32 of the attribute
    */
-  function createNewTag(uint8 tagIndex, bytes32 tagName) public onlyOwner {
-    tagIndex._checkTagIndexIsValid();
-    if (_isTagCreated(tagIndex)) {
-      revert TagAlreadyExists(tagIndex);
+  function createNewAttribute(uint8 index, bytes32 name) public onlyOwner {
+    index._checkIndexIsValid();
+    if (_isAttributeCreated(index)) {
+      revert AttributeAlreadyExists(index);
     }
-    _createNewTag(tagIndex, tagName);
+    _createNewAttribute(index, name);
   }
 
-  function createNewTags(uint8[] memory tagIndices, bytes32[] memory tagNames) external onlyOwner {
-    if (tagIndices.length != tagNames.length) {
+  function createNewAttributes(uint8[] memory indices, bytes32[] memory names) external onlyOwner {
+    if (indices.length != names.length) {
       revert ArgsLengthDoesNotMatch();
     }
 
-    for (uint256 i = 0; i < tagIndices.length; i++) {
-      createNewTag(tagIndices[i], tagNames[i]);
+    for (uint256 i = 0; i < indices.length; i++) {
+      createNewAttribute(indices[i], names[i]);
     }
   }
 
   /**
-   * @dev Update the name of an existing tag
-   * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
-   * @param newTagName new name in bytes32 of the tag
+   * @dev Update the name of an existing attribute
+   * @param index Index of the attribute. Can go from 0 to 63. The attribute must exist
+   * @param newName new name in bytes32 of the attribute
    */
-  function updateTagName(uint8 tagIndex, bytes32 newTagName) public onlyOwner {
-    tagIndex._checkTagIndexIsValid();
-    if (!_isTagCreated(tagIndex)) {
-      revert TagDoesNotExist(tagIndex);
+  function updateAttributeName(uint8 index, bytes32 newName) public onlyOwner {
+    index._checkIndexIsValid();
+    if (!_isAttributeCreated(index)) {
+      revert AttributeDoesNotExist(index);
     }
-    _updateTagName(tagIndex, newTagName);
+    _updateAttributeName(index, newName);
   }
 
-  function updateTagsName(uint8[] memory tagIndices, bytes32[] memory newTagNames)
-    external
-    onlyOwner
-  {
-    if (tagIndices.length != newTagNames.length) {
+  function updateAttributesName(
+    uint8[] memory indices,
+    bytes32[] memory newNames
+  ) external onlyOwner {
+    if (indices.length != newNames.length) {
       revert ArgsLengthDoesNotMatch();
     }
 
-    for (uint256 i = 0; i < tagIndices.length; i++) {
-      updateTagName(tagIndices[i], newTagNames[i]);
+    for (uint256 i = 0; i < indices.length; i++) {
+      updateAttributeName(indices[i], newNames[i]);
     }
   }
 
   /**
-   * @dev Delete an existing tag
-   * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
+   * @dev Delete an existing attribute
+   * @param index Index of the attribute. Can go from 0 to 63. The attribute must already exist
    */
-  function deleteTag(uint8 tagIndex) public onlyOwner {
-    tagIndex._checkTagIndexIsValid();
-    if (!_isTagCreated(tagIndex)) {
-      revert TagDoesNotExist(tagIndex);
+  function deleteAttribute(uint8 index) public onlyOwner {
+    index._checkIndexIsValid();
+    if (!_isAttributeCreated(index)) {
+      revert AttributeDoesNotExist(index);
     }
-    _deleteTag(tagIndex);
+    _deleteAttribute(index);
   }
 
-  function deleteTags(uint8[] memory tagIndices) external onlyOwner {
-    for (uint256 i = 0; i < tagIndices.length; i++) {
-      deleteTag(tagIndices[i]);
+  function deleteAttributes(uint8[] memory indices) external onlyOwner {
+    for (uint256 i = 0; i < indices.length; i++) {
+      deleteAttribute(indices[i]);
     }
-  }
-
-  /**
-   * @dev Get the name of an existing tag
-   * @param tagIndex Index of the tag. Can go from 0 to 63. The tag must exist
-   */
-  function getTagName(uint8 tagIndex) public view returns (bytes32) {
-    return _getTagName(tagIndex);
   }
 
   /*****************************
@@ -364,54 +347,51 @@ contract AttestationsRegistryConfigLogic is
     return _authorizedRanges[issuer]._includes(collectionId);
   }
 
-  function _setTagForAttestationsCollection(
+  function _setAttributeForAttestationsCollection(
     uint256 collectionId,
-    uint8 tagIndex,
-    uint8 tagPower
+    uint8 index,
+    uint8 value
   ) internal {
-    uint256 currentTags = _getTagsBitmapForAttestationsCollection(collectionId);
+    uint256 currentAttributes = _getAttributesValuesBitmapForAttestationsCollection(collectionId);
 
-    _attestationsCollectionTagsBitmap[collectionId] = currentTags._setTag(tagIndex, tagPower);
+    _attestationsCollectionAttributesValuesBitmap[collectionId] = currentAttributes._set(
+      index,
+      value
+    );
 
-    emit AttestationsCollectionTagSet(collectionId, tagIndex, tagPower);
+    emit AttestationsCollectionAttributeSet(collectionId, index, value);
   }
 
-  function _getTagsBitmapForAttestationsCollection(uint256 collectionId)
-    internal
-    view
-    returns (uint256)
-  {
-    return _attestationsCollectionTagsBitmap[collectionId];
+  function _createNewAttribute(uint8 index, bytes32 name) internal {
+    _attributesNames[index] = name;
+
+    emit NewAttributeCreated(index, name);
   }
 
-  function _createNewTag(uint8 tagIndex, bytes32 tagName) internal {
-    _tags[tagIndex] = tagName;
+  function _updateAttributeName(uint8 index, bytes32 newName) internal {
+    bytes32 previousName = _attributesNames[index];
 
-    emit NewTagCreated(tagIndex, tagName);
+    _attributesNames[index] = newName;
+
+    emit AttributeNameUpdated(index, newName, previousName);
   }
 
-  function _updateTagName(uint8 tagIndex, bytes32 newtagName) internal {
-    bytes32 previousTagName = _getTagName(tagIndex);
+  function _deleteAttribute(uint8 index) internal {
+    bytes32 deletedName = _attributesNames[index];
 
-    _tags[tagIndex] = newtagName;
+    delete _attributesNames[index];
 
-    emit TagNameUpdated(tagIndex, newtagName, previousTagName);
+    emit AttributeDeleted(index, deletedName);
   }
 
-  function _deleteTag(uint8 tagIndex) internal {
-    bytes32 deletedTagName = _getTagName(tagIndex);
-
-    delete _tags[tagIndex];
-
-    emit TagDeleted(tagIndex, deletedTagName);
+  function _getAttributesValuesBitmapForAttestationsCollection(
+    uint256 collectionId
+  ) internal view returns (uint256) {
+    return _attestationsCollectionAttributesValuesBitmap[collectionId];
   }
 
-  function _getTagName(uint8 tagIndex) internal view returns (bytes32) {
-    return _tags[tagIndex];
-  }
-
-  function _isTagCreated(uint8 tagIndex) internal view returns (bool) {
-    if (_tags[tagIndex] == 0) {
+  function _isAttributeCreated(uint8 index) internal view returns (bool) {
+    if (_attributesNames[index] == 0) {
       return false;
     }
     return true;

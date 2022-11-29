@@ -538,11 +538,11 @@ describe('Test Attestations Registry Config Logic contract', () => {
   });
 
   /***********************************************************************/
-  /******************************** TAGS *********************************/
+  /******************************** ATTRIBUTES *********************************/
   /***********************************************************************/
 
-  describe('Tags', async () => {
-    let TAGS = {
+  describe('Attributes', async () => {
+    let ATTRIBUTES = {
       CURATED: 1,
       SYBIL_RESISTANCE: 2,
       TEST_INSERTION: 10,
@@ -554,193 +554,200 @@ describe('Test Attestations Registry Config Logic contract', () => {
     });
 
     describe('Tag creation', async () => {
-      it('Should revert when creating a new tag as a non-owner', async () => {
+      it('Should revert when creating a new attribute as a non-owner', async () => {
         await expect(
           attestationsRegistry
             .connect(notOwner)
-            .createNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'))
+            .createNewAttribute(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION'))
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when creating new tags as a non-owner', async () => {
+      it('Should revert when creating new attributes as a non-owner', async () => {
         await expect(
           attestationsRegistry
             .connect(notOwner)
-            .createNewTags(
-              [TAGS.TEST_INSERTION, TAGS.CURATED],
+            .createNewAttributes(
+              [ATTRIBUTES.TEST_INSERTION, ATTRIBUTES.CURATED],
               [formatBytes32String('TEST_INSERTION'), formatBytes32String('CURATED')]
             )
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when creating new tags with different arguments length', async () => {
+      it('Should revert when creating new attributes with different arguments length', async () => {
         await expect(
-          attestationsRegistry.connect(deployer).createNewTags(
-            [TAGS.TEST_INSERTION], // missing one argument
+          attestationsRegistry.connect(deployer).createNewAttributes(
+            [ATTRIBUTES.TEST_INSERTION], // missing one argument
             [formatBytes32String('TEST_INSERTION'), formatBytes32String('CURATED')]
           )
         ).to.be.revertedWith('ArgsLengthDoesNotMatch()');
       });
 
-      it('Should revert when creating a tag with index > 63', async () => {
+      it('Should revert when creating a attribute with index > 63', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .createNewTag(64, formatBytes32String('TAG_OVERFLOW'))
-        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+            .createNewAttribute(64, formatBytes32String('TAG_OVERFLOW'))
+        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
       });
 
-      it('Should revert when creating new tags with index of one of them > 63', async () => {
+      it('Should revert when creating new attributes with index of one of them > 63', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .createNewTags(
-              [TAGS.CURATED, 64],
+            .createNewAttributes(
+              [ATTRIBUTES.CURATED, 64],
               [formatBytes32String('CURATED'), formatBytes32String('TAG_OVERFLOW')]
             )
-        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
       });
 
-      it('Should create a new tag as an owner', async () => {
-        const tagInserted = await attestationsRegistry
+      it('Should create a new attribute as an owner', async () => {
+        const attributeInserted = await attestationsRegistry
           .connect(deployer)
-          .createNewTag(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
+          .createNewAttribute(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
 
-        await expect(tagInserted)
-          .to.emit(attestationsRegistry, 'NewTagCreated')
-          .withArgs(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
+        await expect(attributeInserted)
+          .to.emit(attestationsRegistry, 'NewAttributeCreated')
+          .withArgs(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
       });
 
-      it('Should revert when trying to create again a tag for the same index', async () => {
+      it('Should revert when trying to create again a attribute for the same index', async () => {
         await expect(
-          attestationsRegistry.createNewTag(TAGS.TEST_INSERTION, formatBytes32String('OTHER TAG'))
-        ).to.be.revertedWith('TagAlreadyExists(10)');
+          attestationsRegistry.createNewAttribute(
+            ATTRIBUTES.TEST_INSERTION,
+            formatBytes32String('OTHER TAG')
+          )
+        ).to.be.revertedWith('AttributeAlreadyExists(10)');
       });
 
-      it('Should revert when creating new tags with one of them already existing', async () => {
+      it('Should revert when creating new attributes with one of them already existing', async () => {
         await expect(
-          attestationsRegistry.connect(deployer).createNewTags(
-            [TAGS.CURATED, TAGS.TEST_INSERTION], // TEST_INSERTION already created
+          attestationsRegistry.connect(deployer).createNewAttributes(
+            [ATTRIBUTES.CURATED, ATTRIBUTES.TEST_INSERTION], // TEST_INSERTION already created
             [formatBytes32String('CURATED'), formatBytes32String('TEST_INSERTION')]
           )
-        ).to.be.revertedWith('TagAlreadyExists(10)');
+        ).to.be.revertedWith('AttributeAlreadyExists(10)');
       });
 
-      it('Should create new tags as an owner', async () => {
-        const tagsInserted = await attestationsRegistry
+      it('Should create new attributes as an owner', async () => {
+        const attributesInserted = await attestationsRegistry
           .connect(deployer)
-          .createNewTags(
-            [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+          .createNewAttributes(
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
             [formatBytes32String('CURATED'), formatBytes32String('SYBIL_RESISTANCE')]
           );
 
-        await expect(tagsInserted)
-          .to.emit(attestationsRegistry, 'NewTagCreated')
-          .withArgs(TAGS.CURATED, formatBytes32String('CURATED'));
+        await expect(attributesInserted)
+          .to.emit(attestationsRegistry, 'NewAttributeCreated')
+          .withArgs(ATTRIBUTES.CURATED, formatBytes32String('CURATED'));
 
-        await expect(tagsInserted)
-          .to.emit(attestationsRegistry, 'NewTagCreated')
-          .withArgs(TAGS.SYBIL_RESISTANCE, formatBytes32String('SYBIL_RESISTANCE'));
+        await expect(attributesInserted)
+          .to.emit(attestationsRegistry, 'NewAttributeCreated')
+          .withArgs(ATTRIBUTES.SYBIL_RESISTANCE, formatBytes32String('SYBIL_RESISTANCE'));
       });
     });
 
     describe('Tag update', async () => {
-      it('Should revert when updating tag as a non-owner', async () => {
+      it('Should revert when updating attribute as a non-owner', async () => {
         await expect(
           attestationsRegistry
             .connect(notOwner)
-            .updateTagName(TAGS.TEST_INSERTION, formatBytes32String('CURATED2'))
+            .updateAttributeName(ATTRIBUTES.TEST_INSERTION, formatBytes32String('CURATED2'))
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when updating tags as a non-owner', async () => {
+      it('Should revert when updating attributes as a non-owner', async () => {
         await expect(
           attestationsRegistry
             .connect(notOwner)
-            .updateTagsName(
-              [TAGS.TEST_INSERTION, TAGS.CURATED],
+            .updateAttributesName(
+              [ATTRIBUTES.TEST_INSERTION, ATTRIBUTES.CURATED],
               [formatBytes32String('TEST_INSERTION2'), formatBytes32String('CURATED2')]
             )
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when updating new tags with different arguments length', async () => {
+      it('Should revert when updating new attributes with different arguments length', async () => {
         await expect(
-          attestationsRegistry.connect(deployer).updateTagsName(
-            [TAGS.TEST_INSERTION], // missing one argument
+          attestationsRegistry.connect(deployer).updateAttributesName(
+            [ATTRIBUTES.TEST_INSERTION], // missing one argument
             [formatBytes32String('TEST_INSERTION2'), formatBytes32String('CURATED2')]
           )
         ).to.be.revertedWith('ArgsLengthDoesNotMatch()');
       });
 
-      it('Should revert when updating a tag with index > 63', async () => {
+      it('Should revert when updating a attribute with index > 63', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .updateTagName(64, formatBytes32String('TAG_OVERFLOW'))
-        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+            .updateAttributeName(64, formatBytes32String('TAG_OVERFLOW'))
+        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
       });
 
-      it('Should revert when updating new tags with index of one of them > 63', async () => {
+      it('Should revert when updating new attributes with index of one of them > 63', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .updateTagsName(
-              [TAGS.CURATED, 64],
+            .updateAttributesName(
+              [ATTRIBUTES.CURATED, 64],
               [formatBytes32String('CURATED2'), formatBytes32String('TAG_OVERFLOW')]
             )
-        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
       });
 
-      it('Should revert when trying to update a tag name that does not exists', async () => {
+      it('Should revert when trying to update a attribute name that does not exists', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .updateTagName(TAGS.NOT_CREATED, formatBytes32String('NOT_INSERTED'))
-        ).to.be.revertedWith('TagDoesNotExist(50)');
+            .updateAttributeName(ATTRIBUTES.NOT_CREATED, formatBytes32String('NOT_INSERTED'))
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
       });
 
-      it('Should revert when trying to update tags name with one of them that does not exists', async () => {
+      it('Should revert when trying to update attributes name with one of them that does not exists', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .updateTagsName(
-              [TAGS.CURATED, TAGS.NOT_CREATED],
+            .updateAttributesName(
+              [ATTRIBUTES.CURATED, ATTRIBUTES.NOT_CREATED],
               [formatBytes32String('CURATED2'), formatBytes32String('NOT_INSERTED')]
             )
-        ).to.be.revertedWith('TagDoesNotExist(50)');
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
       });
 
-      it('Should update a tag name', async () => {
-        const tagUpdated = await attestationsRegistry
+      it('Should update a attribute name', async () => {
+        const attributeUpdated = await attestationsRegistry
           .connect(deployer)
-          .updateTagName(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION2'));
+          .updateAttributeName(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION2'));
 
-        await expect(tagUpdated)
-          .to.emit(attestationsRegistry, 'TagNameUpdated')
+        await expect(attributeUpdated)
+          .to.emit(attestationsRegistry, 'AttributeNameUpdated')
           .withArgs(
-            TAGS.TEST_INSERTION,
+            ATTRIBUTES.TEST_INSERTION,
             formatBytes32String('TEST_INSERTION2'),
             formatBytes32String('TEST_INSERTION')
           );
       });
 
-      it('Should update tags name', async () => {
-        const tagsUpdated = await attestationsRegistry
+      it('Should update attributes name', async () => {
+        const attributesUpdated = await attestationsRegistry
           .connect(deployer)
-          .updateTagsName(
-            [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+          .updateAttributesName(
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
             [formatBytes32String('CURATED2'), formatBytes32String('SYBIL_RESISTANCE2')]
           );
 
-        await expect(tagsUpdated)
-          .to.emit(attestationsRegistry, 'TagNameUpdated')
-          .withArgs(TAGS.CURATED, formatBytes32String('CURATED2'), formatBytes32String('CURATED'));
-
-        await expect(tagsUpdated)
-          .to.emit(attestationsRegistry, 'TagNameUpdated')
+        await expect(attributesUpdated)
+          .to.emit(attestationsRegistry, 'AttributeNameUpdated')
           .withArgs(
-            TAGS.SYBIL_RESISTANCE,
+            ATTRIBUTES.CURATED,
+            formatBytes32String('CURATED2'),
+            formatBytes32String('CURATED')
+          );
+
+        await expect(attributesUpdated)
+          .to.emit(attestationsRegistry, 'AttributeNameUpdated')
+          .withArgs(
+            ATTRIBUTES.SYBIL_RESISTANCE,
             formatBytes32String('SYBIL_RESISTANCE2'),
             formatBytes32String('SYBIL_RESISTANCE')
           );
@@ -748,302 +755,347 @@ describe('Test Attestations Registry Config Logic contract', () => {
     });
 
     describe('Tag deletion', async () => {
-      it('Should revert when deleting a tag as a non-owner', async () => {
+      it('Should revert when deleting a attribute as a non-owner', async () => {
         await expect(
-          attestationsRegistry.connect(notOwner).deleteTag(TAGS.NOT_CREATED)
+          attestationsRegistry.connect(notOwner).deleteAttribute(ATTRIBUTES.NOT_CREATED)
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when deleting tags as a non-owner', async () => {
+      it('Should revert when deleting attributes as a non-owner', async () => {
         await expect(
-          attestationsRegistry.connect(notOwner).deleteTags([TAGS.NOT_CREATED, TAGS.TEST_INSERTION])
+          attestationsRegistry
+            .connect(notOwner)
+            .deleteAttributes([ATTRIBUTES.NOT_CREATED, ATTRIBUTES.TEST_INSERTION])
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when trying to delete a tag with index > 63', async () => {
-        await expect(attestationsRegistry.connect(deployer).deleteTag(64)).to.be.revertedWith(
-          'TagIndexOutOfBounds(64)'
+      it('Should revert when trying to delete a attribute with index > 63', async () => {
+        await expect(attestationsRegistry.connect(deployer).deleteAttribute(64)).to.be.revertedWith(
+          'AttributeIndexOutOfBounds(64)'
         );
       });
 
-      it('Should revert when trying to delete tags with index of one of them > 63', async () => {
+      it('Should revert when trying to delete attributes with index of one of them > 63', async () => {
         await expect(
-          attestationsRegistry.connect(deployer).deleteTags([TAGS.CURATED, 64])
-        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+          attestationsRegistry.connect(deployer).deleteAttributes([ATTRIBUTES.CURATED, 64])
+        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
       });
 
-      it('Should revert when trying to delete a tag that does not exists', async () => {
+      it('Should revert when trying to delete a attribute that does not exists', async () => {
         await expect(
-          attestationsRegistry.connect(deployer).deleteTag(TAGS.NOT_CREATED)
-        ).to.be.revertedWith('TagDoesNotExist(50)');
+          attestationsRegistry.connect(deployer).deleteAttribute(ATTRIBUTES.NOT_CREATED)
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
       });
 
-      it('Should revert when trying to delete tags with one of them that does not exists', async () => {
+      it('Should revert when trying to delete attributes with one of them that does not exists', async () => {
         await expect(
-          attestationsRegistry.connect(deployer).deleteTags([TAGS.CURATED, TAGS.NOT_CREATED])
-        ).to.be.revertedWith('TagDoesNotExist(50)');
+          attestationsRegistry
+            .connect(deployer)
+            .deleteAttributes([ATTRIBUTES.CURATED, ATTRIBUTES.NOT_CREATED])
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
       });
 
-      it('Should delete a tag', async () => {
-        const tagDeleted = await attestationsRegistry
+      it('Should delete a attribute', async () => {
+        const attributeDeleted = await attestationsRegistry
           .connect(deployer)
-          .deleteTag(TAGS.TEST_INSERTION);
-        await expect(tagDeleted)
-          .to.emit(attestationsRegistry, 'TagDeleted')
-          .withArgs(TAGS.TEST_INSERTION, formatBytes32String('TEST_INSERTION2'));
+          .deleteAttribute(ATTRIBUTES.TEST_INSERTION);
+        await expect(attributeDeleted)
+          .to.emit(attestationsRegistry, 'AttributeDeleted')
+          .withArgs(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION2'));
       });
 
-      it('Should delete tags', async () => {
-        const tagsDeleted = await attestationsRegistry
+      it('Should delete attributes', async () => {
+        const attributesDeleted = await attestationsRegistry
           .connect(deployer)
-          .deleteTags([TAGS.CURATED, TAGS.SYBIL_RESISTANCE]);
+          .deleteAttributes([ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE]);
 
-        await expect(tagsDeleted)
-          .to.emit(attestationsRegistry, 'TagDeleted')
-          .withArgs(TAGS.CURATED, formatBytes32String('CURATED2'));
+        await expect(attributesDeleted)
+          .to.emit(attestationsRegistry, 'AttributeDeleted')
+          .withArgs(ATTRIBUTES.CURATED, formatBytes32String('CURATED2'));
 
-        await expect(tagsDeleted)
-          .to.emit(attestationsRegistry, 'TagDeleted')
-          .withArgs(TAGS.SYBIL_RESISTANCE, formatBytes32String('SYBIL_RESISTANCE2'));
+        await expect(attributesDeleted)
+          .to.emit(attestationsRegistry, 'AttributeDeleted')
+          .withArgs(ATTRIBUTES.SYBIL_RESISTANCE, formatBytes32String('SYBIL_RESISTANCE2'));
       });
     });
 
-    describe('Create AttestationsCollection Tags', async () => {
+    describe('Create AttestationsCollection Attributes', async () => {
       before(async () => {
-        // Register the tag we will use during the tests
+        // Register the attribute we will use during the tests
         await attestationsRegistry
           .connect(deployer)
-          .createNewTags(
-            [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+          .createNewAttributes(
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
             [formatBytes32String('CURATED'), formatBytes32String('SYBIL_RESISTANCE')]
           );
       });
 
-      it('Should revert when setting a tag as a non-owner', async () => {
-        await expect(
-          attestationsRegistry.connect(notOwner).setTagForAttestationsCollection(1, TAGS.CURATED, 1)
-        ).to.be.revertedWith('Ownable: caller is not the owner');
-      });
-
-      it('Should revert when setting tags as a non-owner', async () => {
+      it('Should revert when setting a attribute as a non-owner', async () => {
         await expect(
           attestationsRegistry
             .connect(notOwner)
-            .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [1, 2])
+            .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 1)
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should revert when setting tags with invalid args length', async () => {
+      it('Should revert when setting attributes as a non-owner', async () => {
         await expect(
-          attestationsRegistry.connect(deployer).setTagsForAttestationsCollection(
+          attestationsRegistry
+            .connect(notOwner)
+            .setAttributesValuesForAttestationsCollections(
+              [1, 1],
+              [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+              [1, 2]
+            )
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when setting attributes with invalid args length', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).setAttributesValuesForAttestationsCollections(
             [1], //missing arg
-            [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
             [1, 2]
           )
         ).to.be.revertedWith('ArgsLengthDoesNotMatch');
       });
 
-      it('Should revert when setting a tag with an index > 63', async () => {
-        await expect(
-          attestationsRegistry.connect(deployer).setTagForAttestationsCollection(1, 64, 1)
-        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
-      });
-
-      it('Should revert when setting tags with one of them having an index > 63', async () => {
+      it('Should revert when setting a attribute with an index > 63', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, 64], [1, 2])
-        ).to.be.revertedWith('TagIndexOutOfBounds(64)');
+            .setAttributeValueForAttestationsCollection(1, 64, 1)
+        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
       });
 
-      it('Should revert when setting a tag to an AttestationsCollection and the tag is not already created', async () => {
+      it('Should revert when setting attributes with one of them having an index > 63', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .setTagForAttestationsCollection(1, TAGS.NOT_CREATED, 1)
-        ).to.be.revertedWith('TagDoesNotExist(50)');
+            .setAttributesValuesForAttestationsCollections([1, 1], [ATTRIBUTES.CURATED, 64], [1, 2])
+        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
       });
 
-      it('Should revert when setting tags to an AttestationsCollection and one of the tags is not already created', async () => {
+      it('Should revert when setting a attribute to an AttestationsCollection and the attribute is not already created', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.NOT_CREATED], [1, 2])
-        ).to.be.revertedWith('TagDoesNotExist(50)');
+            .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.NOT_CREATED, 1)
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
       });
 
-      it('Should set a tag to an AttestationsCollection with power 1', async () => {
-        const tagSet = await attestationsRegistry
+      it('Should revert when setting attributes to an AttestationsCollection and one of the attributes is not already created', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setAttributesValuesForAttestationsCollections(
+              [1, 1],
+              [ATTRIBUTES.CURATED, ATTRIBUTES.NOT_CREATED],
+              [1, 2]
+            )
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
+      });
+
+      it('Should set a attribute to an AttestationsCollection with power 1', async () => {
+        const attributeSet = await attestationsRegistry
           .connect(deployer)
-          .setTagForAttestationsCollection(1, TAGS.CURATED, 1);
+          .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 1);
 
-        await expect(tagSet)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.CURATED, 1);
+        await expect(attributeSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 1);
 
-        expect(await attestationsRegistry.attestationsCollectionHasTag(1, TAGS.CURATED)).to.be.true;
+        expect(await attestationsRegistry.attestationsCollectionHasAttribute(1, ATTRIBUTES.CURATED))
+          .to.be.true;
         expect(
-          await attestationsRegistry.getTagPowerForAttestationsCollection(1, TAGS.CURATED)
+          await attestationsRegistry.getAttributeValueForAttestationsCollection(
+            1,
+            ATTRIBUTES.CURATED
+          )
         ).to.be.eq(1);
       });
 
-      it('Should set a tag to an AttestationsCollection and change the power', async () => {
-        const tagSet = await attestationsRegistry
+      it('Should set a attribute to an AttestationsCollection and change the power', async () => {
+        const attributeSet = await attestationsRegistry
           .connect(deployer)
-          .setTagForAttestationsCollection(1, TAGS.CURATED, 5);
+          .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 5);
 
-        await expect(tagSet)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.CURATED, 5);
+        await expect(attributeSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 5);
 
-        expect(await attestationsRegistry.attestationsCollectionHasTag(1, TAGS.CURATED)).to.be.true;
+        expect(await attestationsRegistry.attestationsCollectionHasAttribute(1, ATTRIBUTES.CURATED))
+          .to.be.true;
         expect(
-          await attestationsRegistry.getTagPowerForAttestationsCollection(1, TAGS.CURATED)
+          await attestationsRegistry.getAttributeValueForAttestationsCollection(
+            1,
+            ATTRIBUTES.CURATED
+          )
         ).to.be.eq(5);
       });
 
-      it('Should revert to set a tag to an AttestationsCollection with power > 15', async () => {
+      it('Should revert to set a attribute to an AttestationsCollection with power > 15', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .setTagForAttestationsCollection(1, TAGS.CURATED, 16)
-        ).to.be.revertedWith('TagPowerOutOfBounds(16)');
+            .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 16)
+        ).to.be.revertedWith('AttributeValueOutOfBounds(16)');
       });
 
-      it('Should revert when removing a tag as a non-owner', async () => {
+      it('Should revert when removing a attribute as a non-owner', async () => {
         await expect(
-          attestationsRegistry.connect(notOwner).setTagForAttestationsCollection(1, TAGS.CURATED, 0)
+          attestationsRegistry
+            .connect(notOwner)
+            .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 0)
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should remove tag to an AttestationsCollection', async () => {
-        const tagRemoved = await attestationsRegistry
+      it('Should remove attribute to an AttestationsCollection', async () => {
+        const attributeRemoved = await attestationsRegistry
           .connect(deployer)
-          .setTagForAttestationsCollection(1, TAGS.CURATED, 0);
+          .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 0);
 
-        await expect(tagRemoved)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.CURATED, 0);
+        await expect(attributeRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 0);
 
-        expect(await attestationsRegistry.attestationsCollectionHasTag(1, TAGS.CURATED)).to.be
-          .false;
+        expect(await attestationsRegistry.attestationsCollectionHasAttribute(1, ATTRIBUTES.CURATED))
+          .to.be.false;
         expect(
-          await attestationsRegistry.getTagPowerForAttestationsCollection(1, TAGS.CURATED)
+          await attestationsRegistry.getAttributeValueForAttestationsCollection(
+            1,
+            ATTRIBUTES.CURATED
+          )
         ).to.be.eq(0);
       });
 
-      it('Should set tags to two AttestationsCollection with power 1 and 2', async () => {
-        const tagsSet = await attestationsRegistry
+      it('Should set attributes to two AttestationsCollection with power 1 and 2', async () => {
+        const attributesSet = await attestationsRegistry
           .connect(deployer)
-          .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [1, 2]);
+          .setAttributesValuesForAttestationsCollections(
+            [1, 1],
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [1, 2]
+          );
 
-        await expect(tagsSet)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.CURATED, 1);
+        await expect(attributesSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 1);
 
-        await expect(tagsSet)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.SYBIL_RESISTANCE, 2);
+        await expect(attributesSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.SYBIL_RESISTANCE, 2);
 
         expect(
-          await attestationsRegistry.attestationsCollectionHasTags(1, [
-            TAGS.CURATED,
-            TAGS.SYBIL_RESISTANCE,
+          await attestationsRegistry.attestationsCollectionHasAttributes(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
           ])
         ).to.be.true;
 
         expect(
-          await attestationsRegistry.getTagsPowerForAttestationsCollection(1, [
-            TAGS.CURATED,
-            TAGS.SYBIL_RESISTANCE,
+          await attestationsRegistry.getAttributesValuesForAttestationsCollection(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
           ])
         ).to.be.eql([1, 2]);
       });
 
-      it('Should set tags to AttestationsCollection and change the power', async () => {
-        const tagsSet = await attestationsRegistry
+      it('Should set attributes to AttestationsCollection and change the power', async () => {
+        const attributesSet = await attestationsRegistry
           .connect(deployer)
-          .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [6, 11]);
+          .setAttributesValuesForAttestationsCollections(
+            [1, 1],
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [6, 11]
+          );
 
-        await expect(tagsSet)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.CURATED, 6);
+        await expect(attributesSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 6);
 
-        await expect(tagsSet)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.SYBIL_RESISTANCE, 11);
+        await expect(attributesSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.SYBIL_RESISTANCE, 11);
 
         expect(
-          await attestationsRegistry.attestationsCollectionHasTags(1, [
-            TAGS.CURATED,
-            TAGS.SYBIL_RESISTANCE,
+          await attestationsRegistry.attestationsCollectionHasAttributes(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
           ])
         ).to.be.true;
         expect(
-          await attestationsRegistry.getTagsPowerForAttestationsCollection(1, [
-            TAGS.CURATED,
-            TAGS.SYBIL_RESISTANCE,
+          await attestationsRegistry.getAttributesValuesForAttestationsCollection(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
           ])
         ).to.be.eql([6, 11]);
       });
 
-      it('Should get tags names and powers for the attestationsCollection referenced', async () => {
+      it('Should get attributes names and values for the attestationsCollection referenced', async () => {
         const res = await attestationsRegistry
           .connect(deployer)
-          .getTagsNamesAndPowersForAttestationsCollection(1);
+          .getAttributesNamesAndValuesForAttestationsCollection(1);
 
-        // we should have only 2 tags enabled
+        // we should have only 2 attributes enabled
         expect(res[0].length).to.be.eql(2);
         expect(parseBytes32String(res[0][0])).to.be.eql('CURATED');
         expect(parseBytes32String(res[0][1])).to.be.eql('SYBIL_RESISTANCE');
         expect(res[1]).to.be.eql([6, 11]);
       });
 
-      it('Should revert to set tags to an AttestationsCollection with one of them having a power > 15', async () => {
+      it('Should revert to set attributes to an AttestationsCollection with one of them having a power > 15', async () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .setTagsForAttestationsCollection(
+            .setAttributesValuesForAttestationsCollections(
               [1, 1],
-              [TAGS.CURATED, TAGS.SYBIL_RESISTANCE],
+              [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
               [6, 16]
             )
-        ).to.be.revertedWith('TagPowerOutOfBounds(16)');
+        ).to.be.revertedWith('AttributeValueOutOfBounds(16)');
       });
 
-      it('Should revert when removing tags as a non-owner', async () => {
+      it('Should revert when removing attributes as a non-owner', async () => {
         await expect(
           attestationsRegistry
             .connect(notOwner)
-            .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [0, 0])
+            .setAttributesValuesForAttestationsCollections(
+              [1, 1],
+              [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+              [0, 0]
+            )
         ).to.be.revertedWith('Ownable: caller is not the owner');
       });
 
-      it('Should remove tags to an AttestationsCollection', async () => {
-        const tagsRemoved = await attestationsRegistry
+      it('Should remove attributes to an AttestationsCollection', async () => {
+        const attributesRemoved = await attestationsRegistry
           .connect(deployer)
-          .setTagsForAttestationsCollection([1, 1], [TAGS.CURATED, TAGS.SYBIL_RESISTANCE], [0, 0]);
+          .setAttributesValuesForAttestationsCollections(
+            [1, 1],
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [0, 0]
+          );
 
-        await expect(tagsRemoved)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.CURATED, 0);
+        await expect(attributesRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 0);
 
-        await expect(tagsRemoved)
-          .to.emit(attestationsRegistry, 'AttestationsCollectionTagSet')
-          .withArgs(1, TAGS.SYBIL_RESISTANCE, 0);
+        await expect(attributesRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.SYBIL_RESISTANCE, 0);
 
         expect(
-          await attestationsRegistry.attestationsCollectionHasTags(1, [
-            TAGS.CURATED,
-            TAGS.SYBIL_RESISTANCE,
+          await attestationsRegistry.attestationsCollectionHasAttributes(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
           ])
         ).to.be.false;
 
         expect(
-          await attestationsRegistry.getTagsPowerForAttestationsCollection(1, [
-            TAGS.CURATED,
-            TAGS.SYBIL_RESISTANCE,
+          await attestationsRegistry.getAttributesValuesForAttestationsCollection(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
           ])
         ).to.be.eql([0, 0]);
       });
