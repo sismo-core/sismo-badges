@@ -40,6 +40,8 @@ async function deploymentAction(
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
+  console.log(deployer, deploymentName, CONTRACT_NAME, deploymentArgs, options);
+
   const deployed = await customDeployContract(
     hre,
     deployer,
@@ -50,6 +52,8 @@ async function deploymentAction(
       behindProxy: false,
     })
   );
+
+  console.log('deployed', deployed);
 
   await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
   const mockGatedERC721 = MockGatedERC721__factory.connect(deployed.address, deployer);
