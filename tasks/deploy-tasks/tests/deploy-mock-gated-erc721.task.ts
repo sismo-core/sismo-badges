@@ -40,25 +40,24 @@ async function deploymentAction(
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
+  console.log(deployer, deploymentName, CONTRACT_NAME, deploymentArgs, options);
+
   const deployed = await customDeployContract(
     hre,
     deployer,
     deploymentName,
     CONTRACT_NAME,
     deploymentArgs,
-    options
+    (options = {
+      behindProxy: false,
+    })
   );
+
+  console.log('deployed', deployed);
 
   await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
   const mockGatedERC721 = MockGatedERC721__factory.connect(deployed.address, deployer);
   return { mockGatedERC721 };
 }
 
-task('deploy-mock-gated-erc-721')
-  .addParam('badgesAddress', 'Address of the Badges contract')
-  .addParam('attesterAddress', 'Address of the attester contract')
-  .addOptionalParam(
-    'gatedBadges',
-    'Array of badges token indices you want to gate your contract with'
-  )
-  .setAction(wrapCommonDeployOptions(deploymentAction));
+task('deploy-mock-gated-erc-721').setAction(wrapCommonDeployOptions(deploymentAction));
