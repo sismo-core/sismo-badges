@@ -19,7 +19,7 @@ import { HydraS1SimpleAttester } from 'types/HydraS1SimpleAttester';
 import { AttestationStruct } from 'types/AttestationsRegistry';
 
 // Launch with command
-// FORK=true FORK_NETWORK=goerli npx hardhat test ./tasks/deploy-tasks/full/4-upgrade-attestations-registry-proxy.test-fork.ts
+// FORK=true FORK_NETWORK=goerli npx hardhat test ./tasks/deploy-tasks/full/4-upgrade-attestations-registry-proxy-and-badges-proxy.test-fork.ts
 
 describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () => {
   let deployer: SignerWithAddress;
@@ -145,7 +145,7 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () =
   });
 
   describe('Get Attestation Data', () => {
-    it('Should return the right data', async () => {
+    it('Should return the right data from the attestations registry contract', async () => {
       expect(
         await attestationsRegistry.getAttestationData(
           attestations.first.collectionId,
@@ -178,9 +178,13 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () =
         hre,
         config.deployOptions.proxyAdmin ?? config.attestationsRegistry.owner
       );
-      ({ attestationsRegistry } = await hre.run('4-upgrade-attestations-registry-proxy', {
-        options: { manualConfirm: false, log: false },
-      }));
+
+      ({ attestationsRegistry, badges } = await hre.run(
+        '4-upgrade-attestations-registry-proxy-and-badges-proxy',
+        {
+          options: { manualConfirm: false, log: false },
+        }
+      ));
 
       snapshotId = await evmSnapshot(hre);
     });
@@ -222,24 +226,26 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () =
     it('Should set new attributes to attestationsCollection 11 with values 1 and 15', async () => {
       const attributesSet = await attestationsRegistry
         .connect(await impersonateAddress(hre, config.attestationsRegistry.owner))
-        .setAttributesValuesForAttestationsCollections([11, 11], [0, 1], [1, 15], {
-          gasLimit: 100000,
-        });
+        .setAttributesValuesForAttestationsCollections(
+          [attestations.first.collectionId, attestations.second.collectionId],
+          [0, 1],
+          [1, 15],
+          {
+            gasLimit: 100000,
+          }
+        );
 
       await expect(attributesSet)
         .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
-        .withArgs(11, 0, 1);
+        .withArgs(attestations.first.collectionId, 0, 1);
 
       await expect(attributesSet)
         .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
-        .withArgs(11, 1, 15);
+        .withArgs(attestations.second.collectionId, 1, 15);
       const res = await attestationsRegistry.getAttributesNamesAndValuesForAttestationsCollection(
-        11
+        attestations.first.collectionId
       );
-      expect([
-        ['CURATED', 'SYBIL RESISTANCE'],
-        [1, 15],
-      ]).to.be.eql([[parseBytes32String(res[0][0]), parseBytes32String(res[0][1])], res[1]]);
+      expect([['CURATED'], [1]]).to.be.eql([[parseBytes32String(res[0][0])], res[1]]);
     });
   });
 
@@ -305,7 +311,7 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () =
         ]);
     });
 
-    it('Should return the right data', async () => {
+    it('Should return the right data from attestations registry contract', async () => {
       expect(
         await attestationsRegistry.getAttestationData(
           attestations.first.collectionId,
@@ -329,6 +335,35 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () =
         attestations.second.timestamp,
         ethers.utils.hexlify(attestations.second.extraData),
       ]);
+    });
+
+    it('Should return the right data from badges contract', async () => {
+      expect(
+        await badges.balanceOf(randomSigner.address, attestations.first.collectionId)
+      ).to.be.eql(BigNumber.from(2));
+      expect(
+        await badges.getBadgeIssuer(randomSigner.address, attestations.first.collectionId)
+      ).to.be.eql(attestations.first.issuer);
+
+      expect(
+        await badges.getBadgeTimestamp(randomSigner.address, attestations.first.collectionId)
+      ).to.be.eql(attestations.first.timestamp);
+
+      expect(
+        await badges.getBadgeExtraData(randomSigner.address, attestations.first.collectionId)
+      ).to.be.eql(ethers.utils.hexlify(attestations.first.extraData));
+
+      expect(await badges.getAttributeValueForBadge(attestations.first.collectionId, 0)).to.be.eql(
+        1
+      );
+
+      expect(await badges.getAttributeValueForBadge(attestations.second.collectionId, 1)).to.be.eql(
+        15
+      );
+      const res = await badges.getAttributesNamesAndValuesForBadge(
+        attestations.second.collectionId
+      );
+      expect([['SYBIL RESISTANCE'], [15]]).to.be.eql([[parseBytes32String(res[0][0])], res[1]]);
     });
   });
 });

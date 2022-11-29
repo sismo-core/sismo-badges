@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {Attestation, AttestationData} from '../libs/Structs.sol';
+import {IAttestationsRegistryConfigLogic} from './IAttestationsRegistryConfigLogic.sol';
 
 /**
  * @title IAttestationsRegistry
  * @author Sismo
  * @notice This is the interface of the AttestationRegistry
  */
-interface IAttestationsRegistry {
+interface IAttestationsRegistry is IAttestationsRegistryConfigLogic {
   error IssuerNotAuthorized(address issuer, uint256 collectionId);
   error OwnersAndCollectionIdsLengthMismatch(address[] owners, uint256[] collectionIds);
   event AttestationRecorded(Attestation attestation);

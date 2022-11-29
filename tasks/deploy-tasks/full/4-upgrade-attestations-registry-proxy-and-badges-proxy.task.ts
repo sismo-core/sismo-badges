@@ -1,12 +1,14 @@
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployOptions, getDeployer } from '../utils';
-import { AttestationsRegistry } from 'types';
+import { AttestationsRegistry, Badges } from 'types';
 import { DeployedAttestationsRegistry } from 'tasks/deploy-tasks/unit/core/deploy-attestations-registry.task';
 import { deploymentsConfig } from '../deployments-config';
+import { DeployedBadges } from 'tasks/deploy-tasks/unit/core/deploy-badges.task';
 
 export interface Deployed4 {
   attestationsRegistry: AttestationsRegistry;
+  badges: Badges;
 }
 
 async function deploymentAction(
@@ -23,6 +25,8 @@ async function deploymentAction(
   // The following proxy will be updated:
   // - AttestationRegistry => introduce attributes names and values for attestationsCollection
   //  tagPowers go from 0 to 15, if the tagPower is 0 the tag is disabled, else it is enabled with the power set
+  // - Badges => add getters for attestations issuer, timestamp and extradata
+  //          => add getters for tags values and names
 
   // Upgrade attestations registry
   const { attestationsRegistry: newAttestationsRegistry } = (await hre.run(
@@ -38,9 +42,21 @@ async function deploymentAction(
     }
   )) as DeployedAttestationsRegistry;
 
+  // Upgrade Badges
+  const { badges: newBadges } = (await hre.run('deploy-badges', {
+    uri: config.badges.uri,
+    owner: config.badges.owner,
+    options: {
+      ...options,
+      implementationVersion: 3, // implementation version has been bumped from v2 to v3
+      proxyAddress: config.badges.address,
+    },
+  })) as DeployedBadges;
+
   return {
     attestationsRegistry: newAttestationsRegistry,
+    badges: newBadges,
   };
 }
 
-task('4-upgrade-attestations-registry-proxy').setAction(deploymentAction);
+task('4-upgrade-attestations-registry-proxy-and-badges-proxy').setAction(deploymentAction);

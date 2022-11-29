@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 /**
  * @title Interface for Badges contract
@@ -60,4 +60,41 @@ interface IBadges {
    * @dev Getter of the attestations registry
    */
   function getAttestationsRegistry() external view returns (address);
+
+  /**
+   * @dev Getter of the badge issuer
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeIssuer(address account, uint256 id) external view returns (address);
+
+  /**
+   * @dev Getter of the badge timestamp
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeTimestamp(address account, uint256 id) external view returns (uint32);
+
+  /**
+   * @dev Getter of the badge extra data (it can store nullifier and burnCount)
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeExtraData(address account, uint256 id) external view returns (bytes memory);
+
+  /**
+   * @dev Getter of the value of a specific badge attribute
+   * @param id Badge Id to check (= attestationCollectionId)
+   * @param index Index of the attribute
+   */
+  function getAttributeValueForBadge(uint256 id, uint8 index) external view returns (uint8);
+
+  /**
+   * @dev Getter of all badge attributes and their values for a specific badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getAttributesNamesAndValuesForBadge(uint256 id)
+    external
+    view
+    returns (bytes32[] memory, uint8[] memory);
 }

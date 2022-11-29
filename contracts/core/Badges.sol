@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {ERC1155} from '@openzeppelin/contracts/token/ERC1155/ERC1155.sol';
 import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.sol';
@@ -124,6 +124,54 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    */
   function getAttestationsRegistry() external view override returns (address) {
     return address(_attestationsRegistry);
+  }
+
+  /**
+   * @dev Getter of the badge issuer
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeIssuer(address account, uint256 id) external view returns (address) {
+    return _attestationsRegistry.getAttestationIssuer(id, account);
+  }
+
+  /**
+   * @dev Getter of the badge timestamp
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeTimestamp(address account, uint256 id) external view returns (uint32) {
+    return _attestationsRegistry.getAttestationTimestamp(id, account);
+  }
+
+  /**
+   * @dev Getter of the badge extra data (it can store nullifier and burnCount)
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeExtraData(address account, uint256 id) external view returns (bytes memory) {
+    return _attestationsRegistry.getAttestationExtraData(id, account);
+  }
+
+  /**
+   * @dev Getter of the value of a specific badge attribute
+   * @param id Badge Id to check (= attestationCollectionId)
+   * @param index Index of the attribute
+   */
+  function getAttributeValueForBadge(uint256 id, uint8 index) external view returns (uint8) {
+    return _attestationsRegistry.getAttributeValueForAttestationsCollection(id, index);
+  }
+
+  /**
+   * @dev Getter of all badge attributes and their values for a specific badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getAttributesNamesAndValuesForBadge(uint256 id)
+    external
+    view
+    returns (bytes32[] memory, uint8[] memory)
+  {
+    return _attestationsRegistry.getAttributesNamesAndValuesForAttestationsCollection(id);
   }
 
   /**
