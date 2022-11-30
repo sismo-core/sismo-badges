@@ -36,11 +36,9 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
   // Registry storing the Registry Tree Roots of the Attester's available ClaimData
   IAvailableRootsRegistry immutable AVAILABLE_ROOTS_REGISTRY;
 
-  /**********************************
-   *
-   *    INITIALIZATION FUNCTIONS
-   *
-   **********************************/
+  /*******************************************************
+    INITIALIZATION FUNCTIONS
+  *******************************************************/
 
   /**
    * @dev Constructor. Initializes the contract
@@ -79,11 +77,9 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
     return AVAILABLE_ROOTS_REGISTRY;
   }
 
-  /**********************************
-   *
-   *   Hydra-S1 SPECIFIC FUNCTIONS
-   *
-   **********************************/
+  /*******************************************************
+    Hydra-S1 SPECIFIC FUNCTIONS
+  *******************************************************/
 
   /**
    * @dev MANDATORY: must be implemented to return the external nullifier from a user request
