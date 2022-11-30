@@ -262,9 +262,10 @@ contract HydraS1AccountboundAttester is
     return _nullifiersBurnCount[nullifier];
   }
 
-  /*****************************************
-        GROUP CONFIGURATION LOGIC
-  ******************************************/
+  /*******************************************************
+    GROUP CONFIGURATION LOGIC
+  *******************************************************/
+
   function setCooldownDurationForGroupIndex(
     uint256 groupIndex,
     uint32 cooldownDuration
