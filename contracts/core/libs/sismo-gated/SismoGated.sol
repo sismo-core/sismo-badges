@@ -15,15 +15,10 @@ contract SismoGated {
   IAttester public immutable ATTESTER;
 
   uint256 public immutable GATED_BADGE;
-  mapping(uint256 => NullifierData) private _nullifiedAddresses;
+  mapping(uint256 => bool) private _isNullifierUsed;
 
   error UserIsNotOwnerOfBadge(uint256 collectionId);
-  error NFTAlreadyMintedOnAddress(address owner);
-
-  struct NullifierData {
-    address destination;
-    bool hasAlreadyBeenUsedInProof;
-  }
+  error NFTAlreadyMinted();
 
   /**
    * @dev Constructor
@@ -40,51 +35,41 @@ contract SismoGated {
    * @notice a proof can also be sent to allow non-holders to prove their eligibility
    */
   modifier onlyBadgesOwner(address to, bytes calldata data) {
-    bool isProofProvided = false;
-
-    if (data.length > 0) {
-      isProofProvided = true;
-    }
-
-    if (BADGES.balanceOf(to, GATED_BADGE) > 0) {
-      // badge already minted on address `to`
-      (uint256 previousNullifier, ) = abi.decode(
-        BADGES.getBadgeExtraData(to, GATED_BADGE),
-        (uint256, uint16)
-      );
-
-      if (_nullifiedAddresses[previousNullifier].destination != address(0x0)) {
-        revert NFTAlreadyMintedOnAddress(_nullifiedAddresses[previousNullifier].destination);
-      }
-      // set to address owning the badge for this nullifier to prevent from bypassing this modifier several times with different destination address
-      _nullifiedAddresses[previousNullifier].destination = to;
-    } else {
-      // badge NOT already minted on address `to`
-
-      // if no proof is provided
-      if (!isProofProvided) {
+    if (BADGES.balanceOf(to, GATED_BADGE) == 0) {
+      if (data.length == 0) {
         revert UserIsNotOwnerOfBadge(GATED_BADGE);
       }
       proveWithSismo(data);
-
-      (uint256 newNullifier, ) = abi.decode(
-        BADGES.getBadgeExtraData(to, GATED_BADGE),
-        (uint256, uint16)
-      );
-
-      if (
-        _nullifiedAddresses[newNullifier].destination != address(0x0) &&
-        _nullifiedAddresses[newNullifier].hasAlreadyBeenUsedInProof
-      ) {
-        revert NFTAlreadyMintedOnAddress(_nullifiedAddresses[newNullifier].destination);
-      }
-      _nullifiedAddresses[newNullifier].hasAlreadyBeenUsedInProof = true;
     }
+
+    // to remove to hydra-s1
+    (uint256 nullifier, ) = abi.decode(
+      BADGES.getBadgeExtraData(to, GATED_BADGE),
+      (uint256, uint16)
+    );
+
+    if (_isNullifierUsed[nullifier]) {
+      revert NFTAlreadyMinted();
+    }
+    // mark the nullifier as used to prevent from bypassing this modifier several times with different destination address
+    _markNullifierAsUsed(nullifier);
 
     _;
   }
 
   function proveWithSismo(bytes memory data) public returns (uint256) {
+    (Request memory request, bytes memory proofData) = _buildRequestAndProof(data);
+
+    Attestation[] memory attestations = ATTESTER.generateAttestations(request, proofData);
+
+    (uint256 nullifier, ) = abi.decode(attestations[0].extraData, (uint256, uint16));
+
+    return nullifier;
+  }
+
+  function _buildRequestAndProof(
+    bytes memory data
+  ) internal pure returns (Request memory, bytes memory) {
     Claim[] memory claims = new Claim[](1);
     address newDestination;
     bytes memory proofData;
@@ -95,11 +80,10 @@ contract SismoGated {
     request.claims = claims;
     request.destination = newDestination;
 
-    Attestation[] memory attestations = ATTESTER.generateAttestations(request, proofData);
-    (uint256 nullifier, ) = abi.decode(attestations[0].extraData, (uint256, uint16));
+    return (request, proofData);
+  }
 
-    _nullifiedAddresses[nullifier].destination = newDestination;
-
-    return nullifier;
+  function _markNullifierAsUsed(uint256 nullifier) internal {
+    _isNullifierUsed[nullifier] = true;
   }
 }

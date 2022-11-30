@@ -295,7 +295,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           1,
           [] // empty bytes data
         )
-      ).to.be.revertedWith(`NFTAlreadyMintedOnAddress("${destinationSigner.address}")`);
+      ).to.be.revertedWith(`NFTAlreadyMinted()`);
     });
 
     it('Should be able to change the destination, deleting the old attestation (since the cooldown duration is zero)', async () => {
@@ -398,7 +398,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           1,
           [] // empty bytes data
         )
-      ).to.be.revertedWith(`NFTAlreadyMintedOnAddress("${destinationSigner.address}")`);
+      ).to.be.revertedWith(`NFTAlreadyMinted()`);
     });
 
     it('Should allow the safeTransferFrom because the proof is provided for another destination holding the badge (nullifier already stored)', async () => {
@@ -546,7 +546,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           1,
           packRequestAndProofToBytes(newRequest, newProof)
         )
-      ).to.be.revertedWith(`NFTAlreadyMintedOnAddress("${destination2Signer.address}")`);
+      ).to.be.revertedWith(`NFTAlreadyMinted()`);
     });
   });
 });
