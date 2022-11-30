@@ -119,6 +119,10 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
 
       // ({ mockGatedERC721 } = await hre.run('deploy-mock-gated-erc-721', {}));
 
+      badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+        group.properties.groupIndex
+      );
+
       // 0 - Checks that the verifier, available roots registry, commitment mapper registry and attestations registry are set
       expect(await hydraS1AccountboundAttester.getVerifier()).to.equal(hydraS1Verifier.address);
       expect(await hydraS1AccountboundAttester.getAvailableRootsRegistry()).to.equal(
@@ -549,30 +553,32 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           destinationSigner.address
         )
       ).to.be.true;
-
-      evmSnapshot(hre);
     });
 
-    it('Should mint a NFT with a nullifier not already stored', async () => {
-      const badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
-        group.properties.groupIndex
-      );
+    it('Should revert because of a wrong destination address', async () => {
+      await expect(
+        mockGatedERC721.connect(destinationSigner).safeMint(
+          destination2Signer.address,
+          0,
+          [] // empty bytes data
+        )
+      ).to.be.revertedWith(`UserIsNotOwnerOfBadge(${badgeId})`);
 
-      await mockGatedERC721.connect(destinationSigner).mint(destinationSigner.address, 0, badgeId);
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+    });
+
+    it('Should mint a NFT with a nullifier not already stored and a correct destination address', async () => {
+      await mockGatedERC721.connect(destinationSigner).safeMint(
+        destinationSigner.address,
+        0,
+        [] // empty bytes data
+      );
 
       expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
         BigNumber.from(1)
       );
-    });
-
-    it('Should revert the mint if proof not provided (nullifier already stored)', async () => {
-      const badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
-        group.properties.groupIndex
-      );
-
-      await expect(
-        mockGatedERC721.connect(destinationSigner).mint(destinationSigner.address, 1, badgeId)
-      ).to.be.revertedWith('NeedToMintWithProof()');
     });
 
     it('Should revert if the groupIndex has no cooldownDuration set', async () => {
