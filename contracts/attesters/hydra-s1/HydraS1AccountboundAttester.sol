@@ -161,6 +161,22 @@ contract HydraS1AccountboundAttester is
   }
 
   /*******************************************************
+    MANDATORY FUNCTIONS TO OVERRIDE FROM HYDRAS1BASE.SOL
+  *******************************************************/
+
+  function getNullifier(
+    address destination,
+    uint256 collectionId
+  ) external view override(HydraS1SimpleAttester) returns (uint256) {
+    (uint256 nullifier, ) = abi.decode(
+      ATTESTATIONS_REGISTRY.getAttestationExtraData(collectionId, destination),
+      (uint256, uint16)
+    );
+
+    return nullifier;
+  }
+
+  /*******************************************************
     OPTIONAL HOOK VIRTUAL FUNCTIONS FROM ATTESTER.SOL
   *******************************************************/
   /**
