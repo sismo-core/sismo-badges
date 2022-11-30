@@ -546,8 +546,10 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       );
     });
 
+    // TODO: modify this test to test the ownable contract, not the init part
+    // Move to a Config section in the test. Here we are in the "Generate Attestation section"
     it('Should setup the owner', async () => {
-      await hydraS1AccountboundAttester.setOwner();
+      await hydraS1AccountboundAttester.initialize(deployer.address);
       expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
     });
 
