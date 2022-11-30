@@ -6,9 +6,11 @@ import {
   KVMerkleTree,
   MerkleTreeData,
   REGISTRY_TREE_HEIGHT,
+  SnarkProof,
   SNARK_FIELD,
 } from '@sismo-core/hydra-s1';
 import { BigNumber, ethers } from 'ethers';
+import { RequestStruct } from 'types/HydraS1SimpleAttester';
 
 /*************************************************/
 /**************    MOCK ACCOUNTS     *************/
@@ -165,3 +167,21 @@ export function toBytes(snarkProof: any) {
     [snarkProof.a, snarkProof.b, snarkProof.c, snarkProof.input]
   );
 }
+
+export const packRequestAndProofToBytes = (request: RequestStruct, proof: SnarkProof) => {
+  return ethers.utils.defaultAbiCoder.encode(
+    [
+      'tuple(uint256 groupId, uint256 claimedValue, bytes extraData)',
+      'address destination',
+      'bytes',
+    ],
+    [request.claims[0], request.destination, proof.toBytes()]
+  );
+};
+
+export const decodeRequestAndProofFromBytes = (data: string) => {
+  return ethers.utils.defaultAbiCoder.decode(
+    ['tuple(uint256, uint256, bytes)', 'address', 'bytes'],
+    data
+  );
+};
