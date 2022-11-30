@@ -565,6 +565,16 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
         await hydraS1SimpleAttester.AUTHORIZED_COLLECTION_ID_LAST()
       );
     });
+
+    it('Should check that owner is the owner referenced in the config', async () => {
+      // should check that the owner is not the 0x0 address and owner is well set
+      expect(await hydraS1AccountboundAttester.owner()).to.be.not.eql(
+        '0x0000000000000000000000000000000000000000'
+      );
+      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(
+        config.hydraS1AccountboundAttester.owner
+      );
+    });
   });
 
   describe('prepare test requests (group properties encoding has changed)', () => {
@@ -723,25 +733,6 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
         })
       ).to.be.revertedWith(
         `CooldownDurationNotSetForGroupIndex(${BigNumber.from(group1.properties.groupIndex)})`
-      );
-    });
-
-    it('Should check that owner is the owner referenced in the config only after calling setOwner()', async () => {
-      // before setting the owner, the owner is the 0x0 address
-      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(
-        '0x0000000000000000000000000000000000000000'
-      );
-
-      // mandatory function to trigger to update owner in proxy's state
-      // we don't use initialize because the proxy is already deployed and no owner was set previously
-      await hydraS1AccountboundAttester.setOwner();
-
-      // should check that the owner is not the 0x0 address and owner is well set
-      expect(await hydraS1AccountboundAttester.owner()).to.be.not.eql(
-        '0x0000000000000000000000000000000000000000'
-      );
-      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(
-        config.hydraS1AccountboundAttester.owner
       );
     });
 

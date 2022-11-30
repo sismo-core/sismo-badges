@@ -79,7 +79,10 @@ async function deploymentAction(
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
-  const initData = '0x';
+  const initData = new HydraS1AccountboundAttester__factory().interface.encodeFunctionData(
+    'initialize',
+    [owner || deployer.address]
+  );
 
   const deployed = await customDeployContract(
     hre,
