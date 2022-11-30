@@ -587,7 +587,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
           attestationsRegistry
             .connect(deployer)
             .createNewAttribute(64, formatBytes32String('TAG_OVERFLOW'))
-        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
       it('Should revert when creating new attributes with index of one of them > 63', async () => {
@@ -598,7 +598,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
               [ATTRIBUTES.CURATED, 64],
               [formatBytes32String('CURATED'), formatBytes32String('TAG_OVERFLOW')]
             )
-        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
       it('Should create a new attribute as an owner', async () => {
@@ -681,7 +681,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
           attestationsRegistry
             .connect(deployer)
             .updateAttributeName(64, formatBytes32String('TAG_OVERFLOW'))
-        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
       it('Should revert when updating new attributes with index of one of them > 63', async () => {
@@ -692,7 +692,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
               [ATTRIBUTES.CURATED, 64],
               [formatBytes32String('CURATED2'), formatBytes32String('TAG_OVERFLOW')]
             )
-        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
       it('Should revert when trying to update a attribute name that does not exists', async () => {
@@ -771,14 +771,14 @@ describe('Test Attestations Registry Config Logic contract', () => {
 
       it('Should revert when trying to delete a attribute with index > 63', async () => {
         await expect(attestationsRegistry.connect(deployer).deleteAttribute(64)).to.be.revertedWith(
-          'AttributeIndexOutOfBounds(64)'
+          'IndexOutOfBounds(64)'
         );
       });
 
       it('Should revert when trying to delete attributes with index of one of them > 63', async () => {
         await expect(
           attestationsRegistry.connect(deployer).deleteAttributes([ATTRIBUTES.CURATED, 64])
-        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
       it('Should revert when trying to delete a attribute that does not exists', async () => {
@@ -865,7 +865,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
           attestationsRegistry
             .connect(deployer)
             .setAttributeValueForAttestationsCollection(1, 64, 1)
-        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
       it('Should revert when setting attributes with one of them having an index > 63', async () => {
@@ -873,7 +873,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
           attestationsRegistry
             .connect(deployer)
             .setAttributesValuesForAttestationsCollections([1, 1], [ATTRIBUTES.CURATED, 64], [1, 2])
-        ).to.be.revertedWith('AttributeIndexOutOfBounds(64)');
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
       it('Should revert when setting a attribute to an AttestationsCollection and the attribute is not already created', async () => {
@@ -939,7 +939,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
           attestationsRegistry
             .connect(deployer)
             .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 16)
-        ).to.be.revertedWith('AttributeValueOutOfBounds(16)');
+        ).to.be.revertedWith('ValueOutOfBounds(16)');
       });
 
       it('Should revert when removing a attribute as a non-owner', async () => {
@@ -1053,7 +1053,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
               [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
               [6, 16]
             )
-        ).to.be.revertedWith('AttributeValueOutOfBounds(16)');
+        ).to.be.revertedWith('ValueOutOfBounds(16)');
       });
 
       it('Should revert when removing attributes as a non-owner', async () => {
