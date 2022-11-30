@@ -10,7 +10,7 @@ import {
   SNARK_FIELD,
 } from '@sismo-core/hydra-s1';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 import hre, { ethers } from 'hardhat';
 import {
   AttestationsRegistry,
@@ -35,6 +35,7 @@ import {
   HydraS1SimpleGroup,
   encodeGroupProperties,
   generateGroupIdFromProperties,
+  packRequestAndProofToBytes,
 } from '../../../utils';
 
 describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
@@ -74,6 +75,10 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
   let inputs: Inputs;
   let proof: SnarkProof;
   let request: RequestStruct;
+
+  let badgeId: BigNumber;
+
+  let evmSnapshotId: string;
 
   before(async () => {
     const signers = await hre.ethers.getSigners();
@@ -128,12 +133,14 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       ({ mockGatedERC721 } = await hre.run('deploy-mock-gated-erc-721', {
         badgesAddress: badges.address,
         attesterAddress: hydraS1AccountboundAttester.address,
-        gatedBadges: [
-          (
-            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-          ).add(group.properties.groupIndex),
-        ],
+        gatedBadge: (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(group.properties.groupIndex),
       }));
+
+      badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+        group.properties.groupIndex
+      );
 
       // 0 - Checks that the verifier, available roots registry, commitment mapper registry and attestations registry are set
       expect(await hydraS1AccountboundAttester.getVerifier()).to.equal(hydraS1Verifier.address);
@@ -146,6 +153,23 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       expect(await hydraS1AccountboundAttester.getAttestationRegistry()).to.equal(
         attestationsRegistry.address
       );
+    });
+
+    it('Should set a cooldown duration for a groupIndex', async () => {
+      // set a cooldown of 1 day for first group
+      const setCooldownDurationTransaction = await hydraS1AccountboundAttester
+        .connect(deployer)
+        .setCooldownDurationForGroupIndex(group.properties.groupIndex, cooldownDuration);
+
+      await expect(setCooldownDurationTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'CooldownDurationSetForGroupIndex')
+        .withArgs(group.properties.groupIndex, cooldownDuration);
+
+      expect(
+        await hydraS1AccountboundAttester.getCooldownDurationForGroupIndex(
+          group.properties.groupIndex
+        )
+      ).to.be.eql(cooldownDuration);
     });
 
     after(async () => {
@@ -178,6 +202,8 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         ],
         destination: BigNumber.from(destination.identifier).toHexString(),
       };
+
+      evmSnapshotId = await evmSnapshot(hre);
     });
   });
 
@@ -234,47 +260,42 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           destinationSigner.address
         )
       ).to.be.true;
-
-      evmSnapshot(hre);
     });
 
-    it('Should mint a NFT with a nullifier not already stored', async () => {
-      const badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
-        group.properties.groupIndex
-      );
+    it('Should revert because of a wrong destination address', async () => {
+      await expect(
+        mockGatedERC721.connect(destinationSigner).safeMint(
+          destination2Signer.address,
+          0,
+          [] // empty bytes data
+        )
+      ).to.be.revertedWith(`UserIsNotOwnerOfBadge(${badgeId})`);
 
-      await mockGatedERC721.connect(destinationSigner).mint(destinationSigner.address, 0, badgeId);
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+    });
+
+    it('Should mint a NFT with a nullifier not already stored and a correct destination address', async () => {
+      await mockGatedERC721.connect(destinationSigner).safeMint(
+        destinationSigner.address,
+        0,
+        [] // empty bytes data
+      );
 
       expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
         BigNumber.from(1)
       );
     });
 
-    it('Should revert the mint if proof not provided (nullifier already stored)', async () => {
-      const badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
-        group.properties.groupIndex
-      );
-
+    it('Should revert the mint if nullifier already stored', async () => {
       await expect(
-        mockGatedERC721.connect(destinationSigner).mint(destinationSigner.address, 1, badgeId)
-      ).to.be.revertedWith('NeedToMintWithProof()');
-    });
-
-    it('Should set a cooldown duration for a groupIndex', async () => {
-      // set a cooldown of 1 day for first group
-      const setCooldownDurationTransaction = await hydraS1AccountboundAttester
-        .connect(deployer)
-        .setCooldownDurationForGroupIndex(group.properties.groupIndex, cooldownDuration);
-
-      await expect(setCooldownDurationTransaction)
-        .to.emit(hydraS1AccountboundAttester, 'CooldownDurationSetForGroupIndex')
-        .withArgs(group.properties.groupIndex, cooldownDuration);
-
-      expect(
-        await hydraS1AccountboundAttester.getCooldownDurationForGroupIndex(
-          group.properties.groupIndex
+        mockGatedERC721.connect(destinationSigner).safeMint(
+          destinationSigner.address,
+          1,
+          [] // empty bytes data
         )
-      ).to.be.eql(cooldownDuration);
+      ).to.be.revertedWith(`NFTAlreadyMintedOnAddress("${destinationSigner.address}")`);
     });
 
     it('Should be able to change the destination, deleting the old attestation (since the cooldown duration is zero)', async () => {
@@ -370,17 +391,17 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       ).to.be.true;
     });
 
-    it('Should revert the mint if proof not provided with another destination holding the badge (nullifier already stored)', async () => {
-      const badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
-        group.properties.groupIndex
-      );
-
+    it('Should revert the mint if the nft has already been minted for a specific nullifier', async () => {
       await expect(
-        mockGatedERC721.connect(destination2Signer).mint(destination2Signer.address, 1, badgeId)
-      ).to.be.revertedWith('NeedToMintWithProof()');
+        mockGatedERC721.connect(destination2Signer).safeMint(
+          destination2Signer.address,
+          1,
+          [] // empty bytes data
+        )
+      ).to.be.revertedWith(`NFTAlreadyMintedOnAddress("${destinationSigner.address}")`);
     });
 
-    it('Should allow the mint because the proof is provided for another destination holding the badge (nullifier already stored)', async () => {
+    it('Should allow the safeTransferFrom because the proof is provided for another destination holding the badge (nullifier already stored)', async () => {
       const newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: destination2,
@@ -391,35 +412,13 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         destination: BigNumber.from(destination2.identifier).toHexString(),
       };
 
-      const packToBytes = (request: RequestStruct, proof: SnarkProof) => {
-        return ethers.utils.defaultAbiCoder.encode(
-          [
-            'tuple(uint256 groupId, uint256 claimedValue, bytes extraData)',
-            'address destination',
-            'bytes',
-          ],
-          [request.claims[0], request.destination, proof.toBytes()]
-        );
-      };
-
-      const decodeFromBytes = (data: string) => {
-        return ethers.utils.defaultAbiCoder.decode(
-          ['tuple(uint256, uint256, bytes)', 'address', 'bytes'],
-          data
-        );
-      };
-
-      console.log('newRequest', newRequest);
-      console.log('complete bytes', packToBytes(newRequest, newProof));
-      console.log('decodeFromBytes', decodeFromBytes(packToBytes(newRequest, newProof)));
-
       await mockGatedERC721
         .connect(destinationSigner)
         ['safeTransferFrom(address,address,uint256,bytes)'](
           destinationSigner.address,
           destination2Signer.address,
           0,
-          packToBytes(newRequest, newProof)
+          packRequestAndProofToBytes(newRequest, newProof)
         );
 
       // the previous holder should hold no NFT
@@ -433,333 +432,121 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       );
     });
 
-    //   it('Should renew the timestamp even if the nullifier is in cooldown', async () => {
-    //     const evmSnapshotId = await evmSnapshot(hre);
-    //     const latestCooldownStart = await hydraS1AccountboundAttester.getNullifierCooldownStart(
-    //       BigNumber.from(inputs.publicInputs.nullifier)
-    //     );
+    it('Should be able to change the destination of the badge multiple times and transfer the nft with proof whenever the user wants', async () => {
+      const newProof = await prover.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+      });
 
-    //     const renewGenerationTimestamp = group.properties.generationTimestamp + 10;
-    //     // regenerate groups for attester with different timestamp
-    //     const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups, {
-    //       generationTimestamp: renewGenerationTimestamp,
-    //     });
-    //     // register new registry tree root on chain
-    //     await availableRootsRegistry.registerRootForAttester(
-    //       hydraS1AccountboundAttester.address,
-    //       dataFormat.registryTree.getRoot()
-    //     );
+      const newRequest = {
+        ...request,
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
 
-    //     // create new prover using the new registryTree
-    //     const renewProver = new HydraS1Prover(dataFormat.registryTree, commitmentMapperPubKey);
-    //     const renewProof = await renewProver.generateSnarkProof({
-    //       ...userParams,
-    //       destination: destination2,
-    //       accountsTree: dataFormat.accountsTrees[0],
-    //     });
+      increaseTime(hre, cooldownDuration);
+      await hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes());
 
-    //     const renewRequest = {
-    //       claims: [
-    //         {
-    //           groupId: groups[0].id,
-    //           claimedValue: sourceValue,
-    //           extraData: encodeGroupProperties({
-    //             ...group.properties,
-    //             generationTimestamp: renewGenerationTimestamp,
-    //           }),
-    //         },
-    //       ],
-    //       destination: BigNumber.from(destination2.identifier).toHexString(),
-    //     };
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(2); // the burnCount should be incremented
 
-    //     const generateAttestationsTransaction =
-    //       await hydraS1AccountboundAttester.generateAttestations(renewRequest, renewProof.toBytes());
+      increaseTime(hre, cooldownDuration);
+      await hydraS1AccountboundAttester.generateAttestations(newRequest, newProof.toBytes());
 
-    //     // 0 - Checks that the transaction emitted the event with the new timestamp
-    //     await expect(generateAttestationsTransaction)
-    //       .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
-    //       .withArgs([
-    //         await (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         renewRequest.destination,
-    //         hydraS1AccountboundAttester.address,
-    //         sourceValue,
-    //         renewGenerationTimestamp,
-    //         encodeAccountBoundAttestationExtraData({
-    //           nullifier: inputs.publicInputs.nullifier,
-    //           burnCount: 1,
-    //         }),
-    //       ]);
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(3); // the burnCount should be incremented
 
-    //     // A renew should not have changed the nullifierData
-    //     // cooldownStart and burnCount should be the same
-    //     expect(
-    //       await hydraS1AccountboundAttester.getDestinationOfNullifier(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql(BigNumber.from(destination2.identifier).toHexString());
+      increaseTime(hre, cooldownDuration);
+      await hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes());
 
-    //     expect(
-    //       await hydraS1AccountboundAttester.getNullifierCooldownStart(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql(latestCooldownStart);
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(4); // the burnCount should be incremented
 
-    //     expect(
-    //       await hydraS1AccountboundAttester.getNullifierBurnCount(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql(1);
+      await mockGatedERC721
+        .connect(destinationSigner)
+        ['safeTransferFrom(address,address,uint256,bytes)'](
+          destination2Signer.address,
+          destinationSigner.address,
+          0,
+          packRequestAndProofToBytes(request, proof)
+        );
 
-    //     // 2 - Checks that the attestation in the registry has the new timestamp
-    //     expect(
-    //       await attestationsRegistry.getAttestationTimestamp(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destination2Signer.address
-    //       )
-    //     ).to.equal(renewGenerationTimestamp);
+      // the current holder should hold the NFT
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(1)
+      );
 
-    //     evmRevert(hre, evmSnapshotId);
-    //   });
+      // the previous holder should hold no NFT
+      expect(await mockGatedERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+    });
 
-    //   it('Should be able to update the claimedValue to zero even if the nullifier is in cooldown', async () => {
-    //     const evmSnapshotId = await evmSnapshot(hre);
-    //     // regenerate groups for attester with different timestamp
-    //     const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups, {
-    //       isScore: true,
-    //       generationTimestamp: group.properties.generationTimestamp,
-    //     });
-    //     // register new registry tree root on chain
-    //     await availableRootsRegistry.registerRootForAttester(
-    //       hydraS1AccountboundAttester.address,
-    //       dataFormat.registryTree.getRoot()
-    //     );
+    it('Should allow the safeMint because the proof is provided (nullifier not stored and no attestations generated)', async () => {
+      evmRevert(hre, evmSnapshotId);
 
-    //     // create new prover using the new registryTree
-    //     const renewProver = new HydraS1Prover(dataFormat.registryTree, commitmentMapperPubKey);
-    //     const renewProof = await renewProver.generateSnarkProof({
-    //       ...userParams,
-    //       destination: destination2,
-    //       accountsTree: dataFormat.accountsTrees[0],
-    //       isStrict: false,
-    //       claimedValue: 0,
-    //     });
+      // verify that the address dos not hold any attestations
+      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
+        .false;
 
-    //     const renewRequest = {
-    //       claims: [
-    //         {
-    //           groupId: groups[0].id,
-    //           claimedValue: 0,
-    //           extraData: encodeGroupProperties(groups[0].properties),
-    //         },
-    //       ],
-    //       destination: BigNumber.from(destination2.identifier).toHexString(),
-    //     };
+      // verify that the address does not hold any NFT
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(0)
+      );
 
-    //     const generateAttestationsTransaction =
-    //       await hydraS1AccountboundAttester.generateAttestations(renewRequest, renewProof.toBytes());
+      await mockGatedERC721.safeMint(
+        destinationSigner.address,
+        0,
+        packRequestAndProofToBytes(request, proof)
+      );
 
-    //     // Checks that the transaction emitted the event with a claimedValue of zero
-    //     await expect(generateAttestationsTransaction)
-    //       .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
-    //       .withArgs([
-    //         await (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         renewRequest.destination,
-    //         hydraS1AccountboundAttester.address,
-    //         0, // claimedValue
-    //         group.properties.generationTimestamp,
-    //         encodeAccountBoundAttestationExtraData({
-    //           nullifier: inputs.publicInputs.nullifier,
-    //           burnCount: 1,
-    //         }),
-    //       ]);
+      // verify that the address dos hold a new attestation
+      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
+        .true;
 
-    //     //  Checks that the attestation in the registry has a value of zero
-    //     expect(
-    //       await attestationsRegistry.getAttestationValue(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destination2Signer.address
-    //       )
-    //     ).to.equal(0);
+      // verify that the address does hold a new NFT
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(1)
+      );
+    });
 
-    //     evmRevert(hre, evmSnapshotId);
-    //   });
+    it('Should revert the safeMint because the proof is provided but nullifier is already stored', async () => {
+      increaseTime(hre, cooldownDuration);
 
-    //   it('Should revert because the cooldown period is not yet finished', async () => {
-    //     // not yet the end of the cooldown period
-    //     await increaseTime(hre, cooldownDuration - 10);
+      const newProof = await prover.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+      });
 
-    //     await expect(
-    //       hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes())
-    //     ).to.be.revertedWith(
-    //       `NullifierOnCooldown(${
-    //         inputs.publicInputs.nullifier
-    //       }, "${await hydraS1AccountboundAttester.getDestinationOfNullifier(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )}", ${1}, ${cooldownDuration})`
-    //     );
-    //   });
+      const newRequest = {
+        ...request,
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
 
-    //   it('Should be able to change again the destination after the cooldown period', async () => {
-    //     const evmSnapshotId = await evmSnapshot(hre);
-    //     await increaseTime(hre, cooldownDuration);
+      // verify that the address dos not hold any attestations
+      expect(await attestationsRegistry.hasAttestation(badgeId, destination2Signer.address)).to.be
+        .false;
 
-    //     const generateAttestationsTransaction = hydraS1AccountboundAttester.generateAttestations(
-    //       request,
-    //       proof.toBytes()
-    //     );
+      // verify that the address does not hold any NFT
+      expect(await mockGatedERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
 
-    //     // 0 - Checks that the transaction emitted the event
-    //     await expect(generateAttestationsTransaction)
-    //       .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
-    //       .withArgs([
-    //         await (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //       ]);
-
-    //     // 1 - Checks that the nullifier information were successfully updated
-    //     expect(
-    //       await hydraS1AccountboundAttester.getDestinationOfNullifier(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.equal(destination.identifier);
-
-    //     // cooldownStart should be reset to the latest block timestamp
-    //     // and burnCount incremented by 1
-    //     expect(
-    //       await hydraS1AccountboundAttester.getNullifierCooldownStart(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
-
-    //     expect(
-    //       await hydraS1AccountboundAttester.getNullifierBurnCount(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql(2); // burnCount should be incremented
-
-    //     // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
-    //     // 2.1 - Checks that the old destination has not anymore it's attestation
-    //     expect(
-    //       await attestationsRegistry.hasAttestation(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destination2Signer.address
-    //       )
-    //     ).to.be.false;
-
-    //     // 2.2 - Checks that the new destination has it's attestation
-    //     expect(
-    //       await attestationsRegistry.hasAttestation(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destinationSigner.address
-    //       )
-    //     ).to.be.true;
-    //     evmRevert(hre, evmSnapshotId);
-    //   });
-
-    //   it('Should be able to change again the destination after the cooldown period with a recomputed group', async () => {
-    //     const evmSnapshotId = await evmSnapshot(hre);
-    //     await increaseTime(hre, cooldownDuration);
-
-    //     const renewGenerationTimestamp = group.properties.generationTimestamp + 10;
-    //     // regenerate groups for attester with different timestamp
-    //     const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups, {
-    //       generationTimestamp: renewGenerationTimestamp,
-    //     });
-    //     // register new registry tree root on chain
-    //     await availableRootsRegistry.registerRootForAttester(
-    //       hydraS1AccountboundAttester.address,
-    //       dataFormat.registryTree.getRoot()
-    //     );
-
-    //     // create new prover using the new registryTree
-    //     const renewProver = new HydraS1Prover(dataFormat.registryTree, commitmentMapperPubKey);
-    //     const renewProof = await renewProver.generateSnarkProof({
-    //       ...userParams,
-    //       destination: destination,
-    //       accountsTree: dataFormat.accountsTrees[0],
-    //     });
-
-    //     const renewRequest = {
-    //       claims: [
-    //         {
-    //           groupId: groups[0].id,
-    //           claimedValue: sourceValue,
-    //           extraData: encodeGroupProperties({
-    //             ...group.properties,
-    //             generationTimestamp: renewGenerationTimestamp,
-    //           }),
-    //         },
-    //       ],
-    //       destination: BigNumber.from(destination.identifier).toHexString(),
-    //     };
-
-    //     const generateAttestationsTransaction =
-    //       await hydraS1AccountboundAttester.generateAttestations(renewRequest, renewProof.toBytes());
-
-    //     // 0 - Checks that the transaction emitted the event
-    //     await expect(generateAttestationsTransaction)
-    //       .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
-    //       .withArgs([
-    //         await (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //       ]);
-
-    //     // 1 - Checks that the nullifier information were successfully updated
-    //     expect(
-    //       await hydraS1AccountboundAttester.getDestinationOfNullifier(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.equal(destination.identifier);
-
-    //     // cooldownStart should be reset to the latest block timestamp
-    //     // and burnCount incremented by 1
-    //     expect(
-    //       await hydraS1AccountboundAttester.getNullifierCooldownStart(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
-
-    //     expect(
-    //       await hydraS1AccountboundAttester.getNullifierBurnCount(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql(2); // burnCount should be incremented
-
-    //     // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
-    //     // 2.1 - Checks that the old destination has not anymore it's attestation
-    //     expect(
-    //       await attestationsRegistry.hasAttestation(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destination2Signer.address
-    //       )
-    //     ).to.be.false;
-
-    //     // 2.2 - Checks that the new destination has it's attestation
-    //     expect(
-    //       await attestationsRegistry.hasAttestation(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destinationSigner.address
-    //       )
-    //     ).to.be.true;
-    //     evmRevert(hre, evmSnapshotId);
-    //   });
+      await expect(
+        mockGatedERC721.safeMint(
+          destination2Signer.address,
+          1,
+          packRequestAndProofToBytes(newRequest, newProof)
+        )
+      ).to.be.revertedWith(`NFTAlreadyMintedOnAddress("${destination2Signer.address}")`);
+    });
   });
 });
