@@ -61,6 +61,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
   let source: HydraS1Account;
   let destination: HydraS1Account;
   let destination2: HydraS1Account;
+  let randomDestination: HydraS1Account;
 
   let sourceValue: BigNumber;
   let registryTree: KVMerkleTree;
@@ -90,7 +91,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
     commitmentMapperPubKey = await commitmentMapper.getPubKey();
 
     let hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
-    [source, destination, destination2] = hydraS1Accounts;
+    [source, destination, destination2, , , randomDestination] = hydraS1Accounts;
 
     allAvailableGroups = await generateGroups(hydraS1Accounts);
     const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups);
@@ -433,12 +434,12 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
     });
 
     it('Should be able to change the destination of the badge multiple times and transfer the nft with proof whenever the user wants', async () => {
-      const newProof = await prover.generateSnarkProof({
+      let newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: destination2,
       });
 
-      const newRequest = {
+      let newRequest = {
         ...request,
         destination: BigNumber.from(destination2.identifier).toHexString(),
       };
@@ -452,6 +453,16 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         )
       ).to.be.eql(2); // the burnCount should be incremented
 
+      newProof = await prover.generateSnarkProof({
+        ...userParams,
+        destination: randomDestination,
+      });
+
+      newRequest = {
+        ...request,
+        destination: BigNumber.from(randomDestination.identifier).toHexString(),
+      };
+
       increaseTime(hre, cooldownDuration);
       await hydraS1AccountboundAttester.generateAttestations(newRequest, newProof.toBytes());
 
@@ -462,27 +473,17 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       ).to.be.eql(3); // the burnCount should be incremented
 
       increaseTime(hre, cooldownDuration);
-      await hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes());
-
-      expect(
-        await hydraS1AccountboundAttester.getNullifierBurnCount(
-          BigNumber.from(inputs.publicInputs.nullifier)
-        )
-      ).to.be.eql(4); // the burnCount should be incremented
-
       await mockGatedERC721
-        .connect(destinationSigner)
+        .connect(destination2Signer)
         ['safeTransferFrom(address,address,uint256,bytes)'](
           destination2Signer.address,
-          destinationSigner.address,
+          randomSigner.address,
           0,
           packRequestAndProofToBytes(request, proof)
         );
 
       // the current holder should hold the NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(1)
-      );
+      expect(await mockGatedERC721.balanceOf(randomSigner.address)).to.be.eql(BigNumber.from(1));
 
       // the previous holder should hold no NFT
       expect(await mockGatedERC721.balanceOf(destination2Signer.address)).to.be.eql(
