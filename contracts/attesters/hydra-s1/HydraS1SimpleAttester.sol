@@ -143,6 +143,17 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
   }
 
   /*******************************************************
+    MANDATORY FUNCTIONS TO OVERRIDE FROM HYDRAS1BASE.SOL
+  *******************************************************/
+
+  function getNullifier(
+    address destination,
+    uint256 collectionId
+  ) external view virtual override returns (uint256) {
+    return 0;
+  }
+
+  /*******************************************************
     OPTIONAL HOOK VIRTUAL FUNCTIONS FROM ATTESTER.SOL
   *******************************************************/
 

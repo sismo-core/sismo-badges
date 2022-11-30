@@ -77,6 +77,16 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
     return AVAILABLE_ROOTS_REGISTRY;
   }
 
+  /**
+   * @dev Getter of a nullifier for a destiantion and a collectionId
+   * @param destination destination chosen by the user with this nullifier
+   * @param collectionId id of the attestationsCollection used for the external nullifier
+   */
+  function getNullifier(
+    address destination,
+    uint256 collectionId
+  ) external view virtual returns (uint256);
+
   /*******************************************************
     Hydra-S1 SPECIFIC FUNCTIONS
   *******************************************************/
