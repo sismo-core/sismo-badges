@@ -71,6 +71,8 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
   let proof: SnarkProof;
   let request: RequestStruct;
 
+  let evmSnapshotId: string;
+
   before(async () => {
     const signers = await hre.ethers.getSigners();
     [deployer, destinationSigner, destination2Signer, , , randomSigner] = signers;
@@ -155,6 +157,55 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         destination: BigNumber.from(destination.identifier).toHexString(),
       };
     });
+
+    it('Should have setup the owner correctly', async () => {
+      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should revert when trying to call initialize again', async () => {
+      await expect(hydraS1AccountboundAttester.initialize(randomSigner.address)).to.be.revertedWith(
+        'Initializable: contract is already initialized'
+      );
+    });
+  });
+
+  describe('Ownable', () => {
+    // TODO: modify this test to test the ownable contract, not the init part
+    // Move to a Config section in the test. Here we are in the "Generate Attestation section"
+
+    it('Should revert when trying to transferOwnership with a random address', async () => {
+      await expect(
+        hydraS1AccountboundAttester.connect(randomSigner).transferOwnership(randomSigner.address)
+      ).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('Should revert when trying to transferOwnership to 0x0', async () => {
+      await expect(
+        hydraS1AccountboundAttester
+          .connect(deployer)
+          .transferOwnership('0x0000000000000000000000000000000000000000')
+      ).to.be.revertedWith('Ownable: new owner is the zero address');
+    });
+
+    it('Should transfer ownership', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+
+      await hydraS1AccountboundAttester.connect(deployer).transferOwnership(randomSigner.address);
+      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(randomSigner.address);
+
+      evmRevert(hre, evmSnapshotId);
+    });
+
+    it('Should renounce ownership', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+
+      await hydraS1AccountboundAttester.connect(deployer).renounceOwnership();
+      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(
+        '0x0000000000000000000000000000000000000000'
+      );
+
+      evmRevert(hre, evmSnapshotId);
+    });
   });
 
   /*************************************************************************************/
@@ -204,6 +255,35 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           burnCount: 0,
         })
       );
+    });
+  });
+
+  describe('Cooldown configuration', () => {
+    it('Should revert if a signer different from contract owner wants to set a cooldown duration for a groupIndex', async () => {
+      expect(await hydraS1AccountboundAttester.owner()).not.to.be.eql(randomSigner.address);
+
+      await expect(
+        hydraS1AccountboundAttester
+          .connect(randomSigner)
+          .setCooldownDurationForGroupIndex(group.properties.groupIndex, cooldownDuration)
+      ).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('Should set a cooldown duration for a groupIndex', async () => {
+      // set a cooldown of 1 day for first group
+      const setCooldownDurationTransaction = await hydraS1AccountboundAttester
+        .connect(deployer)
+        .setCooldownDurationForGroupIndex(group.properties.groupIndex, cooldownDuration);
+
+      await expect(setCooldownDurationTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'CooldownDurationSetForGroupIndex')
+        .withArgs(group.properties.groupIndex, cooldownDuration);
+
+      expect(
+        await hydraS1AccountboundAttester.getCooldownDurationForGroupIndex(
+          group.properties.groupIndex
+        )
+      ).to.be.eql(cooldownDuration);
     });
   });
 
@@ -529,6 +609,12 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
     });
 
     it('Should revert if the groupIndex has no cooldownDuration set', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+
+      await hydraS1AccountboundAttester
+        .connect(deployer)
+        .setCooldownDurationForGroupIndex(group.properties.groupIndex, 0);
+
       const newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: destination2,
@@ -544,40 +630,8 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       ).to.be.revertedWith(
         `CooldownDurationNotSetForGroupIndex(${BigNumber.from(group.properties.groupIndex)})`
       );
-    });
 
-    // TODO: modify this test to test the ownable contract, not the init part
-    // Move to a Config section in the test. Here we are in the "Generate Attestation section"
-    it('Should setup the owner', async () => {
-      await hydraS1AccountboundAttester.initialize(deployer.address);
-      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
-    });
-
-    it('Should revert if a signer different from contract owner wants to set a cooldown duration for a groupIndex', async () => {
-      expect(await hydraS1AccountboundAttester.owner()).not.to.be.eql(randomSigner.address);
-
-      await expect(
-        hydraS1AccountboundAttester
-          .connect(randomSigner)
-          .setCooldownDurationForGroupIndex(group.properties.groupIndex, cooldownDuration)
-      ).to.be.revertedWith('Ownable: caller is not the owner');
-    });
-
-    it('Should set a cooldown duration for a groupIndex', async () => {
-      // set a cooldown of 1 day for first group
-      const setCooldownDurationTransaction = await hydraS1AccountboundAttester
-        .connect(deployer)
-        .setCooldownDurationForGroupIndex(group.properties.groupIndex, cooldownDuration);
-
-      await expect(setCooldownDurationTransaction)
-        .to.emit(hydraS1AccountboundAttester, 'CooldownDurationSetForGroupIndex')
-        .withArgs(group.properties.groupIndex, cooldownDuration);
-
-      expect(
-        await hydraS1AccountboundAttester.getCooldownDurationForGroupIndex(
-          group.properties.groupIndex
-        )
-      ).to.be.eql(cooldownDuration);
+      evmRevert(hre, evmSnapshotId);
     });
 
     it('Should be able to change the destination, deleting the old attestation (since the cooldown duration is zero)', async () => {

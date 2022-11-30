@@ -97,6 +97,7 @@ export const customDeployContract = async (
     * Deploying ${options?.behindProxy ? 'behind' : 'without'} proxy ***********
     `);
   }
+
   const isImplementationUpgrade =
     options?.implementationVersion && options?.implementationVersion > 1;
   let deploymentNameImplem = deploymentName + 'Implem';
@@ -131,6 +132,7 @@ export const customDeployContract = async (
     }
     await hre.run('upgrade-proxy', {
       proxyAddress,
+      proxyData: options.proxyData,
       newImplementationAddress: deployed.address,
       options,
     });
