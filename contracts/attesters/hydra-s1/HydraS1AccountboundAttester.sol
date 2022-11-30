@@ -44,14 +44,13 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   We also renamed 'IdNullifier' in 'sourceSecret' (the secret tied to a source account) and we kept the 'externalNullifier' notation.
  *   Finally, here is our notations at Sismo: nullifier = hash(sourceSecret, externalNullifier)
 
- * - Accountbound (with cooldown period)
- *   Users can choose to delete or generate attestations to a new destination using their source account.
- *   The attestation is "Accountbound" to the source account.
+ * - Accountbound (opt-in, with cooldown period)
+ *   The owner of this attester can set a cooldown duration for a specific group, activating the accountbound feature for this group.
+ *   Users can update their attestation's destination by providing a new Hydra-S1 ZK proof 
+ *   It means the attestation is bound to the source account, stored on an updatable destination account.
  *   When deleting/ sending to a new destination, the nullifier will enter a cooldown period, so it remains occasional.
- *   Each group has its own cooldown duration, set by the admin of the attester.
  *   A group that has its cooldown duration set to 0 means it has been configured to not feature accountbound attestations, attestations can not be transferred
- *   If the cooldown duration > 0, the user will need to wait until the end of the cooldown period before being able to delete or switch destination again.
- *   One can however know that the former and the new destinations were created using the same nullifier.
+ *   One can however know that the former and the new destinations were created using the same nullifier, thus creating a link between those two destinations.
  
  * - Renewable
  *   A nullifier can actually be reused as long as the destination of the attestation remains the same
