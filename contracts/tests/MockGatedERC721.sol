@@ -14,20 +14,17 @@ contract MockGatedERC721 is ERC721, SismoGated {
     SismoGated(badgesAddress, attesterAddress, _gatedBadges)
   {}
 
-  function mint(address to, uint256 tokenId) public onlyBadgesOwner {
+  function mint(address to, uint256 tokenId, uint256 badgeId) public onlyBadgesOwner(to, badgeId) {
     _mint(to, tokenId);
   }
 
-  function safeMint(address to, uint256 tokenId, bytes calldata data) public {
-    _proveWithSismo(data);
-    _safeMint(to, tokenId);
-  }
-
-  function proveAndMintERC721(
+  function safeTransferFrom(
+    address from,
     address to,
     uint256 tokenId,
-    bytes calldata data
-  ) public onlyBadgesOwner {
-    _safeMint(to, tokenId, data);
+    bytes memory data
+  ) public override(ERC721) {
+    _proveWithSismo(data);
+    _transfer(from, to, tokenId);
   }
 }
