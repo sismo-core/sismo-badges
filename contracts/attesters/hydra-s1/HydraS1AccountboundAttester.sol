@@ -66,17 +66,33 @@ contract HydraS1AccountboundAttester is
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
 
-  // immutable only used for setting up owner during proxy upgrade
-  address private immutable OWNER;
+  /*******************************************************
+    Storage layout:
+    20 slots between HydraS1SimpleAttester and HydraS1AccountboundAttester
+      1 currently used by Ownable
+      19 place holders
+    2O for config
+      1 currently used
+      18 place holders
+    20 for logic
+      2 currently used
+      18 place holders
+  *******************************************************/
+
+  // keeping some space for future config logics
+  uint256[19] private _placeHolderBeforeHydraS1Accountbound;
 
   // cooldown durations for each groupIndex
   mapping(uint256 => uint32) internal _cooldownDurations;
 
   // keeping some space for future config logics
-  uint256[15] private _placeHoldersHydraS1Accountbound;
+  uint256[19] private _placeHoldersHydraS1AccountboundConfig;
 
   mapping(uint256 => uint32) internal _nullifiersCooldownStart;
   mapping(uint256 => uint16) internal _nullifiersBurnCount;
+
+  // keeping some space for future config logics
+  uint256[18] private _placeHoldersHydraS1AccountboundLogic;
 
   /*******************************************************
     INITIALIZATION FUNCTIONS                           
@@ -87,8 +103,8 @@ contract HydraS1AccountboundAttester is
    * @param hydraS1VerifierAddress ZK Snark Hydra-S1 Verifier contract
    * @param availableRootsRegistryAddress Registry storing the available groups for this attester (e.g roots of registry merkle trees)
    * @param commitmentMapperAddress commitment mapper's public key registry
-   * @param collectionIdFirst Id of the first collection in which the attester is supposed to record
-   * @param collectionIdLast Id of the last collection in which the attester is supposed to record
+   * @param collectionIdFirst Id of the first attestation collection in which the attester is supposed to record
+   * @param collectionIdLast Id of the last attestation collection in which the attester is supposed to record
    */
   constructor(
     address attestationsRegistryAddress,
@@ -97,7 +113,7 @@ contract HydraS1AccountboundAttester is
     address commitmentMapperAddress,
     uint256 collectionIdFirst,
     uint256 collectionIdLast,
-    address _owner
+    address owner
   )
     HydraS1SimpleAttester(
       attestationsRegistryAddress,
@@ -108,14 +124,16 @@ contract HydraS1AccountboundAttester is
       collectionIdLast
     )
   {
-    OWNER = _owner;
+    initialize(owner);
   }
 
-  /*
-   * TODO remove the function after updating proxy's state
+  // TODO: redo, add initializer modifier
+  /**
+   * @dev Initialize function, to be called by the proxy delegating calls to this implementation
+   * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
    */
-  function setOwner() public {
-    _transferOwnership(OWNER);
+  function initialize(address owner) public initializer {
+    _transferOwnership(owner);
   }
 
   /*******************************************************
