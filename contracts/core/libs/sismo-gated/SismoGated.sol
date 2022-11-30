@@ -14,57 +14,77 @@ contract SismoGated {
   IBadges public immutable BADGES;
   IAttester public immutable ATTESTER;
 
-  uint256[] public allGatedBadges;
-  mapping(uint256 => address) private _nullifiedAddresses;
+  uint256 public immutable GATED_BADGE;
+  mapping(uint256 => NullifierData) private _nullifiedAddresses;
 
   error UserIsNotOwnerOfBadge(uint256 collectionId);
-  error NeedToMintWithProof();
-  error GatedBadgesAreNotCorrect();
+  error NFTAlreadyMintedOnAddress(address owner);
+
+  struct NullifierData {
+    address destination;
+    bool hasAlreadyBeenUsedInProof;
+  }
 
   /**
    * @dev Constructor
    * @param badgesAddress Badges contract address
    */
-  constructor(address badgesAddress, address attesterAddress, uint256[] memory _gatedBadges) {
+  constructor(address badgesAddress, address attesterAddress, uint256 _gatedBadge) {
     BADGES = IBadges(badgesAddress);
     ATTESTER = IAttester(attesterAddress);
-    allGatedBadges = _gatedBadges;
+    GATED_BADGE = _gatedBadge;
   }
 
   /**
-   * @dev Modifier allowing only the owners of badges referenced in `gatedBadges` to trigger the function
-   * @notice the burnCount for msg.sender should not be greater than zero
+   * @dev Modifier allowing only the owners of the `GATED_BADGE` to trigger the function
+   * @notice a proof can also be sent to allow non-holders to prove their eligibility
    */
-  modifier onlyBadgesOwner(address to, uint256 badgeId) {
-    bool canGate = false;
-    for (uint256 i = 0; i < allGatedBadges.length; i++) {
-      if (allGatedBadges[i] == badgeId) {
-        canGate = true;
+  modifier onlyBadgesOwner(address to, bytes calldata data) {
+    bool isProofProvided = false;
+
+    if (data.length > 0) {
+      isProofProvided = true;
+    }
+
+    if (BADGES.balanceOf(to, GATED_BADGE) > 0) {
+      // badge already minted on address `to`
+      (uint256 previousNullifier, ) = abi.decode(
+        BADGES.getBadgeExtraData(to, GATED_BADGE),
+        (uint256, uint16)
+      );
+
+      if (_nullifiedAddresses[previousNullifier].destination != address(0x0)) {
+        revert NFTAlreadyMintedOnAddress(_nullifiedAddresses[previousNullifier].destination);
       }
-    }
-    if (!canGate) {
-      revert GatedBadgesAreNotCorrect();
-    }
+      // set to address owning the badge for this nullifier to prevent from bypassing this modifier several times with different destination address
+      _nullifiedAddresses[previousNullifier].destination = to;
+    } else {
+      // badge NOT already minted on address `to`
 
-    for (uint256 i = 0; i < allGatedBadges.length; i++) {
-      if (BADGES.balanceOf(to, allGatedBadges[i]) == 0) {
-        revert UserIsNotOwnerOfBadge(allGatedBadges[i]);
+      // if no proof is provided
+      if (!isProofProvided) {
+        revert UserIsNotOwnerOfBadge(GATED_BADGE);
       }
+      proveWithSismo(data);
+
+      (uint256 newNullifier, ) = abi.decode(
+        BADGES.getBadgeExtraData(to, GATED_BADGE),
+        (uint256, uint16)
+      );
+
+      if (
+        _nullifiedAddresses[newNullifier].destination != address(0x0) &&
+        _nullifiedAddresses[newNullifier].hasAlreadyBeenUsedInProof
+      ) {
+        revert NFTAlreadyMintedOnAddress(_nullifiedAddresses[newNullifier].destination);
+      }
+      _nullifiedAddresses[newNullifier].hasAlreadyBeenUsedInProof = true;
     }
 
-    (uint256 nullifier, ) = abi.decode(BADGES.getBadgeExtraData(to, badgeId), (uint256, uint16));
-
-    console.log('nullifier', nullifier);
-
-    if (_nullifiedAddresses[nullifier] != address(0x0)) {
-      revert NeedToMintWithProof();
-    }
-    // set to address owning the badge for this nullifier to prevent from bypassing this modifier several times with different destination address
-    _nullifiedAddresses[nullifier] = msg.sender;
     _;
   }
 
-  function _proveWithSismo(bytes memory data) internal returns (Attestation[] memory, address) {
+  function proveWithSismo(bytes memory data) public returns (uint256) {
     Claim[] memory claims = new Claim[](1);
     address newDestination;
     bytes memory proofData;
@@ -78,9 +98,8 @@ contract SismoGated {
     Attestation[] memory attestations = ATTESTER.generateAttestations(request, proofData);
     (uint256 nullifier, ) = abi.decode(attestations[0].extraData, (uint256, uint16));
 
-    address oldDestination = _nullifiedAddresses[nullifier];
-    _nullifiedAddresses[nullifier] = newDestination;
+    _nullifiedAddresses[nullifier].destination = newDestination;
 
-    return (attestations, oldDestination);
+    return nullifier;
   }
 }
