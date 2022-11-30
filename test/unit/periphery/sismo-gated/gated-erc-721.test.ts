@@ -549,6 +549,30 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           destinationSigner.address
         )
       ).to.be.true;
+
+      evmSnapshot(hre);
+    });
+
+    it('Should mint a NFT with a nullifier not already stored', async () => {
+      const badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+        group.properties.groupIndex
+      );
+
+      await mockGatedERC721.connect(destinationSigner).mint(destinationSigner.address, 0, badgeId);
+
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(1)
+      );
+    });
+
+    it('Should revert the mint if proof not provided (nullifier already stored)', async () => {
+      const badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+        group.properties.groupIndex
+      );
+
+      await expect(
+        mockGatedERC721.connect(destinationSigner).mint(destinationSigner.address, 1, badgeId)
+      ).to.be.revertedWith('NeedToMintWithProof()');
     });
 
     it('Should revert if the groupIndex has no cooldownDuration set', async () => {
@@ -601,98 +625,98 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       ).to.be.revertedWith(`NFTAlreadyMinted()`);
     });
 
-    //   it('Should be able to change the destination, deleting the old attestation (since the cooldown duration is zero)', async () => {
-    //     const newProof = await prover.generateSnarkProof({
-    //       ...userParams,
-    //       destination: destination2,
-    //     });
+    it('Should be able to change the destination, deleting the old attestation (since the cooldown duration is zero)', async () => {
+      const newProof = await prover.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+      });
 
-    //     const newRequest = {
-    //       ...request,
-    //       destination: BigNumber.from(destination2.identifier).toHexString(),
-    //     };
+      const newRequest = {
+        ...request,
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
 
-    //     const generateAttestationsTransaction =
-    //       await hydraS1AccountboundAttester.generateAttestations(newRequest, newProof.toBytes());
+      const generateAttestationsTransaction =
+        await hydraS1AccountboundAttester.generateAttestations(newRequest, newProof.toBytes());
 
-    //     // 0 - Checks that the transaction emitted the event
-    //     await expect(generateAttestationsTransaction)
-    //       .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
-    //       .withArgs([
-    //         await (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         newRequest.destination,
-    //         hydraS1AccountboundAttester.address,
-    //         sourceValue,
-    //         group.properties.generationTimestamp,
-    //         encodeAccountBoundAttestationExtraData({
-    //           nullifier: inputs.publicInputs.nullifier,
-    //           burnCount: 1, // burn count should be incremented
-    //         }),
-    //       ]);
-    //     await expect(generateAttestationsTransaction)
-    //       .to.emit(hydraS1AccountboundAttester, 'NullifierDestinationUpdated')
-    //       .withArgs(inputs.publicInputs.nullifier, destination2.identifier);
-    //     await expect(generateAttestationsTransaction)
-    //       .to.emit(hydraS1AccountboundAttester, 'NullifierSetOnCooldown')
-    //       .withArgs(inputs.publicInputs.nullifier, 1);
+      // 0 - Checks that the transaction emitted the event
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
+        .withArgs([
+          await (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          newRequest.destination,
+          hydraS1AccountboundAttester.address,
+          sourceValue,
+          group.properties.generationTimestamp,
+          encodeAccountBoundAttestationExtraData({
+            nullifier: inputs.publicInputs.nullifier,
+            burnCount: 1, // burn count should be incremented
+          }),
+        ]);
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'NullifierDestinationUpdated')
+        .withArgs(inputs.publicInputs.nullifier, destination2.identifier);
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'NullifierSetOnCooldown')
+        .withArgs(inputs.publicInputs.nullifier, 1);
 
-    //     // 1 - Checks that the nullifier informations were successfully updated
-    //     expect(
-    //       await hydraS1AccountboundAttester.getDestinationOfNullifier(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.equal(BigNumber.from(destination2.identifier));
+      // 1 - Checks that the nullifier informations were successfully updated
+      expect(
+        await hydraS1AccountboundAttester.getDestinationOfNullifier(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.equal(BigNumber.from(destination2.identifier));
 
-    //     expect(
-    //       await hydraS1AccountboundAttester.getNullifierCooldownStart(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
+      expect(
+        await hydraS1AccountboundAttester.getNullifierCooldownStart(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
 
-    //     expect(
-    //       await hydraS1AccountboundAttester.getNullifierBurnCount(
-    //         BigNumber.from(inputs.publicInputs.nullifier)
-    //       )
-    //     ).to.be.eql(1); // the burnCount should be incremented
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(1); // the burnCount should be incremented
 
-    //     // burnCount should be recorded in the attestationsRegistry
-    //     expect(
-    //       await attestationsRegistry.getAttestationExtraData(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destination2Signer.address
-    //       )
-    //     ).to.equal(
-    //       encodeAccountBoundAttestationExtraData({
-    //         nullifier: inputs.publicInputs.nullifier,
-    //         burnCount: 1, // burnCount should be incremented
-    //       })
-    //     );
+      // burnCount should be recorded in the attestationsRegistry
+      expect(
+        await attestationsRegistry.getAttestationExtraData(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          destination2Signer.address
+        )
+      ).to.equal(
+        encodeAccountBoundAttestationExtraData({
+          nullifier: inputs.publicInputs.nullifier,
+          burnCount: 1, // burnCount should be incremented
+        })
+      );
 
-    //     // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
-    //     // 2.1 - Checks that the old destination has not anymore it's attestation
-    //     expect(
-    //       await attestationsRegistry.hasAttestation(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destinationSigner.address
-    //       )
-    //     ).to.be.false;
+      // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
+      // 2.1 - Checks that the old destination has not anymore it's attestation
+      expect(
+        await attestationsRegistry.hasAttestation(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          destinationSigner.address
+        )
+      ).to.be.false;
 
-    //     // 2.2 - Checks that the new destination has it's attestation
-    //     expect(
-    //       await attestationsRegistry.hasAttestation(
-    //         (
-    //           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-    //         ).add(group.properties.groupIndex),
-    //         destination2Signer.address
-    //       )
-    //     ).to.be.true;
-    //   });
+      // 2.2 - Checks that the new destination has it's attestation
+      expect(
+        await attestationsRegistry.hasAttestation(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(group.properties.groupIndex),
+          destination2Signer.address
+        )
+      ).to.be.true;
+    });
 
     it('Should revert if the nullifier is in cooldown', async () => {
       const burnCount = await hydraS1AccountboundAttester.getNullifierBurnCount(
