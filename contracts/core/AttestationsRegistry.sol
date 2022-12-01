@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {IAttestationsRegistry} from './interfaces/IAttestationsRegistry.sol';
 import {AttestationsRegistryConfigLogic} from './libs/attestations-registry/AttestationsRegistryConfigLogic.sol';
@@ -28,23 +28,28 @@ contract AttestationsRegistry is
   AttestationsRegistryConfigLogic
 {
   IBadges immutable BADGES;
+  // implementation version
+  uint8 public immutable VERSION;
 
   /**
    * @dev Constructor.
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
    * @param badgesAddress Stateless ERC1155 Badges contract
    */
-  constructor(address owner, address badgesAddress) {
-    initialize(owner);
+  constructor(address owner, uint8 version, address badgesAddress) {
+    VERSION = version;
     BADGES = IBadges(badgesAddress);
+    initialize(owner, version);
   }
 
   /**
    * @dev Initialize function, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
    */
-  function initialize(address owner) public initializer {
-    _transferOwnership(owner);
+  function initialize(address owner, uint8 version) public reinitializer(version) {
+    if (this.owner() == address(0x0)) {
+      _transferOwnership(owner);
+    }
   }
 
   /**

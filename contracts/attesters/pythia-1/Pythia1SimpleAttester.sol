@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
@@ -46,6 +46,9 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   using Pythia1Lib for bytes;
   using Pythia1Lib for Request;
 
+  // implementation version
+  uint8 public immutable VERSION;
+
   // The deployed contract will need to be authorized to write into the Attestation registry
   // It should get write access on attestation collections from AUTHORIZED_COLLECTION_ID_FIRST to AUTHORIZED_COLLECTION_ID_LAST.
   uint256 public immutable AUTHORIZED_COLLECTION_ID_FIRST;
@@ -72,11 +75,13 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
     uint256 collectionIdLast,
     address pythia1VerifierAddress,
     uint256[2] memory commitmentSignerPubKey,
-    address owner
+    address owner,
+    uint8 version
   ) Attester(attestationsRegistryAddress) Pythia1Base(pythia1VerifierAddress) {
     AUTHORIZED_COLLECTION_ID_FIRST = collectionIdFirst;
     AUTHORIZED_COLLECTION_ID_LAST = collectionIdLast;
-    initialize(commitmentSignerPubKey, owner);
+    VERSION = version;
+    initialize(commitmentSignerPubKey, owner, version);
   }
 
   /**
@@ -84,8 +89,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @param commitmentSignerPubKey EdDSA public key of the commitment signer
    * @param owner Owner of the contract, can update public key and address
    */
-  function initialize(uint256[2] memory commitmentSignerPubKey, address owner) public initializer {
+  function initialize(uint256[2] memory commitmentSignerPubKey, address owner, uint8 version) public reinitializer(version) {
+    if (this.owner() == address(0x0)) {
     _transferOwnership(owner);
+    }
     _updateCommitmentSignerPubKey(commitmentSignerPubKey);
   }
 

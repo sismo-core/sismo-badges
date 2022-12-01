@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IAvailableRootsRegistry} from './interfaces/IAvailableRootsRegistry.sol';
@@ -14,22 +14,28 @@ import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.s
  *
  **/
 contract AvailableRootsRegistry is IAvailableRootsRegistry, Initializable, Ownable {
+  // implementation version
+  uint8 public immutable VERSION;
+
   mapping(address => mapping(uint256 => bool)) public _roots;
 
   /**
    * @dev Constructor
    * @param owner Owner of the contract, can register/ unregister roots
    */
-  constructor(address owner) {
-    initialize(owner);
+  constructor(address owner, uint8 version) {
+    VERSION = version;
+    initialize(owner, version);
   }
 
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, can update public key and address
    */
-  function initialize(address owner) public initializer {
+  function initialize(address owner, uint8 version) public reinitializer(version) {
+    if (this.owner() == address(0x0)) {
     _transferOwnership(owner);
+    }
   }
 
   /**

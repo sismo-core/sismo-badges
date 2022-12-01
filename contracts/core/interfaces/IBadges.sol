@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 /**
  * @title Interface for Badges contract
@@ -15,8 +15,10 @@ interface IBadges {
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param uri Uri for the metadata of badges
    * @param owner Owner of the contract, super admin, can setup roles and update the attestation registry
+   * @param version Version of the implementation
+   * 
    */
-  function initialize(string memory uri, address owner) external;
+  function initialize(string memory uri, address owner, uint8 version) external;
 
   /**
    * @dev Main function of the ERC1155 badge

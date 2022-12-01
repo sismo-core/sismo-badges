@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {ERC1155} from '@openzeppelin/contracts/token/ERC1155/ERC1155.sol';
 import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.sol';
@@ -17,6 +17,9 @@ import {IBadges} from './interfaces/IBadges.sol';
  * For more information: https://badges.docs.sismo.io
  */
 contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
+  // implementation version
+  uint8 public immutable VERSION;
+
   IAttestationsRegistry internal _attestationsRegistry;
 
   bytes32 public constant EVENT_TRIGGERER_ROLE = keccak256('EVENT_TRIGGERER_ROLE');
@@ -28,9 +31,11 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    */
   constructor(
     string memory uri,
-    address owner // This is Sismo Frontend Contract
+    address owner, // This is Sismo Frontend Contract
+    uint8 version
   ) ERC1155(uri) {
-    initialize(uri, owner);
+    VERSION = version;
+    initialize(uri, owner, version);
   }
 
   /**
@@ -38,7 +43,7 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    * @param uri Uri for the metadata of badges
    * @param owner Owner of the contract, super admin, can setup roles and update the attestation registry
    */
-  function initialize(string memory uri, address owner) public initializer {
+  function initialize(string memory uri, address owner, uint8 version) public reinitializer(version) {
     _setURI(uri);
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
   }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 /**
  * @title IAvailableRootsRegistry
@@ -19,8 +19,9 @@ interface IAvailableRootsRegistry {
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, can update public key and address
+   * @param version Version of the implementation
    */
-  function initialize(address owner) external;
+  function initialize(address owner, uint8 version) external;
 
   /**
    * @dev Register a root available for an attester

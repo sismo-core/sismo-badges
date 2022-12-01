@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.sol';
@@ -14,6 +14,9 @@ import {ICommitmentMapperRegistry} from './interfaces/ICommitmentMapperRegistry.
  *
  **/
 contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, Ownable {
+  // implementation version
+  uint8 public immutable VERSION;
+
   uint256[2] internal _commitmentMapperPubKey;
   address _commitmentMapperAddress;
 
@@ -26,9 +29,11 @@ contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, O
   constructor(
     address owner,
     uint256[2] memory commitmentMapperEdDSAPubKey,
-    address commitmentMapperAddress
+    address commitmentMapperAddress,
+    uint8 version
   ) {
-    initialize(owner, commitmentMapperEdDSAPubKey, commitmentMapperAddress);
+    VERSION = version;
+    initialize(owner, commitmentMapperEdDSAPubKey, commitmentMapperAddress, version);
   }
 
   /**
@@ -40,9 +45,12 @@ contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, O
   function initialize(
     address owner,
     uint256[2] memory commitmentMapperEdDSAPubKey,
-    address commitmentMapperAddress
-  ) public initializer {
+    address commitmentMapperAddress,
+    uint8 version
+  ) public reinitializer(version) {
+    if (this.owner() == address(0x0)) {
     _transferOwnership(owner);
+    }
     _updateCommitmentMapperEdDSAPubKey(commitmentMapperEdDSAPubKey);
     _updateCommitmentMapperAddress(commitmentMapperAddress);
   }

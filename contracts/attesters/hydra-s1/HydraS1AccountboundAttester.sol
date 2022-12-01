@@ -66,6 +66,9 @@ contract HydraS1AccountboundAttester is
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
 
+  // implementation version
+  uint8 public immutable VERSION;
+
   /*******************************************************
     Storage layout:
     20 slots between HydraS1SimpleAttester and HydraS1AccountboundAttester
@@ -113,7 +116,8 @@ contract HydraS1AccountboundAttester is
     address commitmentMapperAddress,
     uint256 collectionIdFirst,
     uint256 collectionIdLast,
-    address owner
+    address owner,
+    uint8 version
   )
     HydraS1SimpleAttester(
       attestationsRegistryAddress,
@@ -124,7 +128,8 @@ contract HydraS1AccountboundAttester is
       collectionIdLast
     )
   {
-    initialize(owner);
+    VERSION = version;
+    initialize(owner, version);
   }
 
   // TODO: redo, add initializer modifier
@@ -132,8 +137,10 @@ contract HydraS1AccountboundAttester is
    * @dev Initialize function, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
    */
-  function initialize(address owner) public initializer {
-    _transferOwnership(owner);
+  function initialize(address owner, uint8 version) public reinitializer(version) {
+    if (this.owner() == address(0x0)) {
+      _transferOwnership(owner);
+    }
   }
 
   /*******************************************************

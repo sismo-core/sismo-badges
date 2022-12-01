@@ -44,6 +44,13 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
   error CooldownDurationNotSetForGroupIndex(uint256 groupIndex);
 
   /**
+   * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
+   * @param owner Owner of the contract, can update public key and address
+   * @param version Version of the implementation
+   */
+  function initialize(address owner, uint8 version) external;
+
+  /**
    * @dev Getter, returns the cooldown start of a nullifier
    * @param nullifier nullifier used
    **/

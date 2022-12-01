@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 
 interface ICommitmentMapperRegistry {
   event UpdatedCommitmentMapperEdDSAPubKey(uint256[2] newEdDSAPubKey);
@@ -11,11 +11,13 @@ interface ICommitmentMapperRegistry {
    * @param owner Owner of the contract, can update public key and address
    * @param commitmentMapperEdDSAPubKey EdDSA public key of the commitment mapper
    * @param commitmentMapperAddress Address of the commitment mapper
+   * @param version Version of the implementation
    */
   function initialize(
     address owner,
     uint256[2] memory commitmentMapperEdDSAPubKey,
-    address commitmentMapperAddress
+    address commitmentMapperAddress,
+    uint8 version
   ) external;
 
   /**

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {Attestation} from '../../../core/libs/Structs.sol';
@@ -19,8 +19,9 @@ interface IPythia1SimpleAttester is IPythia1Base, IAttester {
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param commitmentSignerPubKey EdDSA public key of the commitment signer
    * @param owner Owner of the contract, can update public key and address
+   * @param version Version of the implementation
    */
-  function initialize(uint256[2] memory commitmentSignerPubKey, address owner) external;
+  function initialize(uint256[2] memory commitmentSignerPubKey, address owner, uint8 version) external;
 
   /**
    * @dev Getter, returns the last attestation destination of a ticket
