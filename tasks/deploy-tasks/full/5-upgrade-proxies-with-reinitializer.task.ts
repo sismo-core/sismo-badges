@@ -87,4 +87,4 @@ async function deploymentAction(
   };
 }
 
-task('4-upgrade-attestations-registry-proxy-and-badges-proxy').setAction(deploymentAction);
+task('5-upgrade-proxies-with-reinitializer').setAction(deploymentAction);

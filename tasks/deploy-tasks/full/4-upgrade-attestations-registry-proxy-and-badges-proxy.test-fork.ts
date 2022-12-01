@@ -86,7 +86,7 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () =
   });
 
   describe('Setup fork', () => {
-    it('Should retrieve attestationsRegistry contract', async () => {
+    it('Should retrieve core contracts', async () => {
       // Deploy Sismo Protocol Core contracts
       attestationsRegistry = AttestationsRegistry__factory.connect(
         config.attestationsRegistry.address,
