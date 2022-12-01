@@ -24,6 +24,7 @@ async function deploymentAction(
   // The following proxies will be updated:
   // - HydraS1Verifier => rename ticket in nullifier
   // - HydraS1SimpleAttester implementation will be replaced by the HydraS1AccountboundAttester implementation => cooldown duration removed from groupProperties + inherits from HydraS1SimpleAttester
+  //                                                                                                           => + reinitializer modifier added and version as constant
 
   // Upgrade HydraS1Verifier
   const { hydraS1Verifier: newHydraS1Verifier } = await hre.run('deploy-hydra-s1-verifier', {

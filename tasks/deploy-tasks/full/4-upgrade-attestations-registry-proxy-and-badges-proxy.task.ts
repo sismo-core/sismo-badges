@@ -24,9 +24,11 @@ async function deploymentAction(
 
   // The following proxy will be updated:
   // - AttestationRegistry => introduce attributes names and values for attestationsCollection
-  //  tagPowers go from 0 to 15, if the tagPower is 0 the tag is disabled, else it is enabled with the power set
+  //                          tagPowers go from 0 to 15, if the tagPower is 0 the tag is disabled, else it is enabled with the power set
+  //                          + reinitializer modifier added and version as constant
   // - Badges => add getters for attestations issuer, timestamp and extradata
   //          => add getters for tags values and names
+  //          => + reinitializer modifier added and version as constant
 
   // Upgrade attestations registry
   const { attestationsRegistry: newAttestationsRegistry } = (await hre.run(
