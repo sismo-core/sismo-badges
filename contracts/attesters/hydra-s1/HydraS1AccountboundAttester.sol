@@ -7,6 +7,7 @@ import 'hardhat/console.sol';
 import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
 import {HydraS1SimpleAttester} from './HydraS1SimpleAttester.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {IHydraS1Base} from "./base/IHydraS1Base.sol";
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../core/libs/Structs.sol';
@@ -169,14 +170,10 @@ contract HydraS1AccountboundAttester is
     MANDATORY FUNCTIONS TO OVERRIDE FROM HYDRAS1BASE.SOL
   *******************************************************/
 
-  function getNullifier(
-    address destination,
-    uint256 collectionId
-  ) external view override(HydraS1SimpleAttester) returns (uint256) {
-    (uint256 nullifier, ) = abi.decode(
-      ATTESTATIONS_REGISTRY.getAttestationExtraData(collectionId, destination),
-      (uint256, uint16)
-    );
+  function getNullifierFromExtraData(
+    bytes memory extraData
+  ) external pure override(IHydraS1Base, HydraS1SimpleAttester) returns (uint256) {
+    (uint256 nullifier, ) = abi.decode(extraData, (uint256, uint16));
 
     return nullifier;
   }

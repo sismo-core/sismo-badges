@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1SimpleAttester} from './interfaces/IHydraS1SimpleAttester.sol';
+import {IHydraS1Base} from "./base/IHydraS1Base.sol";
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from './../../core/libs/Structs.sol';
@@ -146,10 +147,9 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
     MANDATORY FUNCTIONS TO OVERRIDE FROM HYDRAS1BASE.SOL
   *******************************************************/
 
-  function getNullifier(
-    address destination,
-    uint256 collectionId
-  ) external view virtual override returns (uint256) {
+  function getNullifierFromExtraData(
+    bytes memory extraData
+  ) external pure virtual override(IHydraS1Base, HydraS1Base) returns (uint256) {
     return 0;
   }
 

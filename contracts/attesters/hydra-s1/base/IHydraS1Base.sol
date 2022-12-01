@@ -38,6 +38,10 @@ interface IHydraS1Base {
   );
   error InvalidGroth16Proof(string reason);
 
+  function getNullifierFromExtraData(
+    bytes memory extraData
+  ) external view returns (uint256);
+
   /**
    * @dev Getter of Hydra-S1 Verifier contract
    */
