@@ -27,29 +27,29 @@ contract AttestationsRegistry is
   IAttestationsRegistry,
   AttestationsRegistryConfigLogic
 {
-  IBadges immutable BADGES;
   // implementation version
   uint8 public immutable VERSION;
-
+  IBadges immutable BADGES;
+  
   /**
    * @dev Constructor.
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
+   * @param version Version of the implementation
    * @param badgesAddress Stateless ERC1155 Badges contract
    */
   constructor(address owner, uint8 version, address badgesAddress) {
     VERSION = version;
     BADGES = IBadges(badgesAddress);
-    initialize(owner, version);
+    initialize(owner);
   }
 
   /**
    * @dev Initialize function, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner, uint8 version) public reinitializer(version) {
-    if (this.owner() == address(0x0)) {
-      _transferOwnership(owner);
-    }
+  function initialize(address owner) public reinitializer(VERSION) {
+    _transferOwnership(owner);
   }
 
   /**

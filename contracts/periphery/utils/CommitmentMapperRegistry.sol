@@ -33,7 +33,7 @@ contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, O
     uint8 version
   ) {
     VERSION = version;
-    initialize(owner, commitmentMapperEdDSAPubKey, commitmentMapperAddress, version);
+    initialize(owner, commitmentMapperEdDSAPubKey, commitmentMapperAddress);
   }
 
   /**
@@ -41,16 +41,14 @@ contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, O
    * @param owner Owner of the contract, can update public key and address
    * @param commitmentMapperEdDSAPubKey EdDSA public key of the commitment mapper
    * @param commitmentMapperAddress Address of the commitment mapper
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
   function initialize(
     address owner,
     uint256[2] memory commitmentMapperEdDSAPubKey,
-    address commitmentMapperAddress,
-    uint8 version
-  ) public reinitializer(version) {
-    if (this.owner() == address(0x0)) {
+    address commitmentMapperAddress
+  ) public reinitializer(VERSION) {
     _transferOwnership(owner);
-    }
     _updateCommitmentMapperEdDSAPubKey(commitmentMapperEdDSAPubKey);
     _updateCommitmentMapperAddress(commitmentMapperAddress);
   }

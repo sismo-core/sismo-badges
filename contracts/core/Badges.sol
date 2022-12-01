@@ -35,15 +35,16 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
     uint8 version
   ) ERC1155(uri) {
     VERSION = version;
-    initialize(uri, owner, version);
+    initialize(uri, owner);
   }
 
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param uri Uri for the metadata of badges
    * @param owner Owner of the contract, super admin, can setup roles and update the attestation registry
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(string memory uri, address owner, uint8 version) public reinitializer(version) {
+  function initialize(string memory uri, address owner) public reinitializer(VERSION) {
     _setURI(uri);
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
   }

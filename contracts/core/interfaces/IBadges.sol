@@ -15,10 +15,9 @@ interface IBadges {
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param uri Uri for the metadata of badges
    * @param owner Owner of the contract, super admin, can setup roles and update the attestation registry
-   * @param version Version of the implementation
-   * 
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(string memory uri, address owner, uint8 version) external;
+  function initialize(string memory uri, address owner) external;
 
   /**
    * @dev Main function of the ERC1155 badge

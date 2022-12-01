@@ -75,6 +75,7 @@ async function deploymentAction(
     BigNumber.from(collectionIdFirst),
     BigNumber.from(collectionIdLast),
     owner || deployer.address,
+    options?.implementationVersion || 1,
   ];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);

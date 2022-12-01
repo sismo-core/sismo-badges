@@ -46,9 +46,8 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, can update public key and address
-   * @param version Version of the implementation
    */
-  function initialize(address owner, uint8 version) external;
+  function initialize(address owner) external;
 
   /**
    * @dev Getter, returns the cooldown start of a nullifier

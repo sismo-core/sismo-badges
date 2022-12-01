@@ -157,22 +157,29 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         destination: BigNumber.from(destination.identifier).toHexString(),
       };
     });
+  });
 
+  describe('Configuration checks', () => {
     it('Should have setup the owner correctly', async () => {
       expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
     });
 
-    it('Should revert when trying to call initialize again', async () => {
-      await expect(hydraS1AccountboundAttester.initialize(randomSigner.address)).to.be.revertedWith(
-        'Initializable: contract is already initialized'
-      );
+    it('Should get the owner correctly', async () => {
+      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should get the version correctly', async () => {
+      expect(await hydraS1AccountboundAttester.VERSION()).to.be.eql(1);
+    });
+
+    it('Should revert when trying to call initialize again with a random address', async () => {
+      await expect(
+        hydraS1AccountboundAttester.connect(randomSigner).initialize(randomSigner.address)
+      ).to.be.revertedWith('Initializable: contract is already initialized');
     });
   });
 
   describe('Ownable', () => {
-    // TODO: modify this test to test the ownable contract, not the init part
-    // Move to a Config section in the test. Here we are in the "Generate Attestation section"
-
     it('Should revert when trying to transferOwnership with a random address', async () => {
       await expect(
         hydraS1AccountboundAttester.connect(randomSigner).transferOwnership(randomSigner.address)

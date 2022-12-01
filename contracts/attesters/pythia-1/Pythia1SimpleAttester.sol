@@ -81,18 +81,17 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
     AUTHORIZED_COLLECTION_ID_FIRST = collectionIdFirst;
     AUTHORIZED_COLLECTION_ID_LAST = collectionIdLast;
     VERSION = version;
-    initialize(commitmentSignerPubKey, owner, version);
+    initialize(commitmentSignerPubKey, owner);
   }
 
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param commitmentSignerPubKey EdDSA public key of the commitment signer
    * @param owner Owner of the contract, can update public key and address
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(uint256[2] memory commitmentSignerPubKey, address owner, uint8 version) public reinitializer(version) {
-    if (this.owner() == address(0x0)) {
+  function initialize(uint256[2] memory commitmentSignerPubKey, address owner) public reinitializer(VERSION) {
     _transferOwnership(owner);
-    }
     _updateCommitmentSignerPubKey(commitmentSignerPubKey);
   }
 

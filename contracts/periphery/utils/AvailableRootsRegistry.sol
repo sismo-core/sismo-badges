@@ -25,17 +25,16 @@ contract AvailableRootsRegistry is IAvailableRootsRegistry, Initializable, Ownab
    */
   constructor(address owner, uint8 version) {
     VERSION = version;
-    initialize(owner, version);
+    initialize(owner);
   }
 
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, can update public key and address
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner, uint8 version) public reinitializer(version) {
-    if (this.owner() == address(0x0)) {
+  function initialize(address owner) public reinitializer(VERSION) {
     _transferOwnership(owner);
-    }
   }
 
   /**

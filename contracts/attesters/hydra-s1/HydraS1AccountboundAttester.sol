@@ -129,18 +129,16 @@ contract HydraS1AccountboundAttester is
     )
   {
     VERSION = version;
-    initialize(owner, version);
+    initialize(owner);
   }
 
-  // TODO: redo, add initializer modifier
   /**
    * @dev Initialize function, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner, uint8 version) public reinitializer(version) {
-    if (this.owner() == address(0x0)) {
-      _transferOwnership(owner);
-    }
+  function initialize(address owner) public reinitializer(VERSION)  {
+    _transferOwnership(owner);
   }
 
   /*******************************************************
