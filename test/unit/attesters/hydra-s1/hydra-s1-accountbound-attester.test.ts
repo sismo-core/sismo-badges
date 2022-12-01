@@ -109,7 +109,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         hydraS1Verifier,
         commitmentMapperRegistry,
         availableRootsRegistry,
-      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
+      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1', {
         options: { deploymentNamePrefix: 'accountbound' },
       }));
 

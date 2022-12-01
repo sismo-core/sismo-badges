@@ -20,7 +20,7 @@ import {
   SNARK_FIELD,
 } from '@sismo-core/hydra-s1';
 import { BigNumber } from 'ethers';
-import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound.task';
+import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1.task';
 import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
 import {
   encodeGroupProperties,
@@ -124,7 +124,10 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
         commitmentMapperRegistry,
         hydraS1SimpleAttester,
         availableRootsRegistry,
-      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {})) as Deployed0);
+      } = (await hre.run(
+        '0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1',
+        {}
+      )) as Deployed0);
       const root = registryTree.getRoot();
       await availableRootsRegistry.registerRootForAttester(hydraS1SimpleAttester.address, root);
     });

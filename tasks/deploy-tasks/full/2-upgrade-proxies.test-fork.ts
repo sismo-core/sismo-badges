@@ -53,7 +53,7 @@ import { CommitmentMapperTester } from '@sismo-core/commitment-mapper-tester-js'
 import { Pythia1Prover } from '@sismo-core/pythia-1';
 import { BigNumber } from 'ethers';
 
-import { Deployed0 } from './0-deploy-core-and-hydra-s1-simple-and-accountbound.task';
+import { Deployed0 } from './0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1.task';
 import { Deployed1 } from './1-deploy-pythia-1-simple.task';
 import {
   CommitmentSignerTester,

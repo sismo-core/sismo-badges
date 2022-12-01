@@ -32,7 +32,13 @@ import {
   HydraS1SimpleAttester,
   HydraS1Verifier,
   HydraS1AccountboundAttester,
+  Pythia1SimpleAttester,
 } from 'types';
+import {
+  DeployedPythia1SimpleAttester,
+  DeployPythia1SimpleAttesterArgs,
+} from 'tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
+import { Pythia1Verifier } from '@sismo-core/pythia-1';
 
 export interface Deployed0 {
   attestationsRegistry: AttestationsRegistry;
@@ -43,6 +49,8 @@ export interface Deployed0 {
   hydraS1SimpleAttester?: HydraS1SimpleAttester | undefined;
   hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   hydraS1Verifier: HydraS1Verifier;
+  pythia1Verifier: Pythia1Verifier;
+  pythia1SimpleAttester: Pythia1SimpleAttester;
 }
 
 async function deploymentAction(
@@ -53,7 +61,10 @@ async function deploymentAction(
   const config = deploymentsConfig[hre.network.name];
   options = { ...config.deployOptions, ...options };
   if (options.manualConfirm || options.log) {
-    console.log('0-deploy-core-and-hydra-s1-simple-and-accountbound: ', hre.network.name);
+    console.log(
+      '0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia: ',
+      hre.network.name
+    );
   }
   // Only deploy contracts without giving final ownership.
   // Owners of the different contract are the deployer
@@ -105,6 +116,20 @@ async function deploymentAction(
     'deploy-hydra-s1-accountbound-attester',
     accountboundArgs
   )) as DeployedHydraS1AccountboundAttester;
+
+  const pythia1SimpleAttesterArgs: DeployPythia1SimpleAttesterArgs = {
+    collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
+    collectionIdLast: config.synapsPythia1SimpleAttester.collectionIdLast,
+    attestationsRegistryAddress: attestationsRegistry.address,
+    commitmentSignerPubKeyX: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX,
+    commitmentSignerPubKeyY: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY,
+    options,
+  };
+
+  const { pythia1SimpleAttester, pythia1Verifier } = (await hre.run(
+    'deploy-pythia-1-simple-attester',
+    pythia1SimpleAttesterArgs
+  )) as DeployedPythia1SimpleAttester;
 
   // Register an initial root for attester
   if (hydraS1SimpleAttester && (options.manualConfirm || options.log)) {
@@ -159,6 +184,19 @@ async function deploymentAction(
     attesterAddress: hydraS1AccountboundAttester.address,
     collectionIdFirst: config.hydraS1AccountboundAttester.collectionIdFirst,
     collectionIdLast: config.hydraS1AccountboundAttester.collectionIdLast,
+    options: getCommonOptions(options),
+  } as AuthorizeRangeArgs);
+
+  if (options.manualConfirm || options.log) {
+    console.log(`
+    ----------------------------------------------------------------
+    * Authorize Pythia1SimpleAttester to record on the AttestationsRegistry`);
+  }
+  await hre.run('attestations-registry-authorize-range', {
+    attestationsRegistryAddress: attestationsRegistry.address,
+    attesterAddress: pythia1SimpleAttester.address,
+    collectionIdFirst: config.synapsPythia1SimpleAttester.collectionIdFirst,
+    collectionIdLast: config.synapsPythia1SimpleAttester.collectionIdLast,
     options: getCommonOptions(options),
   } as AuthorizeRangeArgs);
 
@@ -272,6 +310,16 @@ async function deploymentAction(
       -> implem: ${(await hre.deployments.all()).CommitmentMapperRegistryImplem.address}
       owner: ${config.commitmentMapper.owner}
 
+    * Pythia1SimpleAttester:
+      -> proxy: ${(await hre.deployments.all()).Pythia1SimpleAttester.address}
+      -> implem: ${(await hre.deployments.all()).Pythia1SimpleAttesterImplem.address}
+      collectionIdFirst: ${config.synapsPythia1SimpleAttester.collectionIdFirst}
+      collectionIdLast: ${config.synapsPythia1SimpleAttester.collectionIdLast}
+      commitmentSignerPubKeyX: ${config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX}
+      commitmentSignerPubKeyY: ${config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY}
+
+    * Pythia1Verifier:
+      -> address: ${(await hre.deployments.all()).Pythia1Verifier.address}
   `);
   }
 
@@ -284,7 +332,9 @@ async function deploymentAction(
     badges,
     attestationsRegistry,
     hydraS1Verifier,
+    pythia1Verifier,
+    pythia1SimpleAttester,
   };
 }
 
-task('0-deploy-core-and-hydra-s1-simple-and-accountbound').setAction(deploymentAction);
+task('0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1').setAction(deploymentAction);

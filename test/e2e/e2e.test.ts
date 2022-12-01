@@ -22,7 +22,7 @@ import { HydraS1Account, HydraS1Prover, KVMerkleTree } from '@sismo-core/hydra-s
 import { BigNumber } from 'ethers';
 import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
 import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
-import { Deployed0 } from '../../tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound.task';
+import { Deployed0 } from '../../tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1.task';
 import { getImplementation } from '../../utils';
 import {
   encodeGroupProperties,
@@ -159,17 +159,12 @@ describe('Test E2E Protocol', () => {
         hydraS1SimpleAttester,
         hydraS1AccountboundAttester,
         availableRootsRegistry,
-      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
+        pythia1SimpleAttester,
+      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1', {
         options: {
           proxyAdmin: proxyAdminSigner.address,
         },
       })) as Deployed0);
-
-      ({ pythia1SimpleAttester } = (await hre.run('1-deploy-pythia-1-simple', {
-        options: {
-          proxyAdmin: proxyAdminSigner.address,
-        },
-      })) as Deployed1);
 
       await (
         await availableRootsRegistry.registerRootForAttester(
