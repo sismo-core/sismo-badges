@@ -30,7 +30,7 @@ async function deploymentAction(
 ): Promise<DeployedAvailableRootsRegistry> {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [owner || deployer.address, options?.implementationVersion || 1];
+  const deploymentArgs = [owner || deployer.address];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 

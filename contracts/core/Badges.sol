@@ -18,7 +18,7 @@ import {IBadges} from './interfaces/IBadges.sol';
  */
 contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
   // implementation version
-  uint8 public immutable VERSION;
+  uint8 public constant VERSION = 3;
 
   IAttestationsRegistry internal _attestationsRegistry;
 
@@ -31,10 +31,8 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    */
   constructor(
     string memory uri,
-    address owner, // This is Sismo Frontend Contract
-    uint8 version
+    address owner // This is Sismo Frontend Contract
   ) ERC1155(uri) {
-    VERSION = version;
     initialize(uri, owner);
   }
 

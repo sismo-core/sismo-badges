@@ -68,7 +68,7 @@ contract HydraS1AccountboundAttester is
   using HydraS1Lib for Request;
 
   // implementation version
-  uint8 public immutable VERSION;
+  uint8 public constant VERSION = 4;
 
   /*******************************************************
     Storage layout:
@@ -117,8 +117,7 @@ contract HydraS1AccountboundAttester is
     address commitmentMapperAddress,
     uint256 collectionIdFirst,
     uint256 collectionIdLast,
-    address owner,
-    uint8 version
+    address owner
   )
     HydraS1SimpleAttester(
       attestationsRegistryAddress,
@@ -129,7 +128,6 @@ contract HydraS1AccountboundAttester is
       collectionIdLast
     )
   {
-    VERSION = version;
     initialize(owner);
   }
 

@@ -28,17 +28,15 @@ contract AttestationsRegistry is
   AttestationsRegistryConfigLogic
 {
   // implementation version
-  uint8 public immutable VERSION;
+  uint8 public constant VERSION = 3;
   IBadges immutable BADGES;
   
   /**
    * @dev Constructor.
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
-   * @param version Version of the implementation
    * @param badgesAddress Stateless ERC1155 Badges contract
    */
-  constructor(address owner, uint8 version, address badgesAddress) {
-    VERSION = version;
+  constructor(address owner, address badgesAddress) {
     BADGES = IBadges(badgesAddress);
     initialize(owner);
   }

@@ -15,7 +15,7 @@ import {ICommitmentMapperRegistry} from './interfaces/ICommitmentMapperRegistry.
  **/
 contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, Ownable {
   // implementation version
-  uint8 public immutable VERSION;
+  uint8 public constant VERSION = 2;
 
   uint256[2] internal _commitmentMapperPubKey;
   address _commitmentMapperAddress;
@@ -29,10 +29,8 @@ contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, O
   constructor(
     address owner,
     uint256[2] memory commitmentMapperEdDSAPubKey,
-    address commitmentMapperAddress,
-    uint8 version
+    address commitmentMapperAddress
   ) {
-    VERSION = version;
     initialize(owner, commitmentMapperEdDSAPubKey, commitmentMapperAddress);
   }
 

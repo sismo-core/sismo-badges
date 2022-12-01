@@ -47,19 +47,6 @@ const SANDBOX_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const SANDBOX_POLYGON_ROOTS_OWNER_RELAYER = '0x7e2305312099748bbd6a31bff27a8218edd4cbd2';
 const SANDBOX_POLYGON_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
 
-export const implementationVersions = {
-  badges: 2,
-  front: 1,
-  hydraS1Verifier: 1,
-  hydraS1SimpleAttester: 3,
-  hydraS1AccountboundAttester: 3,
-  pythia1Verifier: 1,
-  synapsPythia1SimpleAttester: 2,
-  attestationsRegistry: 2,
-  availableRootsRegistry: 1,
-  commitmentMapper: 1,
-};
-
 export const deploymentsConfig: DeploymentsConfigTypes = {
   sandboxPolygon: {
     deployOptions: {

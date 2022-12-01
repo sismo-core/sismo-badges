@@ -123,6 +123,7 @@ async function deploymentAction(
     attestationsRegistryAddress: attestationsRegistry.address,
     commitmentSignerPubKeyX: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyX,
     commitmentSignerPubKeyY: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY,
+    owner: config.synapsPythia1SimpleAttester.owner,
     options,
   };
 

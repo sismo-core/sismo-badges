@@ -47,7 +47,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   using Pythia1Lib for Request;
 
   // implementation version
-  uint8 public immutable VERSION;
+  uint8 public constant VERSION = 3;
 
   // The deployed contract will need to be authorized to write into the Attestation registry
   // It should get write access on attestation collections from AUTHORIZED_COLLECTION_ID_FIRST to AUTHORIZED_COLLECTION_ID_LAST.
@@ -75,12 +75,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
     uint256 collectionIdLast,
     address pythia1VerifierAddress,
     uint256[2] memory commitmentSignerPubKey,
-    address owner,
-    uint8 version
+    address owner
   ) Attester(attestationsRegistryAddress) Pythia1Base(pythia1VerifierAddress) {
     AUTHORIZED_COLLECTION_ID_FIRST = collectionIdFirst;
     AUTHORIZED_COLLECTION_ID_LAST = collectionIdLast;
-    VERSION = version;
     initialize(commitmentSignerPubKey, owner);
   }
 

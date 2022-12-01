@@ -31,7 +31,7 @@ async function deploymentAction(
 ): Promise<DeployedBadges> {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [uri, owner || deployer.address, options?.implementationVersion || 1];
+  const deploymentArgs = [uri, owner || deployer.address];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 

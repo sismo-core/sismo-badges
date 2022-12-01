@@ -43,7 +43,6 @@ async function deploymentAction(
     owner || deployer.address,
     [commitmentMapperPubKeyX, commitmentMapperPubKeyY],
     commitmentMapperAddress || hre.ethers.constants.AddressZero,
-    options?.implementationVersion || 1,
   ];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);

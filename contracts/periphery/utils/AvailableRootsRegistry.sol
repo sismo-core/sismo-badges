@@ -15,7 +15,7 @@ import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.s
  **/
 contract AvailableRootsRegistry is IAvailableRootsRegistry, Initializable, Ownable {
   // implementation version
-  uint8 public immutable VERSION;
+  uint8 public constant VERSION = 2;
 
   mapping(address => mapping(uint256 => bool)) public _roots;
 
@@ -23,8 +23,7 @@ contract AvailableRootsRegistry is IAvailableRootsRegistry, Initializable, Ownab
    * @dev Constructor
    * @param owner Owner of the contract, can register/ unregister roots
    */
-  constructor(address owner, uint8 version) {
-    VERSION = version;
+  constructor(address owner) {
     initialize(owner);
   }
 
