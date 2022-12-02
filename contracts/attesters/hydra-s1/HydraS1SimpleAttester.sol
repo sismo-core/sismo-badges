@@ -42,7 +42,7 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   It enables users to renew their attestations
  **/
 
-contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester {
+contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base {
   using HydraS1Lib for HydraS1ProofData;
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;

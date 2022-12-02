@@ -3,6 +3,7 @@
 pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
+import {IAttester} from '../../../core/interfaces/IAttester.sol';
 import {HydraS1Verifier, HydraS1Lib, HydraS1ProofData} from '../libs/HydraS1Lib.sol';
 import {ICommitmentMapperRegistry} from '../../../periphery/utils/CommitmentMapperRegistry.sol';
 import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRegistry.sol';
@@ -18,7 +19,7 @@ import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRe
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
  **/
-interface IHydraS1Base {
+interface IHydraS1Base is IAttester {
   error ClaimsLengthDifferentThanOne(uint256 claimLength);
   error RegistryRootMismatch(uint256 inputRoot);
   error DestinationMismatch(address expectedDestination, address inputDestination);

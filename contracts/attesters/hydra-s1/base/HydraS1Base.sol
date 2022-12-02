@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1Base} from './IHydraS1Base.sol';
+import {Attester} from '../../../core/Attester.sol';
 import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.sol';
 
 // Protocol imports
@@ -26,7 +27,7 @@ import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRe
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
  *
  */
-abstract contract HydraS1Base is IHydraS1Base, Initializable {
+abstract contract HydraS1Base is IHydraS1Base, Attester, Initializable {
   using HydraS1Lib for HydraS1ProofData;
 
   // ZK-SNARK Verifier

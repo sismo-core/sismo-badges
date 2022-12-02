@@ -4,7 +4,6 @@ pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {Attestation} from '../../../core/libs/Structs.sol';
-import {IAttester} from '../../../core/interfaces/IAttester.sol';
 import {CommitmentMapperRegistry} from '../../../periphery/utils/CommitmentMapperRegistry.sol';
 import {AvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRegistry.sol';
 import {HydraS1Lib, HydraS1ProofData, HydraS1ProofInput} from './../libs/HydraS1Lib.sol';
@@ -15,7 +14,7 @@ import {IHydraS1Base} from './../base/IHydraS1Base.sol';
  * @author Sismo
  * @notice Interface with errors, events and methods specific to the HydraS1SimpleAttester.
  **/
-interface IHydraS1SimpleAttester is IHydraS1Base, IAttester {
+interface IHydraS1SimpleAttester is IHydraS1Base {
   /**
    * @dev Error when the nullifier is already used for a destination address
    **/
