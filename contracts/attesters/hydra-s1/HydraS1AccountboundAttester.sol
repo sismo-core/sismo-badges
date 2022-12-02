@@ -214,7 +214,7 @@ contract HydraS1AccountboundAttester is
   *******************************************************/
 
   /**
-   * @dev ABI-encodes nullifier and the burn count of the nullifier
+   * @dev ABI-encodes burn count of the nullifier
    * @param nullifier user nullifier
    * @param claimDestination destination referenced in the user claim
    */
