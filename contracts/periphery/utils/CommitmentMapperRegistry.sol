@@ -14,8 +14,7 @@ import {ICommitmentMapperRegistry} from './interfaces/ICommitmentMapperRegistry.
  *
  **/
 contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, Ownable {
-  // implementation version
-  uint8 public constant VERSION = 2;
+  uint8 public constant IMPLEMENTATION_VERSION = 2;
 
   uint256[2] internal _commitmentMapperPubKey;
   address _commitmentMapperAddress;

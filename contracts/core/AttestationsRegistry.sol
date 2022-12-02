@@ -27,8 +27,7 @@ contract AttestationsRegistry is
   IAttestationsRegistry,
   AttestationsRegistryConfigLogic
 {
-  // implementation version
-  uint8 public constant VERSION = 3;
+  uint8 public constant IMPLEM_VERSION = 3;
   IBadges immutable BADGES;
 
   /**

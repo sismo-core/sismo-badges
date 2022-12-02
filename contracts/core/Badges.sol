@@ -17,8 +17,7 @@ import {IBadges} from './interfaces/IBadges.sol';
  * For more information: https://badges.docs.sismo.io
  */
 contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
-  // implementation version
-  uint8 public constant VERSION = 3;
+  uint8 public constant IMPLEMENTATION_VERSION = 3;
 
   IAttestationsRegistry internal _attestationsRegistry;
 
