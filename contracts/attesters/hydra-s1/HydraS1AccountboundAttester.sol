@@ -3,17 +3,15 @@
 pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
-import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
-import {HydraS1SimpleAttester} from './HydraS1SimpleAttester.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {IHydraS1Base} from './base/IHydraS1Base.sol';
+
+import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../core/libs/Structs.sol';
-import {IAttester} from '../../core/Attester.sol';
 
-// Imports related to HydraS1 Proving Scheme
-import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Claim} from './base/HydraS1Base.sol';
+// Imports related to Hydra-S1
+import {HydraS1SimpleAttester, IAttester, HydraS1Lib, HydraS1ProofData, HydraS1Claim} from './HydraS1SimpleAttester.sol';
 
 /**
  * @title  Hydra-S1 Accountbound Attester
