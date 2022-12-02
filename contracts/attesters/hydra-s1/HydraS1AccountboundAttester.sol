@@ -153,8 +153,8 @@ contract HydraS1AccountboundAttester is
 
     uint256 nullifier = proofData._getNullifier();
     attestations[0].extraData = abi.encodePacked(
-      attestations[0].extraData,
-      generateAccountboundExtraData(nullifier, attestations[0].owner)
+      attestations[0].extraData, // nullifier, from HydraS1 Simple
+      _getNextBurnCount(nullifier, attestations[0].owner) // BurnCount
     );
 
     return (attestations);
@@ -208,27 +208,6 @@ contract HydraS1AccountboundAttester is
   /*******************************************************
     LOGIC FUNCTIONS RELATED TO ACCOUNTBOUND FEATURE
   *******************************************************/
-
-  /**
-   * @dev ABI-encodes nullifier and the burn count of the nullifier
-   * @param nullifier user nullifier
-   * @param claimDestination destination referenced in the user claim
-   */
-  function generateAccountboundExtraData(
-    uint256 nullifier,
-    address claimDestination
-  ) public view virtual returns (bytes memory) {
-    address previousNullifierDestination = _getDestinationOfNullifier(nullifier);
-    uint16 burnCount = _getNullifierBurnCount(nullifier);
-    // If the attestation is minted on a new destination address
-    // the burnCount that will be encoded in the extraData of the Attestation should be incremented
-    if (
-      previousNullifierDestination != address(0) && previousNullifierDestination != claimDestination
-    ) {
-      burnCount += 1;
-    }
-    return (abi.encode(burnCount));
-  }
 
   /**
    * @dev Getter, returns the burnCount of a nullifier
@@ -307,6 +286,27 @@ contract HydraS1AccountboundAttester is
 
   function _getNullifierBurnCount(uint256 nullifier) internal view returns (uint16) {
     return _nullifiersBurnCount[nullifier];
+  }
+
+  /**
+   * @dev returns burn count or burn count + 1 if new burn will happen
+   * @param nullifier user nullifier
+   * @param claimDestination destination referenced in the user claim
+   */
+  function _getNextBurnCount(
+    uint256 nullifier,
+    address claimDestination
+  ) public view virtual returns (uint16) {
+    address previousNullifierDestination = _getDestinationOfNullifier(nullifier);
+    uint16 burnCount = _getNullifierBurnCount(nullifier);
+    // If the attestation is minted on a new destination address
+    // the burnCount that will be encoded in the extraData of the Attestation should be incremented
+    if (
+      previousNullifierDestination != address(0) && previousNullifierDestination != claimDestination
+    ) {
+      burnCount += 1;
+    }
+    return burnCount;
   }
 
   /*******************************************************

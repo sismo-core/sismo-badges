@@ -50,16 +50,6 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
   function initialize(address owner) external;
 
   /**
-   * @dev ABI-encodes nullifier and the burn count of the nullifier
-   * @param nullifier user nullifier
-   * @param claimDestination destination referenced in the user claim
-   */
-  function generateAccountboundExtraData(
-    uint256 nullifier,
-    address claimDestination
-  ) external view returns (bytes memory);
-
-  /**
    * @dev returns the nullifier for a given extraData
    * @param extraData bytes where the nullifier is encoded
    */
