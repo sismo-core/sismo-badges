@@ -4,6 +4,7 @@ import { confirm } from '../../utils';
 import { DeployResult } from 'hardhat-deploy/dist/types';
 import { DeployOptions } from './';
 import { deploymentsConfig } from '../deployments-config';
+import { ethers } from 'ethers';
 const accountNumber = Number(process.env.DEPLOYER_ACCOUNT) || 0;
 
 export const getDeployer = async (hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> => {
@@ -98,28 +99,32 @@ export const customDeployContract = async (
     `);
   }
 
-  const isImplementationUpgrade =
-    options?.implementationVersion && options?.implementationVersion > 1;
-  let deploymentNameImplem = deploymentName + 'Implem';
-  if (isImplementationUpgrade) {
-    deploymentNameImplem += `V${options?.implementationVersion}`;
+  const finalDeploymentName = options?.behindProxy ? deploymentName + 'Implem' : deploymentName;
+  const deploymentOptions = {
+    contract: contractName,
+    from: deployer.address,
+    args,
+    // If deployment name is already used, it means we are upgrading the implementation
+    skipIfAlreadyDeployed: false,
+  };
+  const deploymentDifference = await hre.deployments.fetchIfDifferent(
+    finalDeploymentName,
+    deploymentOptions
+  );
+  if (options?.isImplementationUpgrade && deploymentDifference.differences) {
     if (options?.log) {
       console.log(`
-      * Proxy upgrade to version: ${options?.implementationVersion} ***********
+      ** Deploying new implementation for ${deploymentName} ***********
       `);
     }
-  }
-  const deployed = await hre.deployments.deploy(
-    options?.behindProxy ? deploymentNameImplem : deploymentName,
-    {
-      contract: contractName,
-      from: deployer.address,
-      args,
+    if (options.manualConfirm) {
+      await confirm();
     }
-  );
+  }
+  const deployed = await hre.deployments.deploy(finalDeploymentName, deploymentOptions);
   if (!options?.behindProxy) {
     return deployed;
-  } else if (isImplementationUpgrade) {
+  } else if (options?.isImplementationUpgrade) {
     const proxyAddress = options.proxyAddress;
     if (!proxyAddress) {
       throw new Error('proxyAddress should be defined when upgrading a proxy!');
@@ -130,12 +135,14 @@ export const customDeployContract = async (
       * Implementation deployed with address: ${deployed.address} ***********
       `);
     }
-    await hre.run('upgrade-proxy', {
-      proxyAddress,
-      proxyData: options.proxyData,
-      newImplementationAddress: deployed.address,
-      options,
-    });
+    if (deploymentDifference.differences) {
+      await hre.run('upgrade-proxy', {
+        proxyAddress,
+        proxyData: options.proxyData,
+        newImplementationAddress: deployed.address,
+        options,
+      });
+    }
     return {
       ...deployed,
       address: proxyAddress,

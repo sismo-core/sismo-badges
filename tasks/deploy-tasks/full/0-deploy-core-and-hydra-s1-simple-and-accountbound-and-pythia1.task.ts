@@ -285,13 +285,17 @@ async function deploymentAction(
       -> proxy: ${(await hre.deployments.all()).Badges.address}
       -> implem: ${(await hre.deployments.all()).BadgesImplem.address}
       uri: ${config.badges.uri}
-
+    ${
+      hydraS1SimpleAttester
+        ? `
     * HydraS1SimpleAttester:
       -> proxy: ${(await hre.deployments.all()).HydraS1SimpleAttester.address}
       -> implem: ${(await hre.deployments.all()).HydraS1SimpleAttesterImplem.address}
       collectionIdFirst: ${config.hydraS1SimpleAttester.collectionIdFirst}
       collectionIdLast: ${config.hydraS1SimpleAttester.collectionIdLast}
-
+    `
+        : ''
+    }
     * HydraS1Verifier:
       -> address: ${(await hre.deployments.all()).HydraS1Verifier.address}
 

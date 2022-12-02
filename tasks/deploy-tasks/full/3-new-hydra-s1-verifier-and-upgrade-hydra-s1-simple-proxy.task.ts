@@ -45,7 +45,7 @@ async function deploymentAction(
       owner: config.hydraS1AccountboundAttester.owner, // set the owner referenced in the config
       options: {
         ...options,
-        implementationVersion: 4,
+        isImplementationUpgrade: true,
         proxyAddress: config.hydraS1AccountboundAttester.address, // the address referenced here is the old address of the hydraS1SimpleAttester
       },
     }

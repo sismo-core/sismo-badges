@@ -46,7 +46,7 @@ async function deploymentAction(
       owner: config.synapsPythia1SimpleAttester.owner,
       options: {
         ...options,
-        implementationVersion: 3, // implementation version has been bumped from v2 to v3
+        isImplementationUpgrade: true, // implementation version has been bumped from v2 to v3
         proxyAddress: config.synapsPythia1SimpleAttester.address,
       },
     }
@@ -59,7 +59,7 @@ async function deploymentAction(
       owner: config.availableRootsRegistry.owner,
       options: {
         ...options,
-        implementationVersion: 2, // implementation version has been bumped from v1 to v2
+        isImplementationUpgrade: true, // implementation version has been bumped from v1 to v2
         proxyAddress: config.availableRootsRegistry.address,
       },
     }
@@ -74,7 +74,7 @@ async function deploymentAction(
       owner: config.commitmentMapper.owner,
       options: {
         ...options,
-        implementationVersion: 2, // implementation version has been bumped from v1 to v2
+        isImplementationUpgrade: true, // implementation version has been bumped from v1 to v2
         proxyAddress: config.commitmentMapper.address,
       },
     }

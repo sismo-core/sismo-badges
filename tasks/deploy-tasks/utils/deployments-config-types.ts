@@ -9,8 +9,8 @@ export interface DeployOptions extends CommonTaskOptions {
   proxyData?: string;
   // admin of the proxy
   proxyAdmin?: string;
-  // implementation version number
-  implementationVersion?: number;
+  // set to true if the deployment is an upgrade of an existing proxy
+  isImplementationUpgrade?: boolean;
   // proxy address, required in case of implementation upgrade
   proxyAddress?: string;
 }

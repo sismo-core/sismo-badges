@@ -38,7 +38,7 @@ async function deploymentAction(
       owner: config.attestationsRegistry.owner,
       options: {
         ...options,
-        implementationVersion: 3, // implementation version has been bumped from v2 to v3
+        isImplementationUpgrade: true, // implementation version has been bumped from v2 to v3
         proxyAddress: config.attestationsRegistry.address,
       },
     }
@@ -50,7 +50,7 @@ async function deploymentAction(
     owner: config.badges.owner,
     options: {
       ...options,
-      implementationVersion: 3, // implementation version has been bumped from v2 to v3
+      isImplementationUpgrade: true, // implementation version has been bumped from v2 to v3
       proxyAddress: config.badges.address,
     },
   })) as DeployedBadges;
