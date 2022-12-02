@@ -118,7 +118,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         badges,
         commitmentMapperRegistry,
         availableRootsRegistry,
-      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
+      } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1', {
         options: { deploymentNamePrefix: 'gated-erc721' },
       }));
 
@@ -128,7 +128,6 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         root
       );
 
-      await hydraS1AccountboundAttester.setOwner();
       expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
 
       ({ mockGatedERC721 } = await hre.run('deploy-mock-gated-erc-721', {
