@@ -609,6 +609,27 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           destinationSigner.address
         )
       ).to.be.true;
+
+      it("should get the nullifier and burn count from attestation's extra data", async () => {
+        const attestationExtraData = await attestationsRegistry.getAttestationExtraData(
+          group.properties.groupIndex,
+          destinationSigner.address
+        );
+
+        expect(attestationExtraData).to.be.eql(
+          encodeAccountBoundAttestationExtraData({
+            nullifier: inputs.publicInputs.nullifier,
+            burnCount: 0,
+          })
+        );
+
+        expect(
+          await hydraS1AccountboundAttester.getNullifierFromExtraData(attestationExtraData)
+        ).to.be.eql(inputs.publicInputs.nullifier);
+        expect(
+          await hydraS1AccountboundAttester.getBurnCountFromExtraData(attestationExtraData)
+        ).to.be.eql(0);
+      });
     });
 
     it('Should revert if the groupIndex has no cooldownDuration set', async () => {

@@ -114,7 +114,7 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
    */
   function buildAttestations(
     Request calldata request,
-    bytes calldata
+    bytes calldata proofData
   ) public view virtual override(IAttester, Attester) returns (Attestation[] memory) {
     HydraS1Claim memory claim = request._claim();
 
@@ -128,13 +128,15 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
 
     address issuer = address(this);
 
+    uint256 nullifier = proofData._getNullifier();
+
     attestations[0] = Attestation(
       attestationCollectionId,
       claim.destination,
       issuer,
       claim.claimedValue,
       claim.groupProperties.generationTimestamp,
-      ''
+      abi.encode(nullifier)
     );
     return (attestations);
   }
@@ -194,7 +196,7 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
   function getNullifierFromExtraData(
     bytes memory extraData
   ) external pure virtual override(IHydraS1Base, HydraS1Base) returns (uint256) {
-    return 0;
+    return abi.decode(extraData, (uint256));
   }
 
   /*******************************************************

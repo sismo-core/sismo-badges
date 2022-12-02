@@ -231,7 +231,7 @@ contract HydraS1AccountboundAttester is
     ) {
       burnCount += 1;
     }
-    return (abi.encode(nullifier, burnCount));
+    return (abi.encode(burnCount));
   }
 
   function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
