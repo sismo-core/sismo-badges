@@ -179,6 +179,24 @@ describe('Test Hydra S1 standard attester contract, not strict', () => {
       expect(args.attestation.value).to.equal(1);
       expect(args.attestation.timestamp).to.equal(group1.properties.generationTimestamp);
     });
+
+    it("should get the nullifier from attestation's extra data", async () => {
+      const attestationExtraData = await attestationsRegistry.getAttestationExtraData(
+        collectionIdFirst.add(group1.properties.groupIndex),
+        BigNumber.from(destination1.identifier).toHexString()
+      );
+
+      expect(
+        await attestationsRegistry.hasAttestation(
+          collectionIdFirst.add(group1.properties.groupIndex),
+          BigNumber.from(destination1.identifier).toHexString().toLowerCase()
+        )
+      ).to.be.true;
+
+      expect(await hydraS1SimpleAttester.getNullifierFromExtraData(attestationExtraData)).to.be.eql(
+        BigNumber.from(proof.input[6])
+      );
+    });
   });
 
   /*************************************************************************************/
