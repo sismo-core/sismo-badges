@@ -208,13 +208,13 @@ describe('FORK Test Pythia', () => {
 
       snapshotId = await evmSnapshot(hre);
     });
-
-    it('Should check the address of the proxy', async () => {
-      expect(pythia1SimpleAttester.address).to.be.eql(config.synapsPythia1SimpleAttester.address);
-    });
   });
 
   describe('Configuration checks', () => {
+    it('Should check the address of the proxy', async () => {
+      expect(pythia1SimpleAttester.address).to.be.eql(config.synapsPythia1SimpleAttester.address);
+    });
+
     it('Should have setup the owner correctly', async () => {
       expect(await pythia1SimpleAttester.owner()).to.be.eql(
         config.synapsPythia1SimpleAttester.owner
@@ -231,11 +231,11 @@ describe('FORK Test Pythia', () => {
       expect(await pythia1SimpleAttester.VERSION()).to.be.eql(3);
     });
 
-    it('Should revert when trying to call initialize again with a random address', async () => {
+    it('Should revert when trying to call initialize again', async () => {
       const commitmentSignerPubKey = await commitmentSigner.getPublicKey();
       await expect(
         pythia1SimpleAttester
-          .connect(randomSigner)
+          .connect(await impersonateAddress(hre, config.synapsPythia1SimpleAttester.owner))
           .initialize(commitmentSignerPubKey, randomSigner.address, { gasLimit: 600000 })
       ).to.be.revertedWith('Initializable: contract is already initialized');
     });

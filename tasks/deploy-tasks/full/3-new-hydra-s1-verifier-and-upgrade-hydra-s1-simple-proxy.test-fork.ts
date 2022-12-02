@@ -548,12 +548,31 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
 
       snapshotId = await evmSnapshot(hre);
     });
+  });
 
-    it('should test the Hydra-S1 AccountBound Attester contract address', async () => {
-      // should be the same that the old hydraS1SimpleAttester
-      expect(hydraS1AccountboundAttester.address).to.be.equal(
-        oldConfig.hydraS1SimpleAttester.address
+  describe('Configuration checks', () => {
+    it('Should check the address of the proxy', async () => {
+      expect(hydraS1AccountboundAttester.address).to.be.eql(
+        config.hydraS1AccountboundAttester.address
       );
+    });
+
+    it('Should have setup the owner correctly', async () => {
+      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(
+        config.hydraS1AccountboundAttester.owner
+      );
+    });
+
+    it('Should get the version correctly', async () => {
+      expect(await hydraS1AccountboundAttester.VERSION()).to.be.eql(4);
+    });
+
+    it('Should revert when trying to call initialize again', async () => {
+      await expect(
+        hydraS1AccountboundAttester
+          .connect(await impersonateAddress(hre, config.hydraS1AccountboundAttester.owner))
+          .initialize(randomSigner.address, { gasLimit: 600000 })
+      ).to.be.revertedWith('Initializable: contract is already initialized');
     });
 
     it('should test the collectionIds of the Hydra S1 Accountbound attester', async () => {

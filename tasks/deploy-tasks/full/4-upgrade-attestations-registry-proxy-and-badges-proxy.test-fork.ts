@@ -14,14 +14,14 @@ import {
 } from '../../../types';
 import { formatBytes32String, parseBytes32String } from 'ethers/lib/utils';
 import { evmSnapshot, impersonateAddress } from '../../../test/utils';
-import { BigNumber } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 import { HydraS1SimpleAttester } from 'types/HydraS1SimpleAttester';
 import { AttestationStruct } from 'types/AttestationsRegistry';
 
 // Launch with command
 // FORK=true FORK_NETWORK=goerli npx hardhat test ./tasks/deploy-tasks/full/4-upgrade-attestations-registry-proxy-and-badges-proxy.test-fork.ts
 
-describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () => {
+describe('FORK-Test Upgrade AttestationsRegistry contract with attributes and reinitializer and Badges with getter and reinitializer', () => {
   let deployer: SignerWithAddress;
   let randomSigner: SignerWithAddress;
   let secondDeployer: SignerWithAddress;
@@ -189,8 +189,37 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with attributes', () =
       snapshotId = await evmSnapshot(hre);
     });
 
-    it('Should check the address of the proxy', async () => {
-      expect(attestationsRegistry.address).to.be.eql(config.attestationsRegistry.address);
+    describe('Configuration checks', () => {
+      it('Should check the addresses of the proxies', async () => {
+        expect(attestationsRegistry.address).to.be.eql(config.attestationsRegistry.address);
+        expect(badges.address).to.be.eql(config.badges.address);
+      });
+
+      it('Should have setup the owner correctly', async () => {
+        expect(await attestationsRegistry.owner()).to.be.eql(config.attestationsRegistry.owner);
+        expect(
+          await badges.hasRole(await badges.DEFAULT_ADMIN_ROLE(), config.badges.owner)
+        ).to.be.eql(true);
+      });
+
+      it('Should get the version correctly', async () => {
+        expect(await attestationsRegistry.VERSION()).to.be.eql(3);
+        expect(await badges.VERSION()).to.be.eql(3);
+      });
+
+      it('Should revert when trying to call initialize again', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(await impersonateAddress(hre, config.attestationsRegistry.owner))
+            .initialize(randomSigner.address, { gasLimit: 600000 })
+        ).to.be.revertedWith('Initializable: contract is already initialized');
+
+        await expect(
+          badges
+            .connect(await impersonateAddress(hre, config.badges.owner))
+            .initialize('fake_uri', randomSigner.address, { gasLimit: 600000 })
+        ).to.be.revertedWith('Initializable: contract is already initialized');
+      });
     });
 
     it('Should revert with Ownable error', async () => {
