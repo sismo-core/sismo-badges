@@ -199,7 +199,7 @@ contract HydraS1AccountboundAttester is
         );
       }
 
-      // Delete the old Attestation linked to the nullifier before recording the new one (accountbound behaviour)
+      // Delete the old Attestation linked to the nullifier before recording the new one (accountbound feature)
       _deletePreviousAttestation(claim, previousNullifierDestination);
 
       _setNullifierOnCooldownAndIncrementBurnCount(nullifier);
@@ -208,7 +208,7 @@ contract HydraS1AccountboundAttester is
   }
 
   /*******************************************************
-    LOGIC FUNCTIONS RELATED TO ACCOUNTBOUND BEHAVIOUR
+    LOGIC FUNCTIONS RELATED TO ACCOUNTBOUND FEATURE
   *******************************************************/
 
   /**
@@ -232,6 +232,18 @@ contract HydraS1AccountboundAttester is
     return (abi.encode(nullifier, burnCount));
   }
 
+  /**
+   * @dev Getter, returns the burnCount of a nullifier
+   * @param nullifier nullifier used
+   **/
+  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
+    return _getNullifierBurnCount(nullifier);
+  }
+
+  /**
+   * @dev Getter, returns the cooldown start of a nullifier
+   * @param nullifier nullifier used
+   **/
   function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
     return _getNullifierCooldownStart(nullifier);
   }
@@ -265,10 +277,6 @@ contract HydraS1AccountboundAttester is
    */
   function _isOnCooldown(uint256 nullifier, uint32 cooldownDuration) internal view returns (bool) {
     return _getNullifierCooldownStart(nullifier) + cooldownDuration > block.timestamp;
-  }
-
-  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
-    return _getNullifierBurnCount(nullifier);
   }
 
   /**
@@ -307,6 +315,12 @@ contract HydraS1AccountboundAttester is
     GROUP CONFIGURATION LOGIC
   *******************************************************/
 
+  /**
+   * @dev Setter, sets the cooldown duration of a groupIndex
+   * @notice set to 0 to deactivate the accountbound feature for this group
+   * @param groupIndex internal collection id
+   * @param cooldownDuration cooldown duration we want to set for the groupIndex
+   **/
   function setCooldownDurationForGroupIndex(
     uint256 groupIndex,
     uint32 cooldownDuration
@@ -315,12 +329,17 @@ contract HydraS1AccountboundAttester is
     emit CooldownDurationSetForGroupIndex(groupIndex, cooldownDuration);
   }
 
+  /**
+   * @dev Getter, get the cooldown duration of a groupIndex
+   * @notice returns 0 when the accountbound feature is deactivated for this group
+   * @param groupIndex internal collection id
+   **/
   function getCooldownDurationForGroupIndex(uint256 groupIndex) external view returns (uint32) {
     return _getCooldownDurationForGroupIndex(groupIndex);
   }
 
+  // = 0 means that the accountbound feature is deactivated for this group
   function _getCooldownDurationForGroupIndex(uint256 groupIndex) internal view returns (uint32) {
-    // if cooldownDuration == 0, the accountbound behaviour is prohibited
     return _cooldownDurations[groupIndex];
   }
 }

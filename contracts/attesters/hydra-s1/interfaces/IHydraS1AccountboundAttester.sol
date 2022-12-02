@@ -90,8 +90,9 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
    **/
   function setCooldownDurationForGroupIndex(uint256 groupIndex, uint32 cooldownDuration) external;
 
-  /**
+  /*/**
    * @dev Getter, get the cooldown duration of a groupIndex
+   * @notice returns 0 when the accountbound feature is deactivated for this group
    * @param groupIndex internal collection id
    **/
   function getCooldownDurationForGroupIndex(uint256 groupIndex) external view returns (uint32);
