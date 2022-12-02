@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
-import 'hardhat/console.sol';
 
 import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
 import {HydraS1SimpleAttester} from './HydraS1SimpleAttester.sol';
