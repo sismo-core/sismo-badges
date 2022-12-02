@@ -94,8 +94,7 @@ interface IBadges {
    * @dev Getter of all badge attributes and their values for a specific badge
    * @param id Badge Id to check (= attestationCollectionId)
    */
-  function getAttributesNamesAndValuesForBadge(uint256 id)
-    external
-    view
-    returns (bytes32[] memory, uint8[] memory);
+  function getAttributesNamesAndValuesForBadge(
+    uint256 id
+  ) external view returns (bytes32[] memory, uint8[] memory);
 }

@@ -32,7 +32,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged --pattern 'test/**/*.ts'  --pattern 'tasks/**/*.ts'"
+      "pre-commit": "pretty-quick --staged --pattern 'test/**/*.ts'  --pattern 'tasks/**/*.ts' --pattern 'contracts/**/*.sol'"
     }
   },
   "dependencies": {
