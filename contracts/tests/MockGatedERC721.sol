@@ -8,10 +8,10 @@ contract MockGatedERC721 is ERC721, SismoGated {
   constructor(
     address badgesAddress,
     address attesterAddress,
-    uint256 _gatedBadge
+    uint256 gatedBadge
   )
     ERC721('Sismo Gated NFT Contract', 'SGNFT')
-    SismoGated(badgesAddress, attesterAddress, _gatedBadge)
+    SismoGated(badgesAddress, attesterAddress, gatedBadge)
   {}
 
   function safeMint(
