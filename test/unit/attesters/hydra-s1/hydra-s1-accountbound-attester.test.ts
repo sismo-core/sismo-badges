@@ -168,10 +168,6 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
     });
 
-    it('Should get the version correctly', async () => {
-      expect(await hydraS1AccountboundAttester.VERSION()).to.be.eql(4);
-    });
-
     it('Should revert when trying to call initialize again with a random address', async () => {
       await expect(
         hydraS1AccountboundAttester.connect(randomSigner).initialize(randomSigner.address)

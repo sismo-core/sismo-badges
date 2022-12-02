@@ -64,6 +64,19 @@ describe('Test Badges contract', () => {
     });
   });
 
+  describe('Configuration checks', () => {
+    it('Should have setup the admin role correctly', async () => {
+      const adminRole = await badges.DEFAULT_ADMIN_ROLE();
+      expect(await badges.hasRole(adminRole, deployer.address)).to.be.true;
+    });
+
+    it('Should revert when trying to call initialize again', async () => {
+      await expect(
+        badges.connect(deployer).initialize('fake_uri', deployer.address)
+      ).to.be.revertedWith('Initializable: contract is already initialized');
+    });
+  });
+
   /*************************************************************************************/
   /***************************** SET ATTESTATIONS REGISTRY *****************************/
   /*************************************************************************************/

@@ -42,6 +42,22 @@ describe('Test AvailableRootsRegistry contract', () => {
     });
   });
 
+  describe('Configuration checks', () => {
+    it('Should have setup the owner correctly', async () => {
+      expect(await availableRootsRegistry.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should get the owner correctly', async () => {
+      expect(await availableRootsRegistry.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should revert when trying to call initialize again', async () => {
+      await expect(
+        availableRootsRegistry.connect(deployer).initialize(deployer.address)
+      ).to.be.revertedWith('Initializable: contract is already initialized');
+    });
+  });
+
   /*************************************************************************************/
   /***************************** REGISTER ROOT FOR ATTESTER ****************************/
   /*************************************************************************************/

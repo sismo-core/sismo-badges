@@ -105,6 +105,23 @@ describe('Test pythia 1 standard attester contract, not strict', () => {
     });
   });
 
+  describe('Configuration checks', () => {
+    it('Should have setup the owner correctly', async () => {
+      expect(await pythia1SimpleAttester.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should get the owner correctly', async () => {
+      expect(await pythia1SimpleAttester.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should revert when trying to call initialize again', async () => {
+      const commitmentSignerPubKey = await commitmentSigner.getPublicKey();
+      await expect(
+        pythia1SimpleAttester.connect(deployer).initialize(commitmentSignerPubKey, deployer.address)
+      ).to.be.revertedWith('Initializable: contract is already initialized');
+    });
+  });
+
   /*************************************************************************************/
   /***************************** GENERATE VALID ATTESTATION ****************************/
   /*************************************************************************************/
