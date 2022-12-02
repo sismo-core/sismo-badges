@@ -244,7 +244,7 @@ contract HydraS1AccountboundAttester is
    */
   function getNullifierFromExtraData(
     bytes memory extraData
-  ) external pure override(IHydraS1Base, HydraS1SimpleAttester) returns (uint256) {
+  ) external pure override(HydraS1SimpleAttester, IHydraS1AccountboundAttester) returns (uint256) {
     (uint256 nullifier, ) = abi.decode(extraData, (uint256, uint16));
 
     return nullifier;
