@@ -144,16 +144,6 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
   }
 
   /*******************************************************
-    MANDATORY FUNCTIONS TO OVERRIDE FROM HYDRAS1BASE.SOL
-  *******************************************************/
-
-  function getNullifierFromExtraData(
-    bytes memory extraData
-  ) external pure virtual override(IHydraS1Base, HydraS1Base) returns (uint256) {
-    return 0;
-  }
-
-  /*******************************************************
     OPTIONAL HOOK VIRTUAL FUNCTIONS FROM ATTESTER.SOL
   *******************************************************/
 
@@ -203,6 +193,16 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
       claim.groupProperties.groupIndex
     );
     return externalNullifier;
+  }
+
+  /**
+   * @dev returns the nullifier for a given extraData
+   * @param extraData bytes where the nullifier is encoded
+   */
+  function getNullifierFromExtraData(
+    bytes memory extraData
+  ) external pure virtual override(IHydraS1Base, HydraS1Base) returns (uint256) {
+    return 0;
   }
 
   /*******************************************************

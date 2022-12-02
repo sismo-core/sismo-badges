@@ -16,11 +16,11 @@ import { RequestStruct } from 'types/Attester';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, Signer } from 'ethers';
-import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
+import { deploymentsConfig } from '../../deployments-config';
 import {
   DeployedPythia1SimpleAttester,
   DeployPythia1SimpleAttesterArgs,
-} from '../../../../tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
+} from '../../unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
 import { Pythia1Prover, SnarkProof, EddsaSignature, buildPoseidon } from '@sismo-core/pythia-1';
 import {
   evmSnapshot,

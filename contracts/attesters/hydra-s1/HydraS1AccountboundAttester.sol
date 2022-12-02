@@ -165,18 +165,6 @@ contract HydraS1AccountboundAttester is
   }
 
   /*******************************************************
-    MANDATORY FUNCTIONS TO OVERRIDE FROM HYDRAS1BASE.SOL
-  *******************************************************/
-
-  function getNullifierFromExtraData(
-    bytes memory extraData
-  ) external pure override(IHydraS1Base, HydraS1SimpleAttester) returns (uint256) {
-    (uint256 nullifier, ) = abi.decode(extraData, (uint256, uint16));
-
-    return nullifier;
-  }
-
-  /*******************************************************
     OPTIONAL HOOK VIRTUAL FUNCTIONS FROM ATTESTER.SOL
   *******************************************************/
   /**
@@ -248,6 +236,30 @@ contract HydraS1AccountboundAttester is
 
   function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
     return _getNullifierCooldownStart(nullifier);
+  }
+
+  /**
+   * @dev returns the nullifier for a given extraData
+   * @param extraData bytes where the nullifier is encoded
+   */
+  function getNullifierFromExtraData(
+    bytes memory extraData
+  ) external pure override(IHydraS1Base, HydraS1SimpleAttester) returns (uint256) {
+    (uint256 nullifier, ) = abi.decode(extraData, (uint256, uint16));
+
+    return nullifier;
+  }
+
+  /**
+   * @dev Returns the burn count for a given extraData
+   * @param extraData bytes where the burnCount is encoded
+   */
+  function getBurnCountFromExtraData(
+    bytes memory extraData
+  ) external pure returns (uint16) {
+    (, uint16 burnCount) = abi.decode(extraData, (uint256, uint16));
+
+    return burnCount;
   }
 
   /**
