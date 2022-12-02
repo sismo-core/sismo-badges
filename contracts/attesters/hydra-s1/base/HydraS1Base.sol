@@ -77,17 +77,19 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
     return AVAILABLE_ROOTS_REGISTRY;
   }
 
+  /*******************************************************
+    Hydra-S1 SPECIFIC FUNCTIONS
+  *******************************************************/
+
   /**
+   * @dev MANDATORY: must be implemented to return the external nullifier from an attestation extraData
    * @dev Getter of a nullifier encoded in extraData
+   * @notice Must be implemented by the inheriting contracts
    * @param extraData extraData where nullifier can be encoded
    */
   function getNullifierFromExtraData(
     bytes memory extraData
   ) external view virtual returns (uint256);
-
-  /*******************************************************
-    Hydra-S1 SPECIFIC FUNCTIONS
-  *******************************************************/
 
   /**
    * @dev MANDATORY: must be implemented to return the external nullifier from a user request
