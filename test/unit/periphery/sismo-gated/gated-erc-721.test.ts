@@ -916,7 +916,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           BigNumber.from(inputs.publicInputs.nullifier)
         )}", ${1}, ${cooldownDuration})`
       );
-    });
+    }).timeout(80000);
 
     it('Should be able to change again the destination after the cooldown period', async () => {
       const evmSnapshotId = await evmSnapshot(hre);
