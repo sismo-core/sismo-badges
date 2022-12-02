@@ -88,7 +88,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @param owner Owner of the contract, can update public key and address
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(uint256[2] memory commitmentSignerPubKey, address owner) public reinitializer(VERSION) {
+  function initialize(
+    uint256[2] memory commitmentSignerPubKey,
+    address owner
+  ) public reinitializer(VERSION) {
     _transferOwnership(owner);
     _updateCommitmentSignerPubKey(commitmentSignerPubKey);
   }
@@ -102,11 +105,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _verifyRequest(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _verifyRequest(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     Pythia1ProofData memory snarkProof = abi.decode(proofData, (Pythia1ProofData));
     Pythia1ProofInput memory snarkInput = snarkProof._input();
     Pythia1Claim memory claim = request._claim();
@@ -121,13 +123,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @dev Returns attestations that will be recorded, constructed from the user request
    * @param request users request. Claim of having an account part of a group of accounts
    */
-  function buildAttestations(Request calldata request, bytes calldata)
-    public
-    view
-    virtual
-    override(IAttester, Attester)
-    returns (Attestation[] memory)
-  {
+  function buildAttestations(
+    Request calldata request,
+    bytes calldata
+  ) public view virtual override(IAttester, Attester) returns (Attestation[] memory) {
     Pythia1Claim memory claim = request._claim();
 
     Attestation[] memory attestations = new Attestation[](1);
@@ -161,11 +160,10 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * @param request users request. Claim of beiing part of a group.
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _beforeRecordAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     // we get the ticket used from the snark input in the data provided
     uint256 userTicket = proofData._getTicket();
     address currentDestination = _getDestinationOfTicket(userTicket);
@@ -191,12 +189,9 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
    * Here we chose ticketIdentifier = hash(attesterAddress, claim.GroupId)
    * Creates one ticket per group, per user and makes sure no collision with other attester's tickets
   **/
-  function _getTicketIdentifierOfClaim(Pythia1Claim memory claim)
-    internal
-    view
-    override
-    returns (uint256)
-  {
+  function _getTicketIdentifierOfClaim(
+    Pythia1Claim memory claim
+  ) internal view override returns (uint256) {
     uint256 ticketIdentifier = _encodeInSnarkField(
       address(this),
       claim.groupProperties.internalCollectionId
@@ -212,10 +207,9 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
     Pythia-1 Attester Specific Functions
   *******************************************************/
 
-  function updateCommitmentSignerPubKey(uint256[2] memory commitmentSignerPubKey)
-    external
-    onlyOwner
-  {
+  function updateCommitmentSignerPubKey(
+    uint256[2] memory commitmentSignerPubKey
+  ) external onlyOwner {
     _updateCommitmentSignerPubKey(commitmentSignerPubKey);
   }
 

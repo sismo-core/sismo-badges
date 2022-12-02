@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1SimpleAttester} from './interfaces/IHydraS1SimpleAttester.sol';
-import {IHydraS1Base} from "./base/IHydraS1Base.sol";
+import {IHydraS1Base} from './base/IHydraS1Base.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from './../../core/libs/Structs.sol';
@@ -94,11 +94,10 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _verifyRequest(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _verifyRequest(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     HydraS1ProofData memory snarkProof = abi.decode(proofData, (HydraS1ProofData));
     HydraS1ProofInput memory snarkInput = snarkProof._input();
     HydraS1Claim memory claim = request._claim();
@@ -113,13 +112,10 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
    * @dev Returns attestations that will be recorded, constructed from the user request
    * @param request users request. Claim of having an account part of a group of accounts
    */
-  function buildAttestations(Request calldata request, bytes calldata)
-    public
-    view
-    virtual
-    override(IAttester, Attester)
-    returns (Attestation[] memory)
-  {
+  function buildAttestations(
+    Request calldata request,
+    bytes calldata
+  ) public view virtual override(IAttester, Attester) returns (Attestation[] memory) {
     HydraS1Claim memory claim = request._claim();
 
     Attestation[] memory attestations = new Attestation[](1);
@@ -153,11 +149,10 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _beforeRecordAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     // we get the nullifier used from the snark input in the data provided
     uint256 nullifier = proofData._getNullifier();
     address currentDestination = _getDestinationOfNullifier(nullifier);
@@ -182,12 +177,9 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
    * Here we chose externalNullifier = hash(attesterAddress, claim.GroupId)
    * Creates one nullifier per group, per user and makes sure no collision with other attester's nullifiers
   **/
-  function _getExternalNullifierOfClaim(HydraS1Claim memory claim)
-    internal
-    view
-    override
-    returns (uint256)
-  {
+  function _getExternalNullifierOfClaim(
+    HydraS1Claim memory claim
+  ) internal view override returns (uint256) {
     uint256 externalNullifier = _encodeInSnarkField(
       address(this),
       claim.groupProperties.groupIndex

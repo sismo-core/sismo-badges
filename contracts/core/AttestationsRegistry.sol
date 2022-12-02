@@ -30,7 +30,7 @@ contract AttestationsRegistry is
   // implementation version
   uint8 public constant VERSION = 3;
   IBadges immutable BADGES;
-  
+
   /**
    * @dev Constructor.
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
@@ -86,11 +86,10 @@ contract AttestationsRegistry is
    * @param owners The owners of the attestations to be deleted
    * @param collectionIds The collection ids of the attestations to be deleted
    */
-  function deleteAttestations(address[] calldata owners, uint256[] calldata collectionIds)
-    external
-    override
-    whenNotPaused
-  {
+  function deleteAttestations(
+    address[] calldata owners,
+    uint256[] calldata collectionIds
+  ) external override whenNotPaused {
     if (owners.length != collectionIds.length)
       revert OwnersAndCollectionIdsLengthMismatch(owners, collectionIds);
 
@@ -122,12 +121,10 @@ contract AttestationsRegistry is
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function hasAttestation(uint256 collectionId, address owner)
-    external
-    view
-    override
-    returns (bool)
-  {
+  function hasAttestation(
+    uint256 collectionId,
+    address owner
+  ) external view override returns (bool) {
     return _getAttestationValue(collectionId, owner) != 0;
   }
 
@@ -136,12 +133,10 @@ contract AttestationsRegistry is
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationData(uint256 collectionId, address owner)
-    external
-    view
-    override
-    returns (AttestationData memory)
-  {
+  function getAttestationData(
+    uint256 collectionId,
+    address owner
+  ) external view override returns (AttestationData memory) {
     return _getAttestationData(collectionId, owner);
   }
 
@@ -150,12 +145,10 @@ contract AttestationsRegistry is
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationValue(uint256 collectionId, address owner)
-    external
-    view
-    override
-    returns (uint256)
-  {
+  function getAttestationValue(
+    uint256 collectionId,
+    address owner
+  ) external view override returns (uint256) {
     return _getAttestationValue(collectionId, owner);
   }
 
@@ -164,17 +157,10 @@ contract AttestationsRegistry is
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationDataTuple(uint256 collectionId, address owner)
-    external
-    view
-    override
-    returns (
-      address,
-      uint256,
-      uint32,
-      bytes memory
-    )
-  {
+  function getAttestationDataTuple(
+    uint256 collectionId,
+    address owner
+  ) external view override returns (address, uint256, uint32, bytes memory) {
     AttestationData memory attestationData = _attestationsData[collectionId][owner];
     return (
       attestationData.issuer,
@@ -189,12 +175,10 @@ contract AttestationsRegistry is
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationExtraData(uint256 collectionId, address owner)
-    external
-    view
-    override
-    returns (bytes memory)
-  {
+  function getAttestationExtraData(
+    uint256 collectionId,
+    address owner
+  ) external view override returns (bytes memory) {
     return _attestationsData[collectionId][owner].extraData;
   }
 
@@ -203,12 +187,10 @@ contract AttestationsRegistry is
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationIssuer(uint256 collectionId, address owner)
-    external
-    view
-    override
-    returns (address)
-  {
+  function getAttestationIssuer(
+    uint256 collectionId,
+    address owner
+  ) external view override returns (address) {
     return _attestationsData[collectionId][owner].issuer;
   }
 
@@ -217,12 +199,10 @@ contract AttestationsRegistry is
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationTimestamp(uint256 collectionId, address owner)
-    external
-    view
-    override
-    returns (uint32)
-  {
+  function getAttestationTimestamp(
+    uint256 collectionId,
+    address owner
+  ) external view override returns (uint32) {
     return _attestationsData[collectionId][owner].timestamp;
   }
 
@@ -231,12 +211,10 @@ contract AttestationsRegistry is
    * @param collectionIds Collection identifiers of the targeted attestations
    * @param owners Owners of the targeted attestations
    */
-  function getAttestationDataBatch(uint256[] memory collectionIds, address[] memory owners)
-    external
-    view
-    override
-    returns (AttestationData[] memory)
-  {
+  function getAttestationDataBatch(
+    uint256[] memory collectionIds,
+    address[] memory owners
+  ) external view override returns (AttestationData[] memory) {
     AttestationData[] memory attestationsDataArray = new AttestationData[](collectionIds.length);
     for (uint256 i = 0; i < collectionIds.length; i++) {
       attestationsDataArray[i] = _getAttestationData(collectionIds[i], owners[i]);
@@ -249,12 +227,10 @@ contract AttestationsRegistry is
    * @param collectionIds Collection identifiers of the targeted attestations
    * @param owners Owners of the targeted attestations
    */
-  function getAttestationValueBatch(uint256[] memory collectionIds, address[] memory owners)
-    external
-    view
-    override
-    returns (uint256[] memory)
-  {
+  function getAttestationValueBatch(
+    uint256[] memory collectionIds,
+    address[] memory owners
+  ) external view override returns (uint256[] memory) {
     uint256[] memory attestationsValues = new uint256[](collectionIds.length);
     for (uint256 i = 0; i < collectionIds.length; i++) {
       attestationsValues[i] = _getAttestationValue(collectionIds[i], owners[i]);
@@ -282,19 +258,17 @@ contract AttestationsRegistry is
     BADGES.triggerTransferEvent(operator, from, to, badgeTokenId, value);
   }
 
-  function _getAttestationData(uint256 collectionId, address owner)
-    internal
-    view
-    returns (AttestationData memory)
-  {
+  function _getAttestationData(
+    uint256 collectionId,
+    address owner
+  ) internal view returns (AttestationData memory) {
     return (_attestationsData[collectionId][owner]);
   }
 
-  function _getAttestationValue(uint256 collectionId, address owner)
-    internal
-    view
-    returns (uint256)
-  {
+  function _getAttestationValue(
+    uint256 collectionId,
+    address owner
+  ) internal view returns (uint256) {
     return _attestationsData[collectionId][owner].value;
   }
 }

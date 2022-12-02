@@ -7,7 +7,7 @@ import 'hardhat/console.sol';
 import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
 import {HydraS1SimpleAttester} from './HydraS1SimpleAttester.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {IHydraS1Base} from "./base/IHydraS1Base.sol";
+import {IHydraS1Base} from './base/IHydraS1Base.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../core/libs/Structs.sol';
@@ -136,7 +136,7 @@ contract HydraS1AccountboundAttester is
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner) public reinitializer(VERSION)  {
+  function initialize(address owner) public reinitializer(VERSION) {
     _transferOwnership(owner);
   }
 
@@ -254,9 +254,7 @@ contract HydraS1AccountboundAttester is
    * @dev Returns the burn count for a given extraData
    * @param extraData bytes where the burnCount is encoded
    */
-  function getBurnCountFromExtraData(
-    bytes memory extraData
-  ) external pure returns (uint16) {
+  function getBurnCountFromExtraData(bytes memory extraData) external pure returns (uint16) {
     (, uint16 burnCount) = abi.decode(extraData, (uint256, uint16));
 
     return burnCount;

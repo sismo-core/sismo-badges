@@ -15,11 +15,10 @@ contract MockAttestationsRegistry {
     ATTESTATION_VALUE = attestationValue;
   }
 
-  function getAttestationValue(uint256 collectionId, address owner)
-    external
-    view
-    returns (uint256)
-  {
+  function getAttestationValue(
+    uint256 collectionId,
+    address owner
+  ) external view returns (uint256) {
     return ATTESTATION_VALUE;
   }
 

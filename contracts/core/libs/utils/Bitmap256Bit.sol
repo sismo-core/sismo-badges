@@ -17,7 +17,7 @@ pragma solidity ^0.8.14;
  **/
 
 library Bitmap256Bit {
-  uint256 constant MAX_INT = 2**256 - 1;
+  uint256 constant MAX_INT = 2 ** 256 - 1;
 
   error IndexOutOfBounds(uint8 index);
   error ValueOutOfBounds(uint8 value);
@@ -31,7 +31,7 @@ library Bitmap256Bit {
     // Get the encode 4-bit value by right shifting to the `index` position
     uint256 shifted = currentValues >> (4 * index);
     // Get the value by only masking the last 4 bits with and AND operator
-    return uint8(shifted & (2**4 - 1));
+    return uint8(shifted & (2 ** 4 - 1));
   }
 
   /**
@@ -39,18 +39,14 @@ library Bitmap256Bit {
    * @param index index where the value will be stored. Can be between 0 and 63
    * @param value value to store. Can be between 0 and 15
    */
-  function _set(
-    uint256 self,
-    uint8 index,
-    uint8 value
-  ) internal pure returns (uint256) {
+  function _set(uint256 self, uint8 index, uint8 value) internal pure returns (uint256) {
     _checkIndexIsValid(index);
     _checkValueIsValid(value);
 
     uint256 currentValues = self;
     // 1. first we need to remove the current value for the inputed `index`
     // Left Shift 4 bits mask (1111 mask) to the `index` position
-    uint256 mask = (2**4 - 1) << (4 * index);
+    uint256 mask = (2 ** 4 - 1) << (4 * index);
     // Apply a XOR operation to obtain a mask with all bits set to 1 except the 4 bits that we want to remove
     uint256 negativeMask = MAX_INT ^ mask;
     // Apply a AND operation between the current values and the negative mask to remove the wanted bits
@@ -67,15 +63,9 @@ library Bitmap256Bit {
    * @dev Get all the non-zero values in a 256-bit bitmap
    * @param self a 256-bit bitmap
    */
-  function _getAllNonZeroValues(uint256 self)
-    internal
-    pure
-    returns (
-      uint8[] memory,
-      uint8[] memory,
-      uint8
-    )
-  {
+  function _getAllNonZeroValues(
+    uint256 self
+  ) internal pure returns (uint8[] memory, uint8[] memory, uint8) {
     uint8[] memory indices = new uint8[](64);
     uint8[] memory values = new uint8[](64);
     uint8 nbOfNonZeroValues = 0;

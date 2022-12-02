@@ -104,11 +104,10 @@ contract TransparentUpgradeableProxy is ERC1967Proxy {
    *
    * NOTE: Only the admin can call this function. See {ProxyAdmin-upgradeAndCall}.
    */
-  function upgradeToAndCall(address newImplementation, bytes calldata data)
-    external
-    payable
-    ifAdmin
-  {
+  function upgradeToAndCall(
+    address newImplementation,
+    bytes calldata data
+  ) external payable ifAdmin {
     _upgradeToAndCall(newImplementation, data, true);
   }
 
