@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 
 import {Claim, Request} from '../../../core/libs/Structs.sol';
 import {HydraS1Lib, HydraS1Claim, HydraS1GroupProperties} from './HydraS1Lib.sol';
