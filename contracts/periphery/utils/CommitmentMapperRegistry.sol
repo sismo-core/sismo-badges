@@ -44,7 +44,7 @@ contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, O
     address owner,
     uint256[2] memory commitmentMapperEdDSAPubKey,
     address commitmentMapperAddress
-  ) public reinitializer(VERSION) {
+  ) public reinitializer(IMPLEMENTATION_VERSION) {
     _transferOwnership(owner);
     _updateCommitmentMapperEdDSAPubKey(commitmentMapperEdDSAPubKey);
     _updateCommitmentMapperAddress(commitmentMapperAddress);

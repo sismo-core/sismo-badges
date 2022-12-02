@@ -31,7 +31,7 @@ contract AvailableRootsRegistry is IAvailableRootsRegistry, Initializable, Ownab
    * @param owner Owner of the contract, can update public key and address
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner) public reinitializer(VERSION) {
+  function initialize(address owner) public reinitializer(IMPLEMENTATION_VERSION) {
     _transferOwnership(owner);
   }
 

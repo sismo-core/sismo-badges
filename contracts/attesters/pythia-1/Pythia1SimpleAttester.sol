@@ -90,7 +90,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   function initialize(
     uint256[2] memory commitmentSignerPubKey,
     address owner
-  ) public reinitializer(VERSION) {
+  ) public reinitializer(IMPLEMENTATION_VERSION) {
     _transferOwnership(owner);
     _updateCommitmentSignerPubKey(commitmentSignerPubKey);
   }

@@ -27,7 +27,7 @@ contract AttestationsRegistry is
   IAttestationsRegistry,
   AttestationsRegistryConfigLogic
 {
-  uint8 public constant IMPLEM_VERSION = 3;
+  uint8 public constant IMPLEMENTATION_VERSION = 3;
   IBadges immutable BADGES;
 
   /**
@@ -45,7 +45,7 @@ contract AttestationsRegistry is
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner) public reinitializer(VERSION) {
+  function initialize(address owner) public reinitializer(IMPLEMENTATION_VERSION) {
     _transferOwnership(owner);
   }
 

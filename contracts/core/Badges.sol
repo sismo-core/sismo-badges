@@ -41,7 +41,10 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    * @param owner Owner of the contract, super admin, can setup roles and update the attestation registry
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(string memory uri, address owner) public reinitializer(VERSION) {
+  function initialize(
+    string memory uri,
+    address owner
+  ) public reinitializer(IMPLEMENTATION_VERSION) {
     _setURI(uri);
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
   }

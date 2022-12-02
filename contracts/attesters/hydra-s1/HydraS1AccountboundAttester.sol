@@ -76,7 +76,7 @@ contract HydraS1AccountboundAttester is
       19 place holders
     2O for config
       1 currently used
-      18 place holders
+      19 place holders
     20 for logic
       2 currently used
       18 place holders
@@ -135,7 +135,7 @@ contract HydraS1AccountboundAttester is
    * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner) public reinitializer(VERSION) {
+  function initialize(address owner) public reinitializer(IMPLEMENTATION_VERSION) {
     _transferOwnership(owner);
   }
 
