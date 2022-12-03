@@ -84,15 +84,18 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param commitmentSignerPubKey EdDSA public key of the commitment signer
-   * @param owner Owner of the contract, can update public key and address
+   * @param ownerAddress Owner of the contract, can update public key and address
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
   function initialize(
     uint256[2] memory commitmentSignerPubKey,
-    address owner
+    address ownerAddress
   ) public reinitializer(IMPLEMENTATION_VERSION) {
-    _transferOwnership(owner);
-    _updateCommitmentSignerPubKey(commitmentSignerPubKey);
+    // if proxy did not setup owner yet or if called by constructor (for implem setup)
+    if (owner() == address(0) || address(this).code.length == 0) {
+      _transferOwnership(ownerAddress);
+      _updateCommitmentSignerPubKey(commitmentSignerPubKey);
+    }
   }
 
   /*******************************************************

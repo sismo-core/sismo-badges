@@ -45,8 +45,11 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
     string memory uri,
     address owner
   ) public reinitializer(IMPLEMENTATION_VERSION) {
-    _setURI(uri);
-    _grantRole(DEFAULT_ADMIN_ROLE, owner);
+    // if proxy did not setup uri yet or if called by constructor (for implem setup)
+    if (bytes(ERC1155.uri(0)).length == 0 || address(this).code.length == 0) {
+      _setURI(uri);
+      _grantRole(DEFAULT_ADMIN_ROLE, owner);
+    }
   }
 
   /**

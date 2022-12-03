@@ -35,19 +35,22 @@ contract CommitmentMapperRegistry is ICommitmentMapperRegistry, Initializable, O
 
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
-   * @param owner Owner of the contract, can update public key and address
+   * @param ownerAddress Owner of the contract, can update public key and address
    * @param commitmentMapperEdDSAPubKey EdDSA public key of the commitment mapper
    * @param commitmentMapperAddress Address of the commitment mapper
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
   function initialize(
-    address owner,
+    address ownerAddress,
     uint256[2] memory commitmentMapperEdDSAPubKey,
     address commitmentMapperAddress
   ) public reinitializer(IMPLEMENTATION_VERSION) {
-    _transferOwnership(owner);
-    _updateCommitmentMapperEdDSAPubKey(commitmentMapperEdDSAPubKey);
-    _updateCommitmentMapperAddress(commitmentMapperAddress);
+    // if proxy did not setup owner yet or if called by constructor (for implem setup)
+    if (owner() == address(0) || address(this).code.length == 0) {
+      _transferOwnership(ownerAddress);
+      _updateCommitmentMapperEdDSAPubKey(commitmentMapperEdDSAPubKey);
+      _updateCommitmentMapperAddress(commitmentMapperAddress);
+    }
   }
 
   /**
