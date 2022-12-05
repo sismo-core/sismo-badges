@@ -46,17 +46,11 @@ contract SismoGated {
       proveWithSismo(data);
     }
 
-    bytes memory extraData = BADGES.getBadgeExtraData(to, GATED_BADGE);
+    uint256 nullifier = _getNulliferForAddress(to);
 
-    uint256 nullifier = ATTESTER.getNullifierFromExtraData(extraData);
-
-    if (_isNullifierUsed[nullifier]) {
+    if (isNullifierUsed(nullifier)) {
       revert NFTAlreadyMinted();
     }
-    // mark the nullifier as used to prevent from bypassing
-    // this modifier several times with different destination address
-    _markNullifierAsUsed(nullifier);
-
     _;
   }
 
@@ -72,6 +66,14 @@ contract SismoGated {
     (uint256 nullifier, ) = abi.decode(attestations[0].extraData, (uint256, uint16));
 
     return nullifier;
+  }
+
+  /**
+   * @dev Getter to know if a nullifier has been used
+   * @param nullifier Nullifier to check
+   */
+  function isNullifierUsed(uint256 nullifier) public view returns (bool) {
+    return _isNullifierUsed[nullifier];
   }
 
   /**
@@ -92,6 +94,15 @@ contract SismoGated {
     request.destination = newDestination;
 
     return (request, proofData);
+  }
+
+  /**
+   * @dev Getter to know a nullifier for a specific address
+   * @param to destination address referenced in the proof with this nullifier
+   */
+  function _getNulliferForAddress(address to) internal view returns (uint256) {
+    bytes memory extraData = BADGES.getBadgeExtraData(to, GATED_BADGE);
+    return ATTESTER.getNullifierFromExtraData(extraData);
   }
 
   /**
