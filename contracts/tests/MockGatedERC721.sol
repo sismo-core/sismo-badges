@@ -28,8 +28,12 @@ contract MockGatedERC721 is ERC721, SismoGated {
     uint256 tokenId,
     bytes memory data
   ) public override(ERC721) {
-    uint256 nullifier = proveWithSismo(data);
+    proveWithSismo(data);
     _transfer(from, to, tokenId);
+  }
+
+  function _afterTokenTransfer(address, address to, uint256, uint256) internal override(ERC721) {
+    uint256 nullifier = _getNulliferForAddress(to);
     _markNullifierAsUsed(nullifier);
   }
 }
