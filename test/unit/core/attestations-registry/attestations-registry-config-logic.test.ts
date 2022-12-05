@@ -553,7 +553,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
       await evmRevert(hre, snapshotId);
     });
 
-    describe('Tag creation', async () => {
+    describe('Attribute creation', async () => {
       it('Should revert when creating a new attribute as a non-owner', async () => {
         await expect(
           attestationsRegistry
@@ -586,7 +586,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .createNewAttribute(64, formatBytes32String('TAG_OVERFLOW'))
+            .createNewAttribute(64, formatBytes32String('ATTRIBUTE_OVERFLOW'))
         ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
@@ -596,7 +596,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
             .connect(deployer)
             .createNewAttributes(
               [ATTRIBUTES.CURATED, 64],
-              [formatBytes32String('CURATED'), formatBytes32String('TAG_OVERFLOW')]
+              [formatBytes32String('CURATED'), formatBytes32String('ATTRIBUTE_OVERFLOW')]
             )
         ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
@@ -615,7 +615,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
         await expect(
           attestationsRegistry.createNewAttribute(
             ATTRIBUTES.TEST_INSERTION,
-            formatBytes32String('OTHER TAG')
+            formatBytes32String('OTHER ATTRIBUTE')
           )
         ).to.be.revertedWith('AttributeAlreadyExists(10)');
       });
@@ -647,7 +647,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
       });
     });
 
-    describe('Tag update', async () => {
+    describe('Attribute update', async () => {
       it('Should revert when updating attribute as a non-owner', async () => {
         await expect(
           attestationsRegistry
@@ -680,7 +680,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
         await expect(
           attestationsRegistry
             .connect(deployer)
-            .updateAttributeName(64, formatBytes32String('TAG_OVERFLOW'))
+            .updateAttributeName(64, formatBytes32String('ATTRIBUTE_OVERFLOW'))
         ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
 
@@ -690,7 +690,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
             .connect(deployer)
             .updateAttributesName(
               [ATTRIBUTES.CURATED, 64],
-              [formatBytes32String('CURATED2'), formatBytes32String('TAG_OVERFLOW')]
+              [formatBytes32String('CURATED2'), formatBytes32String('ATTRIBUTE_OVERFLOW')]
             )
         ).to.be.revertedWith('IndexOutOfBounds(64)');
       });
@@ -754,7 +754,7 @@ describe('Test Attestations Registry Config Logic contract', () => {
       });
     });
 
-    describe('Tag deletion', async () => {
+    describe('Attribute deletion', async () => {
       it('Should revert when deleting a attribute as a non-owner', async () => {
         await expect(
           attestationsRegistry.connect(notOwner).deleteAttribute(ATTRIBUTES.NOT_CREATED)
