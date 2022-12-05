@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
@@ -46,8 +46,7 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   using Pythia1Lib for bytes;
   using Pythia1Lib for Request;
 
-  // implementation version
-  uint8 public constant VERSION = 3;
+  uint8 public constant IMPLEMENTATION_VERSION = 3;
 
   // The deployed contract will need to be authorized to write into the Attestation registry
   // It should get write access on attestation collections from AUTHORIZED_COLLECTION_ID_FIRST to AUTHORIZED_COLLECTION_ID_LAST.
@@ -85,15 +84,18 @@ contract Pythia1SimpleAttester is IPythia1SimpleAttester, Pythia1Base, Attester,
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param commitmentSignerPubKey EdDSA public key of the commitment signer
-   * @param owner Owner of the contract, can update public key and address
+   * @param ownerAddress Owner of the contract, can update public key and address
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
   function initialize(
     uint256[2] memory commitmentSignerPubKey,
-    address owner
-  ) public reinitializer(VERSION) {
-    _transferOwnership(owner);
-    _updateCommitmentSignerPubKey(commitmentSignerPubKey);
+    address ownerAddress
+  ) public reinitializer(IMPLEMENTATION_VERSION) {
+    // if proxy did not setup owner yet or if called by constructor (for implem setup)
+    if (owner() == address(0) || address(this).code.length == 0) {
+      _transferOwnership(ownerAddress);
+      _updateCommitmentSignerPubKey(commitmentSignerPubKey);
+    }
   }
 
   /*******************************************************

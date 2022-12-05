@@ -30,9 +30,161 @@ contract AttestationsRegistryConfigLogic is
 
   /******************************************
    *
-   *    ATTESTATIONS COLLECTION CORE LOGIC
+   *    ATTESTATION REGISTRY WRITE ACCESS MANAGEMENT (ISSUERS)
    *
    *****************************************/
+
+  /**
+   * @dev Pauses the registry. Issuers can no longer record or delete attestations
+   */
+  function pause() external override onlyOwner {
+    _pause();
+  }
+
+  /**
+   * @dev Unpauses the registry
+   */
+  function unpause() external override onlyOwner {
+    _unpause();
+  }
+
+  /**
+   * @dev Authorize an issuer for a specific range
+   * @param issuer Issuer that will be authorized
+   * @param firstCollectionId First collection Id of the range for which the issuer will be authorized
+   * @param lastCollectionId Last collection Id of the range for which the issuer will be authorized
+   */
+  function authorizeRange(
+    address issuer,
+    uint256 firstCollectionId,
+    uint256 lastCollectionId
+  ) external override onlyOwner {
+    _authorizeRange(issuer, firstCollectionId, lastCollectionId);
+  }
+
+  /**
+   * @dev Unauthorize an issuer for a specific range
+   * @param issuer Issuer that will be unauthorized
+   * @param rangeIndex Index of the range to be unauthorized
+   * @param firstCollectionId First collection Id of the range for which the issuer will be unauthorized
+   * @param lastCollectionId Last collection Id of the range for which the issuer will be unauthorized
+   */
+  function unauthorizeRange(
+    address issuer,
+    uint256 rangeIndex,
+    uint256 firstCollectionId,
+    uint256 lastCollectionId
+  ) external override onlyOwner {
+    _unauthorizeRange(issuer, rangeIndex, firstCollectionId, lastCollectionId);
+  }
+
+  /**
+   * @dev Authorize an issuer for specific ranges
+   * @param issuer Issuer that will be authorized
+   * @param ranges Ranges for which the issuer will be authorized
+   */
+  function authorizeRanges(address issuer, Range[] memory ranges) external override onlyOwner {
+    for (uint256 i = 0; i < ranges.length; i++) {
+      _authorizeRange(issuer, ranges[i].min, ranges[i].max);
+    }
+  }
+
+  /**
+   * @dev Unauthorize an issuer for specific ranges
+   * @param issuer Issuer that will be unauthorized
+   * @param ranges Ranges for which the issuer will be unauthorized
+   */
+  function unauthorizeRanges(
+    address issuer,
+    Range[] memory ranges,
+    uint256[] memory rangeIndexes
+  ) external override onlyOwner {
+    for (uint256 i = 0; i < rangeIndexes.length; i++) {
+      _unauthorizeRange(issuer, rangeIndexes[i] - i, ranges[i].min, ranges[i].max);
+    }
+  }
+
+  /**
+   * @dev Returns whether a specific issuer is authorized or not to record in a specific attestations collection
+   * @param issuer Issuer to be checked
+   * @param collectionId Collection Id for which the issuer will be checked
+   */
+  function isAuthorized(address issuer, uint256 collectionId) external view returns (bool) {
+    return _isAuthorized(issuer, collectionId);
+  }
+
+  /******************************************
+   *
+   *    ATTRIBUTES CONFIG LOGIC
+   *
+   *****************************************/
+
+  /**
+   * @dev Create a new attribute.
+   * @param index Index of the attribute. Can go from 0 to 63.
+   * @param name Name in bytes32 of the attribute
+   */
+  function createNewAttribute(uint8 index, bytes32 name) public onlyOwner {
+    index._checkIndexIsValid();
+    if (_isAttributeCreated(index)) {
+      revert AttributeAlreadyExists(index);
+    }
+    _createNewAttribute(index, name);
+  }
+
+  function createNewAttributes(uint8[] memory indices, bytes32[] memory names) external onlyOwner {
+    if (indices.length != names.length) {
+      revert ArgsLengthDoesNotMatch();
+    }
+
+    for (uint256 i = 0; i < indices.length; i++) {
+      createNewAttribute(indices[i], names[i]);
+    }
+  }
+
+  /**
+   * @dev Update the name of an existing attribute
+   * @param index Index of the attribute. Can go from 0 to 63. The attribute must exist
+   * @param newName new name in bytes32 of the attribute
+   */
+  function updateAttributeName(uint8 index, bytes32 newName) public onlyOwner {
+    index._checkIndexIsValid();
+    if (!_isAttributeCreated(index)) {
+      revert AttributeDoesNotExist(index);
+    }
+    _updateAttributeName(index, newName);
+  }
+
+  function updateAttributesName(
+    uint8[] memory indices,
+    bytes32[] memory newNames
+  ) external onlyOwner {
+    if (indices.length != newNames.length) {
+      revert ArgsLengthDoesNotMatch();
+    }
+
+    for (uint256 i = 0; i < indices.length; i++) {
+      updateAttributeName(indices[i], newNames[i]);
+    }
+  }
+
+  /**
+   * @dev Delete an existing attribute
+   * @param index Index of the attribute. Can go from 0 to 63. The attribute must already exist
+   */
+  function deleteAttribute(uint8 index) public onlyOwner {
+    index._checkIndexIsValid();
+    if (!_isAttributeCreated(index)) {
+      revert AttributeDoesNotExist(index);
+    }
+    _deleteAttribute(index);
+  }
+
+  function deleteAttributes(uint8[] memory indices) external onlyOwner {
+    for (uint256 i = 0; i < indices.length; i++) {
+      deleteAttribute(indices[i]);
+    }
+  }
 
   /**
    * @dev Set a value for an attribute of an attestationsCollection. The attribute should already be created.
@@ -145,158 +297,6 @@ contract AttestationsRegistryConfigLogic is
     }
 
     return (attributesNames, attributesValues);
-  }
-
-  /**
-   * @dev Authorize an issuer for a specific range
-   * @param issuer Issuer that will be authorized
-   * @param firstCollectionId First collection Id of the range for which the issuer will be authorized
-   * @param lastCollectionId Last collection Id of the range for which the issuer will be authorized
-   */
-  function authorizeRange(
-    address issuer,
-    uint256 firstCollectionId,
-    uint256 lastCollectionId
-  ) external override onlyOwner {
-    _authorizeRange(issuer, firstCollectionId, lastCollectionId);
-  }
-
-  /**
-   * @dev Unauthorize an issuer for a specific range
-   * @param issuer Issuer that will be unauthorized
-   * @param rangeIndex Index of the range to be unauthorized
-   * @param firstCollectionId First collection Id of the range for which the issuer will be unauthorized
-   * @param lastCollectionId Last collection Id of the range for which the issuer will be unauthorized
-   */
-  function unauthorizeRange(
-    address issuer,
-    uint256 rangeIndex,
-    uint256 firstCollectionId,
-    uint256 lastCollectionId
-  ) external override onlyOwner {
-    _unauthorizeRange(issuer, rangeIndex, firstCollectionId, lastCollectionId);
-  }
-
-  /**
-   * @dev Authorize an issuer for specific ranges
-   * @param issuer Issuer that will be authorized
-   * @param ranges Ranges for which the issuer will be authorized
-   */
-  function authorizeRanges(address issuer, Range[] memory ranges) external override onlyOwner {
-    for (uint256 i = 0; i < ranges.length; i++) {
-      _authorizeRange(issuer, ranges[i].min, ranges[i].max);
-    }
-  }
-
-  /**
-   * @dev Unauthorize an issuer for specific ranges
-   * @param issuer Issuer that will be unauthorized
-   * @param ranges Ranges for which the issuer will be unauthorized
-   */
-  function unauthorizeRanges(
-    address issuer,
-    Range[] memory ranges,
-    uint256[] memory rangeIndexes
-  ) external override onlyOwner {
-    for (uint256 i = 0; i < rangeIndexes.length; i++) {
-      _unauthorizeRange(issuer, rangeIndexes[i] - i, ranges[i].min, ranges[i].max);
-    }
-  }
-
-  /**
-   * @dev Returns whether a specific issuer is authorized or not to record in a specific attestations collection
-   * @param issuer Issuer to be checked
-   * @param collectionId Collection Id for which the issuer will be checked
-   */
-  function isAuthorized(address issuer, uint256 collectionId) external view returns (bool) {
-    return _isAuthorized(issuer, collectionId);
-  }
-
-  /**
-   * @dev Pauses the registry. Issuers can no longer record or delete attestations
-   */
-  function pause() external override onlyOwner {
-    _pause();
-  }
-
-  /**
-   * @dev Unpauses the registry
-   */
-  function unpause() external override onlyOwner {
-    _unpause();
-  }
-
-  /*****************************
-   *
-   *   ATTRIBUTES CORE LOGIC
-   *
-   *****************************/
-
-  /**
-   * @dev Create a new attribute.
-   * @param index Index of the attribute. Can go from 0 to 63.
-   * @param name Name in bytes32 of the attribute
-   */
-  function createNewAttribute(uint8 index, bytes32 name) public onlyOwner {
-    index._checkIndexIsValid();
-    if (_isAttributeCreated(index)) {
-      revert AttributeAlreadyExists(index);
-    }
-    _createNewAttribute(index, name);
-  }
-
-  function createNewAttributes(uint8[] memory indices, bytes32[] memory names) external onlyOwner {
-    if (indices.length != names.length) {
-      revert ArgsLengthDoesNotMatch();
-    }
-
-    for (uint256 i = 0; i < indices.length; i++) {
-      createNewAttribute(indices[i], names[i]);
-    }
-  }
-
-  /**
-   * @dev Update the name of an existing attribute
-   * @param index Index of the attribute. Can go from 0 to 63. The attribute must exist
-   * @param newName new name in bytes32 of the attribute
-   */
-  function updateAttributeName(uint8 index, bytes32 newName) public onlyOwner {
-    index._checkIndexIsValid();
-    if (!_isAttributeCreated(index)) {
-      revert AttributeDoesNotExist(index);
-    }
-    _updateAttributeName(index, newName);
-  }
-
-  function updateAttributesName(
-    uint8[] memory indices,
-    bytes32[] memory newNames
-  ) external onlyOwner {
-    if (indices.length != newNames.length) {
-      revert ArgsLengthDoesNotMatch();
-    }
-
-    for (uint256 i = 0; i < indices.length; i++) {
-      updateAttributeName(indices[i], newNames[i]);
-    }
-  }
-
-  /**
-   * @dev Delete an existing attribute
-   * @param index Index of the attribute. Can go from 0 to 63. The attribute must already exist
-   */
-  function deleteAttribute(uint8 index) public onlyOwner {
-    index._checkIndexIsValid();
-    if (!_isAttributeCreated(index)) {
-      revert AttributeDoesNotExist(index);
-    }
-    _deleteAttribute(index);
-  }
-
-  function deleteAttributes(uint8[] memory indices) external onlyOwner {
-    for (uint256 i = 0; i < indices.length; i++) {
-      deleteAttribute(indices[i]);
-    }
   }
 
   /*****************************

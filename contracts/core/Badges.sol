@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 
 import {ERC1155} from '@openzeppelin/contracts/token/ERC1155/ERC1155.sol';
 import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.sol';
@@ -17,8 +17,7 @@ import {IBadges} from './interfaces/IBadges.sol';
  * For more information: https://badges.docs.sismo.io
  */
 contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
-  // implementation version
-  uint8 public constant VERSION = 3;
+  uint8 public constant IMPLEMENTATION_VERSION = 3;
 
   IAttestationsRegistry internal _attestationsRegistry;
 
@@ -42,9 +41,15 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    * @param owner Owner of the contract, super admin, can setup roles and update the attestation registry
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(string memory uri, address owner) public reinitializer(VERSION) {
-    _setURI(uri);
-    _grantRole(DEFAULT_ADMIN_ROLE, owner);
+  function initialize(
+    string memory uri,
+    address owner
+  ) public reinitializer(IMPLEMENTATION_VERSION) {
+    // if proxy did not setup uri yet or if called by constructor (for implem setup)
+    if (bytes(ERC1155.uri(0)).length == 0 || address(this).code.length == 0) {
+      _setURI(uri);
+      _grantRole(DEFAULT_ADMIN_ROLE, owner);
+    }
   }
 
   /**

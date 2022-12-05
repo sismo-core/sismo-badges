@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
 import {IAttester} from '../../../core/interfaces/IAttester.sol';

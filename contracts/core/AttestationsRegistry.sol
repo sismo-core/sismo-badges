@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 
 import {IAttestationsRegistry} from './interfaces/IAttestationsRegistry.sol';
 import {AttestationsRegistryConfigLogic} from './libs/attestations-registry/AttestationsRegistryConfigLogic.sol';
@@ -27,8 +27,7 @@ contract AttestationsRegistry is
   IAttestationsRegistry,
   AttestationsRegistryConfigLogic
 {
-  // implementation version
-  uint8 public constant VERSION = 3;
+  uint8 public constant IMPLEMENTATION_VERSION = 3;
   IBadges immutable BADGES;
 
   /**
@@ -43,11 +42,14 @@ contract AttestationsRegistry is
 
   /**
    * @dev Initialize function, to be called by the proxy delegating calls to this implementation
-   * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
+   * @param ownerAddress Owner of the contract, has the right to authorize/unauthorize attestations issuers
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner) public reinitializer(VERSION) {
-    _transferOwnership(owner);
+  function initialize(address ownerAddress) public reinitializer(IMPLEMENTATION_VERSION) {
+    // if proxy did not setup owner yet or if called by constructor (for implem setup)
+    if (owner() == address(0) || address(this).code.length == 0) {
+      _transferOwnership(ownerAddress);
+    }
   }
 
   /**

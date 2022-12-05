@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
-import 'hardhat/console.sol';
+
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
 import {IHydraS1AccountboundAttester} from './interfaces/IHydraS1AccountboundAttester.sol';
-import {HydraS1SimpleAttester} from './HydraS1SimpleAttester.sol';
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {IHydraS1Base} from './base/IHydraS1Base.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from '../../core/libs/Structs.sol';
-import {IAttester} from '../../core/Attester.sol';
 
-// Imports related to HydraS1 Proving Scheme
-import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Claim} from './base/HydraS1Base.sol';
+// Imports related to Hydra-S1
+import {HydraS1SimpleAttester, IAttester, HydraS1Lib, HydraS1ProofData, HydraS1Claim} from './HydraS1SimpleAttester.sol';
 
 /**
  * @title  Hydra-S1 Accountbound Attester
@@ -67,8 +64,7 @@ contract HydraS1AccountboundAttester is
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
 
-  // implementation version
-  uint8 public constant VERSION = 4;
+  uint8 public constant IMPLEMENTATION_VERSION = 4;
 
   /*******************************************************
     Storage layout:
@@ -77,7 +73,7 @@ contract HydraS1AccountboundAttester is
       19 place holders
     2O for config
       1 currently used
-      18 place holders
+      19 place holders
     20 for logic
       2 currently used
       18 place holders
@@ -133,11 +129,14 @@ contract HydraS1AccountboundAttester is
 
   /**
    * @dev Initialize function, to be called by the proxy delegating calls to this implementation
-   * @param owner Owner of the contract, has the right to authorize/unauthorize attestations issuers
+   * @param ownerAddress Owner of the contract, has the right to authorize/unauthorize attestations issuers
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner) public reinitializer(VERSION) {
-    _transferOwnership(owner);
+  function initialize(address ownerAddress) public reinitializer(IMPLEMENTATION_VERSION) {
+    // if proxy did not setup owner yet or if called by constructor (for implem setup)
+    if (owner() == address(0) || address(this).code.length == 0) {
+      _transferOwnership(ownerAddress);
+    }
   }
 
   /*******************************************************
@@ -157,8 +156,8 @@ contract HydraS1AccountboundAttester is
 
     uint256 nullifier = proofData._getNullifier();
     attestations[0].extraData = abi.encodePacked(
-      attestations[0].extraData,
-      generateAccountboundExtraData(nullifier, attestations[0].owner)
+      attestations[0].extraData, // nullifier, from HydraS1 Simple
+      _getNextBurnCount(nullifier, attestations[0].owner) // BurnCount
     );
 
     return (attestations);
@@ -201,7 +200,7 @@ contract HydraS1AccountboundAttester is
         );
       }
 
-      // Delete the old Attestation linked to the nullifier before recording the new one (accountbound behaviour)
+      // Delete the old Attestation linked to the nullifier before recording the new one (accountbound feature)
       _deletePreviousAttestation(claim, previousNullifierDestination);
 
       _setNullifierOnCooldownAndIncrementBurnCount(nullifier);
@@ -210,30 +209,21 @@ contract HydraS1AccountboundAttester is
   }
 
   /*******************************************************
-    LOGIC FUNCTIONS RELATED TO ACCOUNTBOUND BEHAVIOUR
+    LOGIC FUNCTIONS RELATED TO ACCOUNTBOUND FEATURE
   *******************************************************/
 
   /**
-   * @dev ABI-encodes burn count of the nullifier
-   * @param nullifier user nullifier
-   * @param claimDestination destination referenced in the user claim
-   */
-  function generateAccountboundExtraData(
-    uint256 nullifier,
-    address claimDestination
-  ) public view virtual returns (bytes memory) {
-    address previousNullifierDestination = _getDestinationOfNullifier(nullifier);
-    uint16 burnCount = _getNullifierBurnCount(nullifier);
-    // If the attestation is minted on a new destination address
-    // the burnCount that will be encoded in the extraData of the Attestation should be incremented
-    if (
-      previousNullifierDestination != address(0) && previousNullifierDestination != claimDestination
-    ) {
-      burnCount += 1;
-    }
-    return (abi.encode(burnCount));
+   * @dev Getter, returns the burnCount of a nullifier
+   * @param nullifier nullifier used
+   **/
+  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
+    return _getNullifierBurnCount(nullifier);
   }
 
+  /**
+   * @dev Getter, returns the cooldown start of a nullifier
+   * @param nullifier nullifier used
+   **/
   function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32) {
     return _getNullifierCooldownStart(nullifier);
   }
@@ -269,10 +259,6 @@ contract HydraS1AccountboundAttester is
     return _getNullifierCooldownStart(nullifier) + cooldownDuration > block.timestamp;
   }
 
-  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16) {
-    return _getNullifierBurnCount(nullifier);
-  }
-
   /**
    * @dev Delete the previous attestation created with this nullifier
    * @param claim user claim
@@ -305,10 +291,37 @@ contract HydraS1AccountboundAttester is
     return _nullifiersBurnCount[nullifier];
   }
 
+  /**
+   * @dev returns burn count or burn count + 1 if new burn will happen
+   * @param nullifier user nullifier
+   * @param claimDestination destination referenced in the user claim
+   */
+  function _getNextBurnCount(
+    uint256 nullifier,
+    address claimDestination
+  ) public view virtual returns (uint16) {
+    address previousNullifierDestination = _getDestinationOfNullifier(nullifier);
+    uint16 burnCount = _getNullifierBurnCount(nullifier);
+    // If the attestation is minted on a new destination address
+    // the burnCount that will be encoded in the extraData of the Attestation should be incremented
+    if (
+      previousNullifierDestination != address(0) && previousNullifierDestination != claimDestination
+    ) {
+      burnCount += 1;
+    }
+    return burnCount;
+  }
+
   /*******************************************************
     GROUP CONFIGURATION LOGIC
   *******************************************************/
 
+  /**
+   * @dev Setter, sets the cooldown duration of a groupIndex
+   * @notice set to 0 to deactivate the accountbound feature for this group
+   * @param groupIndex internal collection id
+   * @param cooldownDuration cooldown duration we want to set for the groupIndex
+   **/
   function setCooldownDurationForGroupIndex(
     uint256 groupIndex,
     uint32 cooldownDuration
@@ -317,12 +330,17 @@ contract HydraS1AccountboundAttester is
     emit CooldownDurationSetForGroupIndex(groupIndex, cooldownDuration);
   }
 
+  /**
+   * @dev Getter, get the cooldown duration of a groupIndex
+   * @notice returns 0 when the accountbound feature is deactivated for this group
+   * @param groupIndex internal collection id
+   **/
   function getCooldownDurationForGroupIndex(uint256 groupIndex) external view returns (uint32) {
     return _getCooldownDurationForGroupIndex(groupIndex);
   }
 
+  // = 0 means that the accountbound feature is deactivated for this group
   function _getCooldownDurationForGroupIndex(uint256 groupIndex) internal view returns (uint32) {
-    // if cooldownDuration == 0, the accountbound behaviour is prohibited
     return _cooldownDurations[groupIndex];
   }
 }

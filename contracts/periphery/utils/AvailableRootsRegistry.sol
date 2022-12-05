@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IAvailableRootsRegistry} from './interfaces/IAvailableRootsRegistry.sol';
@@ -14,8 +14,7 @@ import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.s
  *
  **/
 contract AvailableRootsRegistry is IAvailableRootsRegistry, Initializable, Ownable {
-  // implementation version
-  uint8 public constant VERSION = 2;
+  uint8 public constant IMPLEMENTATION_VERSION = 2;
 
   mapping(address => mapping(uint256 => bool)) public _roots;
 
@@ -29,11 +28,14 @@ contract AvailableRootsRegistry is IAvailableRootsRegistry, Initializable, Ownab
 
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
-   * @param owner Owner of the contract, can update public key and address
+   * @param ownerAddress Owner of the contract, can update public key and address
    * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(address owner) public reinitializer(VERSION) {
-    _transferOwnership(owner);
+  function initialize(address ownerAddress) public reinitializer(IMPLEMENTATION_VERSION) {
+    // if proxy did not setup owner yet or if called by constructor (for implem setup)
+    if (owner() == address(0) || address(this).code.length == 0) {
+      _transferOwnership(ownerAddress);
+    }
   }
 
   /**

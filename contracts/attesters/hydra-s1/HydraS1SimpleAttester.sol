@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1SimpleAttester} from './interfaces/IHydraS1SimpleAttester.sol';
@@ -52,10 +52,17 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base {
   uint256 public immutable AUTHORIZED_COLLECTION_ID_FIRST;
   uint256 public immutable AUTHORIZED_COLLECTION_ID_LAST;
 
+  /*******************************************************
+    Storage layout:
+      20 slots for HydraS1
+        1 slot used
+        19 place holders
+  *******************************************************/
+
   mapping(uint256 => address) internal _nullifiersDestinations;
 
   // keeping some space for future
-  uint256[15] private _placeHoldersHydraS1Simple;
+  uint256[19] private _placeHoldersHydraS1Simple;
 
   /*******************************************************
     INITIALIZATION FUNCTIONS                           

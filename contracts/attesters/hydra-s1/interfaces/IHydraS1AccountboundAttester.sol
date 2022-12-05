@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1SimpleAttester} from '././IHydraS1SimpleAttester.sol';
@@ -50,16 +50,6 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
   function initialize(address owner) external;
 
   /**
-   * @dev ABI-encodes burn count of the nullifier
-   * @param nullifier user nullifier
-   * @param claimDestination destination referenced in the user claim
-   */
-  function generateAccountboundExtraData(
-    uint256 nullifier,
-    address claimDestination
-  ) external view returns (bytes memory);
-
-  /**
    * @dev returns the nullifier for a given extraData
    * @param extraData bytes where the nullifier is encoded
    */
@@ -90,8 +80,9 @@ interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
    **/
   function setCooldownDurationForGroupIndex(uint256 groupIndex, uint32 cooldownDuration) external;
 
-  /**
+  /*/**
    * @dev Getter, get the cooldown duration of a groupIndex
+   * @notice returns 0 when the accountbound feature is deactivated for this group
    * @param groupIndex internal collection id
    **/
   function getCooldownDurationForGroupIndex(uint256 groupIndex) external view returns (uint32);
