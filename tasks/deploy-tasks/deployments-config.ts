@@ -252,7 +252,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0x522018b86645F597626aa127EfC22D55a5c79F11',
+      address: '0xe1bFE993cF8dB9a3214Cc77fD68194Ac534078b4',
     },
     hydraS1SimpleAttester: {
       enableDeployment: false,
