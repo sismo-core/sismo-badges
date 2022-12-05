@@ -62,7 +62,7 @@ async function deploymentAction(
   options = { ...config.deployOptions, ...options };
   if (options.manualConfirm || options.log) {
     console.log(
-      '0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia: ',
+      '0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1: ',
       hre.network.name
     );
   }

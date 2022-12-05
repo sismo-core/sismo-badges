@@ -28,9 +28,9 @@ library Bitmap256Bit {
    */
   function _get(uint256 self, uint8 index) internal pure returns (uint8) {
     uint256 currentValues = self;
-    // Get the encode 4-bit value by right shifting to the `index` position
+    // Get the encoded 4-bit value by right shifting to the `index` position
     uint256 shifted = currentValues >> (4 * index);
-    // Get the value by only masking the last 4 bits with and AND operator
+    // Get the value by only masking the last 4 bits with an AND operator
     return uint8(shifted & (2 ** 4 - 1));
   }
 
