@@ -478,7 +478,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           destination2Signer.address,
           randomSigner.address,
           0,
-          packRequestAndProofToBytes(request, proof)
+          packRequestAndProofToBytes(newRequest, newProof)
         );
 
       // the current holder should hold the NFT
