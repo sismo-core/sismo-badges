@@ -105,6 +105,7 @@ contract HydraS1AccountboundAttester is
    * @param commitmentMapperAddress commitment mapper's public key registry
    * @param collectionIdFirst Id of the first attestation collection in which the attester is supposed to record
    * @param collectionIdLast Id of the last attestation collection in which the attester is supposed to record
+   * @param owner Address of attester's owner
    */
   constructor(
     address attestationsRegistryAddress,

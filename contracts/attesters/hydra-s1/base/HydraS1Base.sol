@@ -83,7 +83,7 @@ abstract contract HydraS1Base is IHydraS1Base, Attester, Initializable {
   *******************************************************/
 
   /**
-   * @dev MANDATORY: must be implemented to return the external nullifier from an attestation extraData
+   * @dev MANDATORY: must be implemented to return the nullifier from an attestation extraData
    * @dev Getter of a nullifier encoded in extraData
    * @notice Must be implemented by the inheriting contracts
    * @param extraData extraData where nullifier can be encoded

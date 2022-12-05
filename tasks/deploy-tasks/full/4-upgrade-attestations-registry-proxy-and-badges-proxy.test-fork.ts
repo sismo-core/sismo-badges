@@ -203,8 +203,8 @@ describe('FORK-Test Upgrade AttestationsRegistry contract with attributes and re
       });
 
       it('Should get the version correctly', async () => {
-        expect(await attestationsRegistry.VERSION()).to.be.eql(3);
-        expect(await badges.VERSION()).to.be.eql(3);
+        expect(await attestationsRegistry.IMPLEMENTATION_VERSION()).to.be.eql(3);
+        expect(await badges.IMPLEMENTATION_VERSION()).to.be.eql(3);
       });
 
       it('Should revert when trying to call initialize again', async () => {

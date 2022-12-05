@@ -80,7 +80,7 @@ describe('FORK Test AvailableRootsRegistry contract', () => {
     });
 
     it('Should get the version correctly', async () => {
-      expect(await availableRootsRegistry.VERSION()).to.be.eql(2);
+      expect(await availableRootsRegistry.IMPLEMENTATION_VERSION()).to.be.eql(2);
     });
 
     it('Should revert when trying to call initialize again', async () => {

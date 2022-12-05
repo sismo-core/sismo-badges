@@ -82,6 +82,10 @@ describe('Test CommitmentMapperRegistry contract', () => {
       expect(await commitmentMapperRegistry.owner()).to.equal(config.commitmentMapper.owner);
     });
 
+    it('Should get the version correctly', async () => {
+      expect(await commitmentMapperRegistry.IMPLEMENTATION_VERSION()).to.be.eql(2);
+    });
+
     it('should check that the commitment mapper address is registered on the correct address (0x0)', async () => {
       // 1 - Checks that the commitment mapper address is registered on the address zero (default value)
       expect(await commitmentMapperRegistry.getAddress()).to.be.equal(ethers.constants.AddressZero);

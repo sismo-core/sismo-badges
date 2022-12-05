@@ -228,7 +228,7 @@ describe('FORK Test Pythia', () => {
     });
 
     it('Should get the version correctly', async () => {
-      expect(await pythia1SimpleAttester.VERSION()).to.be.eql(3);
+      expect(await pythia1SimpleAttester.IMPLEMENTATION_VERSION()).to.be.eql(3);
     });
 
     it('Should revert when trying to call initialize again', async () => {

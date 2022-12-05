@@ -564,7 +564,7 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
     });
 
     it('Should get the version correctly', async () => {
-      expect(await hydraS1AccountboundAttester.VERSION()).to.be.eql(4);
+      expect(await hydraS1AccountboundAttester.IMPLEMENTATION_VERSION()).to.be.eql(4);
     });
 
     it('Should revert when trying to call initialize again', async () => {
