@@ -10,7 +10,7 @@ import {
   SNARK_FIELD,
 } from '@sismo-core/hydra-s1';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 import hre, { ethers } from 'hardhat';
 import {
   AttestationsRegistry,
@@ -248,16 +248,14 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           group.properties.groupIndex
         )
       );
+
       expect(buildAttestations[0].owner).to.eql(request.destination);
       expect(buildAttestations[0].issuer).to.eql(hydraS1AccountboundAttester.address);
       expect(buildAttestations[0].value.toNumber()).to.eql(sourceValue.toNumber());
       expect(buildAttestations[0].timestamp).to.eql(group.properties.generationTimestamp);
-      expect(buildAttestations[0].extraData).to.eql(
-        encodeAccountBoundAttestationExtraData({
-          nullifier: inputs.publicInputs.nullifier,
-          burnCount: 0,
-        })
-      );
+      expect(
+        utils.defaultAbiCoder.decode(['bytes', 'uint16'], buildAttestations[0].extraData)
+      ).to.eql([BigNumber.from(inputs.publicInputs.nullifier)._hex, 0]);
     });
   });
 
@@ -564,6 +562,13 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       const generateAttestationsTransaction =
         await hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes());
 
+      const attestationsExtraData = await attestationsRegistry.getAttestationExtraData(
+        (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(group.properties.groupIndex),
+        request.destination
+      );
+
       // 0 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
@@ -575,10 +580,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           hydraS1AccountboundAttester.address,
           sourceValue,
           group.properties.generationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 0,
-          }),
+          attestationsExtraData,
         ]);
 
       // 1 - Checks that the provided nullifier was successfully recorded in the attester
@@ -619,12 +621,12 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         destinationSigner.address
       );
 
-      expect(attestationExtraData).to.be.eql(
-        encodeAccountBoundAttestationExtraData({
-          nullifier: inputs.publicInputs.nullifier,
-          burnCount: 0,
-        })
-      );
+      // expect(attestationExtraData).to.be.eql(
+      //   encodeAccountBoundAttestationExtraData({
+      //     nullifier: inputs.publicInputs.nullifier,
+      //     burnCount: 0,
+      //   })
+      // );
 
       expect(
         await hydraS1AccountboundAttester.getNullifierFromExtraData(
@@ -684,6 +686,14 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       const generateAttestationsTransaction =
         await hydraS1AccountboundAttester.generateAttestations(newRequest, newProof.toBytes());
 
+      // burnCount should be recorded in the attestationsRegistry
+      const attestationsExtraData = await attestationsRegistry.getAttestationExtraData(
+        (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(group.properties.groupIndex),
+        newRequest.destination
+      );
+
       // 0 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
@@ -695,10 +705,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           hydraS1AccountboundAttester.address,
           sourceValue,
           group.properties.generationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 1, // burn count should be incremented
-          }),
+          attestationsExtraData,
         ]);
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'NullifierDestinationUpdated')
@@ -726,21 +733,10 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
         )
       ).to.be.eql(1); // the burnCount should be incremented
 
-      // burnCount should be recorded in the attestationsRegistry
-      expect(
-        await attestationsRegistry.getAttestationExtraData(
-          (
-            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
-          ).add(group.properties.groupIndex),
-          destination2Signer.address
-        )
-      ).to.equal(
-        encodeAccountBoundAttestationExtraData({
-          nullifier: inputs.publicInputs.nullifier,
-          burnCount: 1, // burnCount should be incremented
-        })
-      );
-
+      expect(utils.defaultAbiCoder.decode(['bytes', 'uint16'], attestationsExtraData)).to.eql([
+        BigNumber.from(inputs.publicInputs.nullifier)._hex,
+        1,
+      ]);
       // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
       // 2.1 - Checks that the old destination has not anymore it's attestation
       expect(
@@ -825,6 +821,13 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       const generateAttestationsTransaction =
         await hydraS1AccountboundAttester.generateAttestations(renewRequest, renewProof.toBytes());
 
+      const attestationsExtraData = await attestationsRegistry.getAttestationExtraData(
+        (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(group.properties.groupIndex),
+        renewRequest.destination
+      );
+
       // 0 - Checks that the transaction emitted the event with the new timestamp
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
@@ -836,10 +839,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           hydraS1AccountboundAttester.address,
           sourceValue,
           renewGenerationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 1,
-          }),
+          attestationsExtraData,
         ]);
 
       // A renew should not have changed the nullifierData
@@ -912,6 +912,13 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       const generateAttestationsTransaction =
         await hydraS1AccountboundAttester.generateAttestations(renewRequest, renewProof.toBytes());
 
+      const attestationsExtraData = await attestationsRegistry.getAttestationExtraData(
+        (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(group.properties.groupIndex),
+        renewRequest.destination
+      );
+
       // Checks that the transaction emitted the event with a claimedValue of zero
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
@@ -923,10 +930,7 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
           hydraS1AccountboundAttester.address,
           0, // claimedValue
           group.properties.generationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 1,
-          }),
+          attestationsExtraData,
         ]);
 
       //  Checks that the attestation in the registry has a value of zero
