@@ -1,24 +1,19 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {SismoGated} from '../core/libs/sismo-gated/SismoGated.sol';
 
 contract MockGatedERC721 is ERC721, SismoGated {
   constructor(
-    address badgesAddress,
-    address attesterAddress,
-    uint256 gatedBadge
-  )
-    ERC721('Sismo Gated NFT Contract', 'SGNFT')
-    SismoGated(badgesAddress, attesterAddress, gatedBadge)
-  {}
+    uint256 _gatedBadge
+  ) ERC721('Sismo Gated NFT Contract', 'SGNFT') SismoGated(_gatedBadge) {}
 
   function safeMint(
     address to,
     uint256 tokenId,
     bytes calldata data
-  ) public onlyBadgesOwner(to, data) {
+  ) public onlyBadgesOwner(to, data, hydraS1AccountboundAttester) {
     _mint(to, tokenId);
   }
 
@@ -28,7 +23,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     uint256 tokenId,
     bytes memory data
   ) public override(ERC721) {
-    proveWithSismo(data);
+    proveWithSismo(hydraS1AccountboundAttester, data);
     _transfer(from, to, tokenId);
   }
 
