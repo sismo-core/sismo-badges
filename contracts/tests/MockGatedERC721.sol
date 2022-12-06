@@ -6,19 +6,18 @@ import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {SismoGated, HydraS1AccountboundAttester} from '../core/libs/sismo-gated/SismoGated.sol';
 
 contract MockGatedERC721 is ERC721, SismoGated {
+  uint256 public constant GATED_BADGE_TOKEN_ID = 200001;
   mapping(uint256 => bool) private _isNullifierUsed;
 
   error NFTAlreadyMinted();
 
-  constructor(
-    uint256 gatedBadgeTokenId
-  ) ERC721('Sismo Gated NFT Contract', 'SGNFT') SismoGated(gatedBadgeTokenId) {}
+  constructor() ERC721('Sismo Gated NFT Contract', 'SGNFT') SismoGated() {}
 
   function safeMint(
     address to,
     uint256 tokenId,
     bytes calldata data
-  ) public onlyBadgesOwner(to, data, address(hydraS1AccountboundAttester)) {
+  ) public onlyBadgesOwner(to, GATED_BADGE_TOKEN_ID, hydraS1AccountboundAttester, data) {
     uint256 nullifier = _getNulliferForAddress(to);
 
     if (isNullifierUsed(nullifier)) {
@@ -48,8 +47,8 @@ contract MockGatedERC721 is ERC721, SismoGated {
    * @param to destination address referenced in the proof with this nullifier
    */
   function _getNulliferForAddress(address to) internal view returns (uint256) {
-    bytes memory extraData = badges.getBadgeExtraData(to, gatedBadge);
-    address badgeIssuerAddress = badges.getBadgeIssuer(to, gatedBadge);
+    bytes memory extraData = badges.getBadgeExtraData(to, GATED_BADGE_TOKEN_ID);
+    address badgeIssuerAddress = badges.getBadgeIssuer(to, GATED_BADGE_TOKEN_ID);
     return HydraS1AccountboundAttester(badgeIssuerAddress).getNullifierFromExtraData(extraData);
   }
 

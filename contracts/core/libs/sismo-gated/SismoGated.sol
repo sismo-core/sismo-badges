@@ -30,32 +30,29 @@ contract SismoGated {
   address public constant HYDRA_S1_ACCOUNTBOUND_LOCAL_ADDRESS =
     0xf93A0C43A3466488D416628bf149495285e9f274;
 
+  uint8 public constant MAX_NUMBER_OF_BADGES = 10;
+
   /**************************************
    * Storage slot
    * 20 slots
-   * -> 3 slots used
-   * -> 1 used by badges, 1 used by hydraS1AccountboundAttester, 1 used by gatedBadge
-   * * 0x0 - 0x20: Badges contract
-   * 0x20 - 0x40: HydraS1AccountboundAttester contract
-   * 0x40 - 0x60: Gated badge token id
+   * -> 2 slots used
+   * -> 1 used by badges, 1 used by hydraS1AccountboundAttester
    *
-   * -> 16 free slots
+   * -> 18 free slots
    **************************************/
 
   Badges public badges;
   HydraS1AccountboundAttester public hydraS1AccountboundAttester;
-  uint256 public gatedBadge;
 
-  uint256[16] private _storagePlaceHolders;
+  uint256[18] private _storagePlaceHolders;
 
   error UnsupportedNetwork();
-  error UserIsNotOwnerOfBadge(uint256 collectionId);
+  error UserIsNotOwnerOfBadge(uint256 badgeTokenId);
 
   /**
    * @dev Constructor
-   * @param gatedBadgeTokenId Badge token id that is required to call the function using `onlyBadgesOwner` modifier
    */
-  constructor(uint256 gatedBadgeTokenId) {
+  constructor() {
     // select the correct contract addresses based on the network
     if (block.chainid == 137) {
       badges = Badges(BADGES_POLYGON_ADDRESS);
@@ -80,28 +77,29 @@ contract SismoGated {
     } else {
       revert UnsupportedNetwork();
     }
-
-    gatedBadge = gatedBadgeTokenId;
   }
 
   /**
    * @dev Modifier allowing only the owners of the `GATED_BADGE` to trigger the function
-   * @param to Address of the badge owner
+   * @param badgeOwnerAddress Address of the badge owner
+   * @param gatedBadgeTokenId Token ID of the badge that the user needs to hold to access the function
    * @param data Data containing the user request and the proof associated to it
-   * @param attesterAddress Attester contract used to verify the proof
+   * @param attester Attester contract used to verify the proof
    * @notice a proof can also be sent to allow non-holders to prove their eligibility
    */
   modifier onlyBadgesOwner(
-    address to,
-    bytes calldata data,
-    address attesterAddress
+    address badgeOwnerAddress,
+    uint256 gatedBadgeTokenId,
+    Attester attester,
+    bytes memory data
   ) {
-    if (badges.balanceOf(to, gatedBadge) == 0) {
+    if (badges.balanceOf(badgeOwnerAddress, gatedBadgeTokenId) == 0) {
       if (data.length == 0) {
-        revert UserIsNotOwnerOfBadge(gatedBadge);
+        revert UserIsNotOwnerOfBadge(gatedBadgeTokenId);
       }
-      proveWithSismo(Attester(attesterAddress), data);
+      proveWithSismo(attester, data);
     }
+
     _;
   }
 

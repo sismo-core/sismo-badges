@@ -29,12 +29,12 @@ export interface DeployedMockGatedERC721 {
 const CONTRACT_NAME = 'MockGatedERC721';
 
 async function deploymentAction(
-  { gatedBadge, options }: DeployMockGatedERC721Args,
+  { options }: DeployMockGatedERC721Args,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [gatedBadge];
+  const deploymentArgs = [];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
