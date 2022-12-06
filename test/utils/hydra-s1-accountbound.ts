@@ -121,5 +121,8 @@ export const encodeAccountBoundAttestationExtraData = ({
   nullifier: BigNumberish | BigInt;
   burnCount: number;
 }) => {
-  return ethers.utils.solidityPack(['uint256', 'uint16'], [nullifier, burnCount]);
+  return ethers.utils.defaultAbiCoder.encode(
+    ['bytes', 'uint16'],
+    [ethers.utils.defaultAbiCoder.encode(['uint256'], [nullifier]), burnCount]
+  );
 };
