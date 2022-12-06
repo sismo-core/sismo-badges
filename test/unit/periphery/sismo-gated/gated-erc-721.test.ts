@@ -213,6 +213,13 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       const generateAttestationsTransaction =
         await hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes());
 
+      const extraData = await attestationsRegistry.getAttestationExtraData(
+        await (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(group.properties.groupIndex),
+        BigNumber.from(destination.identifier).toHexString()
+      );
+
       // 0 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
@@ -224,10 +231,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           hydraS1AccountboundAttester.address,
           sourceValue,
           group.properties.generationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 0,
-          }),
+          extraData,
         ]);
 
       // 1 - Checks that the provided nullifier was successfully recorded in the attester
@@ -275,6 +279,13 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
     });
 
     it('Should mint a NFT with a nullifier not already stored and a correct destination address', async () => {
+      const extraData = await attestationsRegistry.getAttestationExtraData(
+        (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(group.properties.groupIndex),
+        destinationSigner.address
+      );
+
       await mockGatedERC721.connect(destinationSigner).safeMint(
         destinationSigner.address,
         0,
@@ -310,6 +321,13 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       const generateAttestationsTransaction =
         await hydraS1AccountboundAttester.generateAttestations(newRequest, newProof.toBytes());
 
+      const attestationsExtraData = await attestationsRegistry.getAttestationExtraData(
+        (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(group.properties.groupIndex),
+        BigNumber.from(destination2.identifier).toHexString()
+      );
+
       // 0 - Checks that the transaction emitted the event
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
@@ -321,10 +339,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           hydraS1AccountboundAttester.address,
           sourceValue,
           group.properties.generationTimestamp,
-          encodeAccountBoundAttestationExtraData({
-            nullifier: inputs.publicInputs.nullifier,
-            burnCount: 1, // burn count should be incremented
-          }),
+          attestationsExtraData,
         ]);
       await expect(generateAttestationsTransaction)
         .to.emit(hydraS1AccountboundAttester, 'NullifierDestinationUpdated')
@@ -360,12 +375,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           ).add(group.properties.groupIndex),
           destination2Signer.address
         )
-      ).to.equal(
-        encodeAccountBoundAttestationExtraData({
-          nullifier: inputs.publicInputs.nullifier,
-          burnCount: 1, // burnCount should be incremented
-        })
-      );
+      ).to.equal(attestationsExtraData);
 
       // 2 - Checks that the attester unrecorded & rerecorded the attestation in the registry
       // 2.1 - Checks that the old destination has not anymore it's attestation
