@@ -18,8 +18,6 @@ import {
 } from '../utils';
 
 export interface DeployMockGatedERC721Args {
-  badgesAddress: BigNumberish;
-  attesterAddress: BigNumberish;
   gatedBadge: BigNumberish;
   options?: DeployOptions;
 }
@@ -31,12 +29,12 @@ export interface DeployedMockGatedERC721 {
 const CONTRACT_NAME = 'MockGatedERC721';
 
 async function deploymentAction(
-  { badgesAddress, attesterAddress, gatedBadge, options }: DeployMockGatedERC721Args,
+  { gatedBadge, options }: DeployMockGatedERC721Args,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [badgesAddress, attesterAddress, gatedBadge];
+  const deploymentArgs = [gatedBadge];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 

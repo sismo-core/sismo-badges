@@ -1,49 +1,40 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.14;
 import 'hardhat/console.sol';
 
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-
-import {IBadges} from '../../interfaces/IBadges.sol';
-import {IAttestationsRegistry} from '../../interfaces/IAttestationsRegistry.sol';
-import {IHydraS1Base} from '../../../attesters/hydra-s1/base/IHydraS1Base.sol';
+import {SismoGatedState, Badges, HydraS1AccountboundAttester} from './SismoGatedState.sol';
+import {HydraS1Base} from '../../../attesters/hydra-s1/base/HydraS1Base.sol';
 
 import {Request, Claim, Attestation} from '../Structs.sol';
 
-contract SismoGated {
-  IBadges public immutable BADGES;
-  IHydraS1Base public immutable ATTESTER;
-
-  uint256 public immutable GATED_BADGE;
-  mapping(uint256 => bool) private _isNullifierUsed;
-
+contract SismoGated is SismoGatedState {
+  error UnsupportedNetwork();
   error UserIsNotOwnerOfBadge(uint256 collectionId);
   error NFTAlreadyMinted();
 
   /**
    * @dev Constructor
-   * @param badgesAddress Badges contract address
-   * @param attesterAddress Hydra S1 attester contract address
-   * @param gatedBadge Badge token id that is required to call the function using `onlyBadgesOwner` modifier
+   * @param _gatedBadge Badge token id that is required to call the function using `onlyBadgesOwner` modifier
    */
-  constructor(address badgesAddress, address attesterAddress, uint256 gatedBadge) {
-    BADGES = IBadges(badgesAddress);
-    ATTESTER = IHydraS1Base(attesterAddress);
-    GATED_BADGE = gatedBadge;
-  }
+  constructor(uint256 _gatedBadge) SismoGatedState(_gatedBadge) {}
 
   /**
    * @dev Modifier allowing only the owners of the `GATED_BADGE` to trigger the function
    * @param to Address of the badge owner
    * @param data Data containing the user request and the proof associated to it
+   * @param hydraS1Attester Attester contract used to verify the proof
    * @notice a proof can also be sent to allow non-holders to prove their eligibility
    */
-  modifier onlyBadgesOwner(address to, bytes calldata data) {
-    if (BADGES.balanceOf(to, GATED_BADGE) == 0) {
+  modifier onlyBadgesOwner(
+    address to,
+    bytes calldata data,
+    HydraS1Base hydraS1Attester
+  ) {
+    if (badges.balanceOf(to, gatedBadge) == 0) {
       if (data.length == 0) {
-        revert UserIsNotOwnerOfBadge(GATED_BADGE);
+        revert UserIsNotOwnerOfBadge(gatedBadge);
       }
-      proveWithSismo(data);
+      proveWithSismo(hydraS1Attester, data);
     }
 
     uint256 nullifier = _getNulliferForAddress(to);
@@ -56,24 +47,18 @@ contract SismoGated {
 
   /**
    * @dev Prove the user eligibility with Sismo
+   * @param hydraS1Attester Attester contract used to verify the proof
    * @param data Bytes containing the user request and the proof associated to it
    */
-  function proveWithSismo(bytes memory data) public returns (uint256) {
+  function proveWithSismo(
+    HydraS1Base hydraS1Attester,
+    bytes memory data
+  ) public returns (Attestation memory) {
     (Request memory request, bytes memory proofData) = _buildRequestAndProof(data);
 
-    Attestation[] memory attestations = ATTESTER.generateAttestations(request, proofData);
+    Attestation[] memory attestations = hydraS1Attester.generateAttestations(request, proofData);
 
-    (uint256 nullifier, ) = abi.decode(attestations[0].extraData, (uint256, uint16));
-
-    return nullifier;
-  }
-
-  /**
-   * @dev Getter to know if a nullifier has been used
-   * @param nullifier Nullifier to check
-   */
-  function isNullifierUsed(uint256 nullifier) public view returns (bool) {
-    return _isNullifierUsed[nullifier];
+    return attestations[0];
   }
 
   /**
@@ -101,15 +86,8 @@ contract SismoGated {
    * @param to destination address referenced in the proof with this nullifier
    */
   function _getNulliferForAddress(address to) internal view returns (uint256) {
-    bytes memory extraData = BADGES.getBadgeExtraData(to, GATED_BADGE);
-    return ATTESTER.getNullifierFromExtraData(extraData);
-  }
-
-  /**
-   * @dev Mark a nullifier as used
-   * @param nullifier Nullifier to mark as used
-   */
-  function _markNullifierAsUsed(uint256 nullifier) internal {
-    _isNullifierUsed[nullifier] = true;
+    bytes memory extraData = badges.getBadgeExtraData(to, gatedBadge);
+    address badgeIssuerAddress = badges.getBadgeIssuer(to, gatedBadge);
+    return HydraS1Base(badgeIssuerAddress).getNullifierFromExtraData(extraData);
   }
 }

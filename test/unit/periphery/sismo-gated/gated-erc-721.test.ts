@@ -131,8 +131,6 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
 
       ({ mockGatedERC721 } = await hre.run('deploy-mock-gated-erc-721', {
-        badgesAddress: badges.address,
-        attesterAddress: hydraS1AccountboundAttester.address,
         gatedBadge: (
           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
         ).add(group.properties.groupIndex),
