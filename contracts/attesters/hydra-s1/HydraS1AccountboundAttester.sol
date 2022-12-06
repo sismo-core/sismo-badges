@@ -156,7 +156,7 @@ contract HydraS1AccountboundAttester is
     Attestation[] memory attestations = super.buildAttestations(request, proofData);
 
     uint256 nullifier = proofData._getNullifier();
-    attestations[0].extraData = abi.encodePacked(
+    attestations[0].extraData = abi.encode(
       attestations[0].extraData, // nullifier, from HydraS1 Simple
       _getNextBurnCount(nullifier, attestations[0].owner) // BurnCount
     );
