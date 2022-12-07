@@ -34,7 +34,8 @@ contract SismoGated {
 
   error UnsupportedNetwork();
   error InvalidArgumentsLength();
-  error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 badgeValue);
+  error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 balance);
+  error AccountAndRequestDestinationDoNotMatch(address account, address requestDestination);
 
   /**
    * @dev Constructor
@@ -49,91 +50,101 @@ contract SismoGated {
   }
 
   /**
-   * @dev Modifier allowing only the owners of the `GATED_BADGE` to trigger the function
-   * @param badgeOwnerAddress Address of the badge owner
-   * @param gatedBadgeTokenId Token ID of the badge that the user needs to hold to access the function
-   * @param gatedBadgeMinimumValue Minimum value of the badge that the user needs to hold to access the function
-   * @param data Data containing the user request and the proof associated to it
+   * @dev Modifier allowing only:
+   *      - Owners of the badge with tokenId == badgeTokenId and a badge balance >= minBalance
+   *      - Addresses used in a valid proof of elibility that can be provided in `sismoProofData`
+   * @param account Address which holds the badge or is eligible for the badge (need to provide the correct proof for this account)
+   * @param badgeTokenId Token ID of the badge that the user needs to hold to access the function
+   * @param minBalance Minimum balance (= level) of the badge that the user needs to hold to access the function
    * @param attester Attester contract used to verify the proof
-   * @notice a proof can also be sent to allow non-holders to prove their eligibility
+   * @param sismoProofData Data containing the user request and the proof of eligibility associated to it
    */
-  modifier onlyBadgeOwner(
-    address badgeOwnerAddress,
-    uint256 gatedBadgeTokenId,
-    uint256 gatedBadgeMinimumValue,
+  modifier onlyBadgeOwnersOrValidProofs(
+    address account,
+    uint256 badgeTokenId,
+    uint256 minBalance,
     Attester attester,
-    bytes memory data
+    bytes memory sismoProofData
   ) {
-    uint256[] memory gatedBadgeTokenIds = new uint256[](1);
-    gatedBadgeTokenIds[0] = gatedBadgeTokenId;
+    uint256[] memory badgeTokenIds = new uint256[](1);
+    badgeTokenIds[0] = badgeTokenId;
 
-    uint256[] memory gatedBadgeMinimumValues = new uint256[](1);
-    gatedBadgeMinimumValues[0] = gatedBadgeMinimumValue;
+    uint256[] memory minBalances = new uint256[](1);
+    minBalances[0] = minBalance;
 
     Attester[] memory attesters = new Attester[](1);
     attesters[0] = attester;
 
-    bytes[] memory dataArray = new bytes[](1);
-    dataArray[0] = data;
+    bytes[] memory sismoProofDataArray = new bytes[](1);
+    sismoProofDataArray[0] = sismoProofData;
 
-    checkBadgesOwnership(
-      badgeOwnerAddress,
-      gatedBadgeTokenIds,
-      gatedBadgeMinimumValues,
+    checkAccountBadgesOrSismoProofs(
+      account,
+      badgeTokenIds,
+      minBalances,
       attesters,
-      dataArray
+      sismoProofDataArray
     );
 
     _;
   }
 
   /**
-   * @dev Check if the user is the owner of the badge, a proof can be supplied to allow non-holders to prove they can mint a badge
-   * @param account Address of the user
+   * @dev Check if the `account` address holds badges or is used in valid sismo proofs
+   * @param account Address which holds badges or is used in valid sismo proofs
    * @param badgeTokenIds Token ID of the badges
-   * @param badgeMinimumValues Minimum value of the badges
+   * @param minBalances Minimum balances (= levels) of the badges
    * @param attesters Attester contracts used to verify proofs
-   * @param dataArray Array of bytes containing the user requests and the proofs of each badge eligibility
+   * @param sismoProofDataArray Array of bytes containing the user requests and the proofs of each badge eligibility
    */
-  function checkBadgesOwnership(
+  function checkAccountBadgesOrSismoProofs(
     address account,
     uint256[] memory badgeTokenIds,
-    uint256[] memory badgeMinimumValues,
+    uint256[] memory minBalances,
     Attester[] memory attesters,
-    bytes[] memory dataArray
+    bytes[] memory sismoProofDataArray
   ) public {
-    _checkArgumentsLength(badgeTokenIds, badgeMinimumValues, attesters, dataArray);
+    _checkArgumentsLength(badgeTokenIds, minBalances, attesters, sismoProofDataArray);
 
     for (uint32 i = 0; i < badgeTokenIds.length; i++) {
-      if (BADGES.balanceOf(account, badgeTokenIds[i]) < badgeMinimumValues[i]) {
-        if (dataArray[i].length == 0) {
-          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], badgeMinimumValues[i]);
+      if (BADGES.balanceOf(account, badgeTokenIds[i]) < minBalances[i]) {
+        if (sismoProofDataArray[i].length == 0) {
+          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], minBalances[i]);
         }
-        proveWithSismo(attesters[i], dataArray[i]);
+        proveWithSismo(account, attesters[i], sismoProofDataArray[i]);
       }
     }
   }
 
   /**
-   * @dev Prove the user eligibility with Sismo
+   * @dev Prove the eligibility of an address with Sismo
+   * @param account Address used in the proof of eligibility
    * @param attester Attester contract used to verify proofs
-   * @param data Bytes containing the user request and the proof associated to it
+   * @param sismoProofData Bytes containing a request and the proof associated to it
    */
   function proveWithSismo(
+    address account,
     Attester attester,
-    bytes memory data
+    bytes memory sismoProofData
   ) public returns (Attestation memory) {
-    (Request memory request, bytes memory proofData) = _buildRequestAndProof(data);
+    (Request memory request, bytes memory proofData) = _decodeRequestAndProofFromBytes(
+      sismoProofData
+    );
+
+    if (account != request.destination) {
+      revert AccountAndRequestDestinationDoNotMatch(account, request.destination);
+    }
+
     Attestation[] memory attestations = attester.generateAttestations(request, proofData);
 
     return attestations[0];
   }
 
   /**
-   * @dev Build the request and the proof from data
+   * @dev Decode the user request and the proof from bytes
    * @param data Bytes containing the user request and the proof associated to it
    */
-  function _buildRequestAndProof(
+  function _decodeRequestAndProofFromBytes(
     bytes memory data
   ) internal pure returns (Request memory, bytes memory) {
     Claim[] memory claims = new Claim[](1);
@@ -152,20 +163,20 @@ contract SismoGated {
   /**
    * @dev Check if the arguments have the same length
    * @param badgeTokenIds Token ID of the badges
-   * @param badgeMinimumValues Minimum value of the badges
+   * @param minBalances Minimum balances (= levels) of the badges
    * @param attesters Attester contracts used to verify proofs
-   * @param dataArray Array of bytes containing the user requests and the proofs of each badge eligibility
+   * @param sismoProofDataArray Array of bytes containing the user requests and the proofs of each badge eligibility
    */
   function _checkArgumentsLength(
     uint256[] memory badgeTokenIds,
-    uint256[] memory badgeMinimumValues,
+    uint256[] memory minBalances,
     Attester[] memory attesters,
-    bytes[] memory dataArray
+    bytes[] memory sismoProofDataArray
   ) internal pure {
     if (
-      badgeTokenIds.length != badgeMinimumValues.length ||
+      badgeTokenIds.length != minBalances.length ||
       badgeTokenIds.length != attesters.length ||
-      badgeTokenIds.length != dataArray.length
+      badgeTokenIds.length != sismoProofDataArray.length
     ) {
       revert InvalidArgumentsLength();
     }
