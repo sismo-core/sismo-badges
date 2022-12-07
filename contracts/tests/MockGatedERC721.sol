@@ -87,8 +87,6 @@ contract MockGatedERC721 is ERC721, SismoGated {
       sismoProofData
     )
   {
-    proveWithSismo(to, HYDRA_S1_ACCOUNTBOUND_ATTESTER, sismoProofData);
-
     _transfer(from, to, tokenId);
   }
 
