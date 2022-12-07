@@ -26,7 +26,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     bytes[] calldata sismoProofDataArray
   )
     public
-    onlyBadgeOwnerOrValidProof(
+    proveWithSismo(
       to,
       GATED_BADGE_TOKEN_ID,
       GATED_BADGE_MIN_LEVEL,
@@ -60,13 +60,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     attesters[0] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
     attesters[1] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
 
-    checkAccountBadgesOrSismoProofs(
-      to,
-      badgeTokenIds,
-      badgeMinimumValues,
-      attesters,
-      sismoProofDataArray
-    );
+    proveAllWithSismo(to, badgeTokenIds, badgeMinimumValues, attesters, sismoProofDataArray);
 
     uint256 nullifier = _getNulliferForAddress(to);
 
@@ -85,7 +79,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
   )
     public
     override(ERC721)
-    onlyBadgeOwnerOrValidProof(
+    proveWithSismo(
       to,
       GATED_BADGE_TOKEN_ID,
       GATED_BADGE_MIN_LEVEL,

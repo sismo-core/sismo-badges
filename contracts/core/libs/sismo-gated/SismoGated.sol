@@ -60,8 +60,11 @@ contract SismoGated {
    * @param minBalance Minimum balance (= level) of the badge that the user needs to hold to access the function (if no proof is provided)
    * @param attester Attester contract used to verify the proof
    * @param sismoProofData Data containing the user request and the proof of eligibility associated to it
+   *
+   * @notice This function asserts that the `account` address holds the badge with tokenId == badgeTokenId and a badge balance >= minBalance.
+   *         If the user does not hold the badge yet or if the badge balance is too low, it calls `attester` with `sismoProofData` to verify the proof of eligibility.
    */
-  modifier onlyBadgeOwnerOrValidProof(
+  modifier proveWithSismo(
     address account,
     uint256 badgeTokenId,
     uint256 minBalance,
@@ -80,26 +83,20 @@ contract SismoGated {
     bytes[] memory sismoProofDataArray = new bytes[](1);
     sismoProofDataArray[0] = sismoProofData;
 
-    checkAccountBadgesOrSismoProofs(
-      account,
-      badgeTokenIds,
-      minBalances,
-      attesters,
-      sismoProofDataArray
-    );
+    proveAllWithSismo(account, badgeTokenIds, minBalances, attesters, sismoProofDataArray);
 
     _;
   }
 
   /**
-   * @dev Check if the `account` address holds badges or is used in valid sismo proofs
+   * @dev Prove that the `account` address holds badges or is used in valid sismo proofs
    * @param account Address which holds badges or is used in valid sismo proofs
    * @param badgeTokenIds Token ID of the badges
    * @param minBalances Minimum balances (= levels) of the badges
    * @param attesters Attester contracts used to verify proofs
    * @param sismoProofDataArray Array of bytes containing the user requests and the proofs of each badge eligibility
    */
-  function checkAccountBadgesOrSismoProofs(
+  function proveAllWithSismo(
     address account,
     uint256[] memory badgeTokenIds,
     uint256[] memory minBalances,
@@ -113,22 +110,23 @@ contract SismoGated {
         if (sismoProofDataArray[i].length == 0) {
           revert UserIsNotOwnerOfBadge(badgeTokenIds[i], minBalances[i]);
         }
-        proveWithSismo(account, attesters[i], sismoProofDataArray[i]);
+        _generateAttestationAndVerifyProof(account, attesters[i], sismoProofDataArray[i]);
       }
     }
   }
 
   /**
-   * @dev Prove the eligibility of an address with Sismo
+   * @dev Generate an attestation for the given account calling the given attester with the given proof and request.
+   *      The account must be the same as the destination in the request and the proof must be valid.
    * @param account Address used in the proof of eligibility
    * @param attester Attester contract used to verify proofs
    * @param sismoProofData Bytes containing a request and the proof associated to it
    */
-  function proveWithSismo(
+  function _generateAttestationAndVerifyProof(
     address account,
     Attester attester,
     bytes memory sismoProofData
-  ) public returns (Attestation memory) {
+  ) internal returns (Attestation memory) {
     (Request memory request, bytes memory proofData) = _decodeRequestAndProofFromBytes(
       sismoProofData
     );
