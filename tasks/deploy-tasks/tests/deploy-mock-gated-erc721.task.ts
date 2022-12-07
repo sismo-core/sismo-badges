@@ -18,7 +18,8 @@ import {
 } from '../utils';
 
 export interface DeployMockGatedERC721Args {
-  gatedBadge: BigNumberish;
+  badgesLocalAddress: BigNumberish;
+  hydraS1AccountboundLocalAddress: BigNumberish;
   options?: DeployOptions;
 }
 
@@ -29,12 +30,12 @@ export interface DeployedMockGatedERC721 {
 const CONTRACT_NAME = 'MockGatedERC721';
 
 async function deploymentAction(
-  { options }: DeployMockGatedERC721Args,
+  { badgesLocalAddress, hydraS1AccountboundLocalAddress, options }: DeployMockGatedERC721Args,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [];
+  const deploymentArgs = [badgesLocalAddress, hydraS1AccountboundLocalAddress];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 

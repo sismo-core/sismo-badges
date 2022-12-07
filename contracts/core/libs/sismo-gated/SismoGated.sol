@@ -25,9 +25,8 @@ contract SismoGated {
     0x069e6B99f4DA543156f66274FC6673442803C587;
 
   // local contract address
-  address public constant BADGES_LOCAL_ADDRESS = 0xeF5b2Be9a6075a61bCA4384abc375485d5e196c3;
-  address public constant HYDRA_S1_ACCOUNTBOUND_LOCAL_ADDRESS =
-    0xf93A0C43A3466488D416628bf149495285e9f274;
+  address public immutable BADGES_LOCAL_ADDRESS;
+  address public immutable HYDRA_S1_ACCOUNTBOUND_LOCAL_ADDRESS;
 
   Badges public immutable BADGES;
   HydraS1AccountboundAttester public immutable HYDRA_S1_ACCOUNTBOUND_ATTESTER;
@@ -40,7 +39,10 @@ contract SismoGated {
   /**
    * @dev Constructor
    */
-  constructor() {
+  constructor(address badgesLocalAddress, address hydraS1AccountboundLocalAddress) {
+    BADGES_LOCAL_ADDRESS = badgesLocalAddress;
+    HYDRA_S1_ACCOUNTBOUND_LOCAL_ADDRESS = hydraS1AccountboundLocalAddress;
+
     // select the correct contract addresses based on the network
     (address badgesAddress, address hydraS1AccountboundAttesterAddress) = _getContractAddresses();
     BADGES = Badges(badgesAddress);
