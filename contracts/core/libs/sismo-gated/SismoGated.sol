@@ -93,12 +93,7 @@ contract SismoGated {
     Attester attester,
     bytes memory data
   ) {
-    if (badges.balanceOf(badgeOwnerAddress, gatedBadgeTokenId) == 0) {
-      if (data.length == 0) {
-        revert UserIsNotOwnerOfBadge(gatedBadgeTokenId);
-      }
-      proveWithSismo(attester, data);
-    }
+    _checkBadgeOwnership(badgeOwnerAddress, gatedBadgeTokenId, attester, data);
 
     _;
   }
@@ -116,6 +111,27 @@ contract SismoGated {
     Attestation[] memory attestations = attester.generateAttestations(request, proofData);
 
     return attestations[0];
+  }
+
+  /**
+   * @dev Check if the user is the owner of the badge, a proof can be supplied to allow non-holders to prove they can mint a badge
+   * @param account Address of the user
+   * @param badgeTokenId Token ID of the badge
+   * @param attester Attester contract used to verify proofs
+   * @param data Bytes containing the user request and the proof associated to it
+   */
+  function _checkBadgeOwnership(
+    address account,
+    uint256 badgeTokenId,
+    Attester attester,
+    bytes memory data
+  ) internal {
+    if (badges.balanceOf(account, badgeTokenId) == 0) {
+      if (data.length == 0) {
+        revert UserIsNotOwnerOfBadge(badgeTokenId);
+      }
+      proveWithSismo(attester, data);
+    }
   }
 
   /**
