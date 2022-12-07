@@ -3,7 +3,7 @@ pragma solidity ^0.8.14;
 import 'hardhat/console.sol';
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import {SismoGated, HydraS1AccountboundAttester} from '../core/libs/sismo-gated/SismoGated.sol';
+import {SismoGated, HydraS1AccountboundAttester, Attester} from '../core/libs/sismo-gated/SismoGated.sol';
 
 contract MockGatedERC721 is ERC721, SismoGated {
   uint256 public constant GATED_BADGE_TOKEN_ID = 200001;
@@ -17,7 +17,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
   function safeMint(
     address to,
     uint256 tokenId,
-    bytes calldata data
+    bytes[] calldata data
   )
     public
     onlyBadgeOwner(
@@ -25,9 +25,33 @@ contract MockGatedERC721 is ERC721, SismoGated {
       GATED_BADGE_TOKEN_ID,
       GATED_BADGE_MIN_VALUE,
       HYDRA_S1_ACCOUNTBOUND_ATTESTER,
-      data
+      data[0]
     )
   {
+    uint256 nullifier = _getNulliferForAddress(to);
+
+    if (isNullifierUsed(nullifier)) {
+      revert NFTAlreadyMinted();
+    }
+
+    _mint(to, tokenId);
+  }
+
+  function safeMintWithTwoGatedBadges(address to, uint256 tokenId, bytes[] calldata data) public {
+    uint256[] memory badgeTokenIds = new uint256[](2);
+    badgeTokenIds[0] = GATED_BADGE_TOKEN_ID;
+    badgeTokenIds[1] = GATED_BADGE_TOKEN_ID + 1;
+
+    uint256[] memory badgeMinimumValues = new uint256[](2);
+    badgeMinimumValues[0] = GATED_BADGE_MIN_VALUE;
+    badgeMinimumValues[1] = GATED_BADGE_MIN_VALUE;
+
+    Attester[] memory attesters = new Attester[](2);
+    attesters[0] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
+    attesters[1] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
+
+    checkBadgesOwnership(to, badgeTokenIds, badgeMinimumValues, attesters, data);
+
     uint256 nullifier = _getNulliferForAddress(to);
 
     if (isNullifierUsed(nullifier)) {
