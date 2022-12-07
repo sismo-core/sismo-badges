@@ -30,19 +30,11 @@ contract SismoGated {
   address public constant HYDRA_S1_ACCOUNTBOUND_LOCAL_ADDRESS =
     0xf93A0C43A3466488D416628bf149495285e9f274;
 
-  /**************************************
-   * Storage slot
-   * 20 slots
-   *
-   * -> 20 free slots
-   **************************************/
-
   Badges public immutable BADGES;
   HydraS1AccountboundAttester public immutable HYDRA_S1_ACCOUNTBOUND_ATTESTER;
 
-  uint256[20] private _storagePlaceHolders;
-
   error UnsupportedNetwork();
+  error InvalidArgumentsLength();
   error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 badgeValue);
 
   /**
@@ -79,6 +71,9 @@ contract SismoGated {
     uint256[] memory gatedBadgeMinimumValues = new uint256[](1);
     gatedBadgeMinimumValues[0] = gatedBadgeMinimumValue;
 
+    Attester[] memory attesters = new Attester[](1);
+    attesters[0] = attester;
+
     bytes[] memory dataArray = new bytes[](1);
     dataArray[0] = data;
 
@@ -86,7 +81,7 @@ contract SismoGated {
       badgeOwnerAddress,
       gatedBadgeTokenIds,
       gatedBadgeMinimumValues,
-      attester,
+      attesters,
       dataArray
     );
 
@@ -98,22 +93,24 @@ contract SismoGated {
    * @param account Address of the user
    * @param badgeTokenIds Token ID of the badges
    * @param badgeMinimumValues Minimum value of the badges
-   * @param attester Attester contract used to verify proofs
+   * @param attesters Attester contracts used to verify proofs
    * @param dataArray Array of bytes containing the user requests and the proofs of each badge eligibility
    */
   function checkBadgesOwnership(
     address account,
     uint256[] memory badgeTokenIds,
     uint256[] memory badgeMinimumValues,
-    Attester attester,
+    Attester[] memory attesters,
     bytes[] memory dataArray
   ) public {
+    _checkArgumentsLength(badgeTokenIds, badgeMinimumValues, attesters, dataArray);
+
     for (uint32 i = 0; i < badgeTokenIds.length; i++) {
       if (BADGES.balanceOf(account, badgeTokenIds[i]) < badgeMinimumValues[i]) {
         if (dataArray[i].length == 0) {
           revert UserIsNotOwnerOfBadge(badgeTokenIds[i], badgeMinimumValues[i]);
         }
-        proveWithSismo(attester, dataArray[i]);
+        proveWithSismo(attesters[i], dataArray[i]);
       }
     }
   }
@@ -151,6 +148,28 @@ contract SismoGated {
     request.destination = newDestination;
 
     return (request, proofData);
+  }
+
+  /**
+   * @dev Check if the arguments have the same length
+   * @param badgeTokenIds Token ID of the badges
+   * @param badgeMinimumValues Minimum value of the badges
+   * @param attesters Attester contracts used to verify proofs
+   * @param dataArray Array of bytes containing the user requests and the proofs of each badge eligibility
+   */
+  function _checkArgumentsLength(
+    uint256[] memory badgeTokenIds,
+    uint256[] memory badgeMinimumValues,
+    Attester[] memory attesters,
+    bytes[] memory dataArray
+  ) internal pure {
+    if (
+      badgeTokenIds.length != badgeMinimumValues.length ||
+      badgeTokenIds.length != attesters.length ||
+      badgeTokenIds.length != dataArray.length
+    ) {
+      revert InvalidArgumentsLength();
+    }
   }
 
   /**
