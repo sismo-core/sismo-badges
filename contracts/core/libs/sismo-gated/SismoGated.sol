@@ -55,11 +55,11 @@ contract SismoGated {
    *      - Addresses used in a valid proof of elibility that can be provided in `sismoProofData`
    * @param account Address which holds the badge or is eligible for the badge (need to provide the correct proof for this account)
    * @param badgeTokenId Token ID of the badge that the user needs to hold to access the function
-   * @param minBalance Minimum balance (= level) of the badge that the user needs to hold to access the function
+   * @param minBalance Minimum balance (= level) of the badge that the user needs to hold to access the function (if no proof is provided)
    * @param attester Attester contract used to verify the proof
    * @param sismoProofData Data containing the user request and the proof of eligibility associated to it
    */
-  modifier onlyBadgeOwnersOrValidProofs(
+  modifier onlyBadgeOwnerOrValidProof(
     address account,
     uint256 badgeTokenId,
     uint256 minBalance,

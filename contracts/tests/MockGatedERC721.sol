@@ -20,7 +20,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     bytes[] calldata sismoProofDataArray
   )
     public
-    onlyBadgeOwnersOrValidProofs(
+    onlyBadgeOwnerOrValidProof(
       to,
       GATED_BADGE_TOKEN_ID,
       GATED_BADGE_MIN_LEVEL,
@@ -79,7 +79,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
   )
     public
     override(ERC721)
-    onlyBadgeOwnersOrValidProofs(
+    onlyBadgeOwnerOrValidProof(
       to,
       GATED_BADGE_TOKEN_ID,
       GATED_BADGE_MIN_LEVEL,
