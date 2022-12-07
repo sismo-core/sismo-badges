@@ -3,7 +3,7 @@ pragma solidity ^0.8.14;
 import 'hardhat/console.sol';
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import {SismoGated, HydraS1AccountboundAttester, Attester} from '../core/libs/sismo-gated/SismoGated.sol';
+import {SismoGated, Attester} from '../core/libs/sismo-gated/SismoGated.sol';
 
 contract MockGatedERC721 is ERC721, SismoGated {
   uint256 public constant GATED_BADGE_TOKEN_ID = 200001;
@@ -82,8 +82,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
    */
   function _getNulliferForAddress(address to) internal view returns (uint256) {
     bytes memory extraData = BADGES.getBadgeExtraData(to, GATED_BADGE_TOKEN_ID);
-    address badgeIssuerAddress = BADGES.getBadgeIssuer(to, GATED_BADGE_TOKEN_ID);
-    return HydraS1AccountboundAttester(badgeIssuerAddress).getNullifierFromExtraData(extraData);
+    return HYDRA_S1_ACCOUNTBOUND_ATTESTER.getNullifierFromExtraData(extraData);
   }
 
   /**
