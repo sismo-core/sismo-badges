@@ -71,6 +71,17 @@ contract SismoGated {
     Attester attester,
     bytes memory sismoProofData
   ) {
+    _proveWithSismo(account, badgeTokenId, minBalance, attester, sismoProofData);
+    _;
+  }
+
+  function _proveWithSismo(
+    address account,
+    uint256 badgeTokenId,
+    uint256 minBalance,
+    Attester attester,
+    bytes memory sismoProofData
+  ) internal {
     uint256[] memory badgeTokenIds = new uint256[](1);
     badgeTokenIds[0] = badgeTokenId;
 
@@ -83,9 +94,7 @@ contract SismoGated {
     bytes[] memory sismoProofDataArray = new bytes[](1);
     sismoProofDataArray[0] = sismoProofData;
 
-    proveAllWithSismo(account, badgeTokenIds, minBalances, attesters, sismoProofDataArray);
-
-    _;
+    _proveAllWithSismo(account, badgeTokenIds, minBalances, attesters, sismoProofDataArray);
   }
 
   /**
@@ -96,13 +105,13 @@ contract SismoGated {
    * @param attesters Attester contracts used to verify proofs
    * @param sismoProofDataArray Array of bytes containing the user requests and the proofs of each badge eligibility
    */
-  function proveAllWithSismo(
+  function _proveAllWithSismo(
     address account,
     uint256[] memory badgeTokenIds,
     uint256[] memory minBalances,
     Attester[] memory attesters,
     bytes[] memory sismoProofDataArray
-  ) public {
+  ) internal {
     _checkArgumentsLength(badgeTokenIds, minBalances, attesters, sismoProofDataArray);
 
     for (uint32 i = 0; i < badgeTokenIds.length; i++) {
@@ -117,7 +126,7 @@ contract SismoGated {
 
   /**
    * @dev Generate an attestation for the given account calling the given attester with the given proof and request.
-   *      The account must be the same as the destination in the request and the proof must be valid.
+   *      The `account` address must be the same as the destination in the request and the proof must be valid.
    * @param account Address used in the proof of eligibility
    * @param attester Attester contract used to verify proofs
    * @param sismoProofData Bytes containing a request and the proof associated to it

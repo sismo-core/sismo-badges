@@ -60,7 +60,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     attesters[0] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
     attesters[1] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
 
-    proveAllWithSismo(to, badgeTokenIds, badgeMinimumValues, attesters, sismoProofDataArray);
+    _proveAllWithSismo(to, badgeTokenIds, badgeMinimumValues, attesters, sismoProofDataArray);
 
     uint256 nullifier = _getNulliferForAddress(to);
 
