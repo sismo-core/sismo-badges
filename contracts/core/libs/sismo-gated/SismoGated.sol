@@ -5,7 +5,6 @@ import 'hardhat/console.sol';
 import {Badges} from '../../Badges.sol';
 import {Attester} from '../../Attester.sol';
 import {HydraS1AccountboundAttester} from '../../../attesters/hydra-s1/HydraS1AccountboundAttester.sol';
-import {HydraS1Base} from '../../../attesters/hydra-s1/base/HydraS1Base.sol';
 
 import {Request, Claim, Attestation} from '../Structs.sol';
 
