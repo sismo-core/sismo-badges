@@ -432,6 +432,31 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       ).to.be.revertedWith(`NFTAlreadyMinted()`);
     });
 
+    it('Should revert the safeTransferFrom because the user wants to transfer to a destination NOT holding the badge (nullifier already stored and proof is valid)', async () => {
+      const newProof = await prover.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+      });
+
+      const newRequest = {
+        ...request,
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
+
+      await expect(
+        mockGatedERC721
+          .connect(destinationSigner)
+          ['safeTransferFrom(address,address,uint256,bytes)'](
+            destinationSigner.address,
+            randomSigner.address,
+            0,
+            packRequestAndProofToBytes(newRequest, newProof)
+          )
+      ).to.be.revertedWith(
+        `AccountAndRequestDestinationDoNotMatch("${randomSigner.address}", "${destination2Signer.address}")`
+      );
+    });
+
     it('Should allow the safeTransferFrom because the proof is provided for another destination holding the badge (nullifier already stored)', async () => {
       const newProof = await prover.generateSnarkProof({
         ...userParams,

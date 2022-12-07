@@ -3,11 +3,11 @@ pragma solidity ^0.8.14;
 import 'hardhat/console.sol';
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import {SismoGated, Attester} from '../core/libs/sismo-gated/SismoGated.sol';
+import {SismoGated, Attester, Attestation} from '../core/libs/sismo-gated/SismoGated.sol';
 
 contract MockGatedERC721 is ERC721, SismoGated {
   uint256 public constant GATED_BADGE_TOKEN_ID = 200001;
-  uint256 public constant GATED_BADGE_MIN_VALUE = 1;
+  uint256 public constant GATED_BADGE_MIN_LEVEL = 1;
   mapping(uint256 => bool) private _isNullifierUsed;
 
   error NFTAlreadyMinted();
@@ -17,15 +17,15 @@ contract MockGatedERC721 is ERC721, SismoGated {
   function safeMint(
     address to,
     uint256 tokenId,
-    bytes[] calldata data
+    bytes[] calldata sismoProofDataArray
   )
     public
-    onlyBadgeOwner(
+    onlyBadgeOwnersOrValidProofs(
       to,
       GATED_BADGE_TOKEN_ID,
-      GATED_BADGE_MIN_VALUE,
+      GATED_BADGE_MIN_LEVEL,
       HYDRA_S1_ACCOUNTBOUND_ATTESTER,
-      data[0]
+      sismoProofDataArray[0]
     )
   {
     uint256 nullifier = _getNulliferForAddress(to);
@@ -37,20 +37,30 @@ contract MockGatedERC721 is ERC721, SismoGated {
     _mint(to, tokenId);
   }
 
-  function safeMintWithTwoGatedBadges(address to, uint256 tokenId, bytes[] calldata data) public {
+  function safeMintWithTwoGatedBadges(
+    address to,
+    uint256 tokenId,
+    bytes[] calldata sismoProofDataArray
+  ) public {
     uint256[] memory badgeTokenIds = new uint256[](2);
     badgeTokenIds[0] = GATED_BADGE_TOKEN_ID;
     badgeTokenIds[1] = GATED_BADGE_TOKEN_ID + 1;
 
     uint256[] memory badgeMinimumValues = new uint256[](2);
-    badgeMinimumValues[0] = GATED_BADGE_MIN_VALUE;
-    badgeMinimumValues[1] = GATED_BADGE_MIN_VALUE;
+    badgeMinimumValues[0] = GATED_BADGE_MIN_LEVEL;
+    badgeMinimumValues[1] = GATED_BADGE_MIN_LEVEL;
 
     Attester[] memory attesters = new Attester[](2);
     attesters[0] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
     attesters[1] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
 
-    checkBadgesOwnership(to, badgeTokenIds, badgeMinimumValues, attesters, data);
+    checkAccountBadgesOrSismoProofs(
+      to,
+      badgeTokenIds,
+      badgeMinimumValues,
+      attesters,
+      sismoProofDataArray
+    );
 
     uint256 nullifier = _getNulliferForAddress(to);
 
@@ -65,15 +75,26 @@ contract MockGatedERC721 is ERC721, SismoGated {
     address from,
     address to,
     uint256 tokenId,
-    bytes memory data
-  ) public override(ERC721) {
-    proveWithSismo(HYDRA_S1_ACCOUNTBOUND_ATTESTER, data);
+    bytes memory sismoProofData
+  )
+    public
+    override(ERC721)
+    onlyBadgeOwnersOrValidProofs(
+      to,
+      GATED_BADGE_TOKEN_ID,
+      GATED_BADGE_MIN_LEVEL,
+      HYDRA_S1_ACCOUNTBOUND_ATTESTER,
+      sismoProofData
+    )
+  {
+    proveWithSismo(to, HYDRA_S1_ACCOUNTBOUND_ATTESTER, sismoProofData);
+
     _transfer(from, to, tokenId);
   }
 
   function _afterTokenTransfer(address, address to, uint256, uint256) internal override(ERC721) {
     uint256 nullifier = _getNulliferForAddress(to);
-    _markNullifierAsUsed(nullifier);
+    _setNullifierAsUsed(nullifier);
   }
 
   /**
@@ -97,7 +118,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
    * @dev Marks a nullifier as used
    * @param nullifier Nullifier to mark as used
    */
-  function _markNullifierAsUsed(uint256 nullifier) internal {
+  function _setNullifierAsUsed(uint256 nullifier) internal {
     _isNullifierUsed[nullifier] = true;
   }
 }
