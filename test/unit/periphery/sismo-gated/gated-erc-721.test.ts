@@ -605,6 +605,56 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       evmRevert(hre, evmSnapshotId);
     });
 
+    it('Should revert the safeMint because only one proof is provided (nullifier not stored and no attestations generated)', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+
+      // verify that the address does hold the attestation for the first badge
+      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
+        .false;
+
+      // verify that the address does not hold the attestation for the second badge
+      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
+        .false;
+
+      // verify that the address does not hold any NFT
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      await expect(
+        mockGatedERC721.safeMintWithTwoGatedBadges(
+          destinationSigner.address,
+          0,
+          // submit only one proof for the first badge
+          [packRequestAndProofToBytes(request, proof), []]
+        )
+      ).to.be.revertedWith(`UserIsNotOwnerOfBadge(${badgeId2}, 1)`);
+    });
+
+    it('Should revert the safeMint because arguments length are invalid (nullifier not stored and no attestations generated)', async () => {
+      // verify that the address does hold the attestation for the first badge
+      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
+        .false;
+
+      // verify that the address does not hold the attestation for the second badge
+      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
+        .false;
+
+      // verify that the address does not hold any NFT
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      await expect(
+        mockGatedERC721.safeMintWithTwoGatedBadges(
+          destinationSigner.address,
+          0,
+          // submit only one proof for the second badge
+          [packRequestAndProofToBytes(request, proof)]
+        )
+      ).to.be.revertedWith(`InvalidArgumentsLength()`);
+    });
+
     it('Should allow the safeMint because the proofs are provided for the two badges (nullifier not stored and no attestations generated)', async () => {
       evmSnapshotId = await evmSnapshot(hre);
 
@@ -678,56 +728,6 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       );
 
       evmRevert(hre, evmSnapshotId);
-    });
-
-    it('Should revert the safeMint because only one proof is provided (nullifier not stored and no attestations generated)', async () => {
-      evmSnapshotId = await evmSnapshot(hre);
-
-      // verify that the address does hold the attestation for the first badge
-      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold the attestation for the second badge
-      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold any NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(0)
-      );
-
-      await expect(
-        mockGatedERC721.safeMintWithTwoGatedBadges(
-          destinationSigner.address,
-          0,
-          // submit only one proof for the first badge
-          [packRequestAndProofToBytes(request, proof), []]
-        )
-      ).to.be.revertedWith(`UserIsNotOwnerOfBadge(${badgeId2}, 1)`);
-    });
-
-    it('Should revert the safeMint because arguments length are invalid (nullifier not stored and no attestations generated)', async () => {
-      // verify that the address does hold the attestation for the first badge
-      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold the attestation for the second badge
-      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold any NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(0)
-      );
-
-      await expect(
-        mockGatedERC721.safeMintWithTwoGatedBadges(
-          destinationSigner.address,
-          0,
-          // submit only one proof for the second badge
-          [packRequestAndProofToBytes(request, proof)]
-        )
-      ).to.be.revertedWith(`InvalidArgumentsLength()`);
     });
   });
 });
