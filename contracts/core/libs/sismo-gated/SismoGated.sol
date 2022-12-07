@@ -30,21 +30,17 @@ contract SismoGated {
   address public constant HYDRA_S1_ACCOUNTBOUND_LOCAL_ADDRESS =
     0xf93A0C43A3466488D416628bf149495285e9f274;
 
-  uint8 public constant MAX_NUMBER_OF_BADGES = 10;
-
   /**************************************
    * Storage slot
    * 20 slots
-   * -> 2 slots used
-   * -> 1 used by badges, 1 used by hydraS1AccountboundAttester
    *
-   * -> 18 free slots
+   * -> 20 free slots
    **************************************/
 
   Badges public immutable BADGES;
   HydraS1AccountboundAttester public immutable HYDRA_S1_ACCOUNTBOUND_ATTESTER;
 
-  uint256[18] private _storagePlaceHolders;
+  uint256[20] private _storagePlaceHolders;
 
   error UnsupportedNetwork();
   error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 badgeValue);
@@ -70,7 +66,7 @@ contract SismoGated {
    * @param attester Attester contract used to verify the proof
    * @notice a proof can also be sent to allow non-holders to prove their eligibility
    */
-  modifier onlyBadgesOwner(
+  modifier onlyBadgeOwner(
     address badgeOwnerAddress,
     uint256 gatedBadgeTokenId,
     uint256 gatedBadgeMinimumValue,
@@ -83,15 +79,43 @@ contract SismoGated {
     uint256[] memory gatedBadgeMinimumValues = new uint256[](1);
     gatedBadgeMinimumValues[0] = gatedBadgeMinimumValue;
 
-    _checkBadgeOwnership(
+    bytes[] memory dataArray = new bytes[](1);
+    dataArray[0] = data;
+
+    checkBadgesOwnership(
       badgeOwnerAddress,
       gatedBadgeTokenIds,
       gatedBadgeMinimumValues,
       attester,
-      data
+      dataArray
     );
 
     _;
+  }
+
+  /**
+   * @dev Check if the user is the owner of the badge, a proof can be supplied to allow non-holders to prove they can mint a badge
+   * @param account Address of the user
+   * @param badgeTokenIds Token ID of the badges
+   * @param badgeMinimumValues Minimum value of the badges
+   * @param attester Attester contract used to verify proofs
+   * @param dataArray Array of bytes containing the user requests and the proofs of each badge eligibility
+   */
+  function checkBadgesOwnership(
+    address account,
+    uint256[] memory badgeTokenIds,
+    uint256[] memory badgeMinimumValues,
+    Attester attester,
+    bytes[] memory dataArray
+  ) public {
+    for (uint32 i = 0; i < badgeTokenIds.length; i++) {
+      if (BADGES.balanceOf(account, badgeTokenIds[i]) < badgeMinimumValues[i]) {
+        if (dataArray[i].length == 0) {
+          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], badgeMinimumValues[i]);
+        }
+        proveWithSismo(attester, dataArray[i]);
+      }
+    }
   }
 
   /**
@@ -107,31 +131,6 @@ contract SismoGated {
     Attestation[] memory attestations = attester.generateAttestations(request, proofData);
 
     return attestations[0];
-  }
-
-  /**
-   * @dev Check if the user is the owner of the badge, a proof can be supplied to allow non-holders to prove they can mint a badge
-   * @param account Address of the user
-   * @param badgeTokenIds Token ID of the badges
-   * @param badgeMinimumValues Minimum value of the badges
-   * @param attester Attester contract used to verify proofs
-   * @param data Bytes containing the user request and the proof associated to it
-   */
-  function _checkBadgeOwnership(
-    address account,
-    uint256[] memory badgeTokenIds,
-    uint256[] memory badgeMinimumValues,
-    Attester attester,
-    bytes memory data
-  ) internal {
-    for (uint32 i = 0; i < badgeTokenIds.length; i++) {
-      if (BADGES.balanceOf(account, badgeTokenIds[i]) < badgeMinimumValues[i]) {
-        if (data.length == 0) {
-          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], badgeMinimumValues[i]);
-        }
-        proveWithSismo(attester, data);
-      }
-    }
   }
 
   /**

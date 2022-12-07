@@ -18,7 +18,16 @@ contract MockGatedERC721 is ERC721, SismoGated {
     address to,
     uint256 tokenId,
     bytes calldata data
-  ) public onlyBadgesOwner(to, GATED_BADGE_TOKEN_ID, 1, HYDRA_S1_ACCOUNTBOUND_ATTESTER, data) {
+  )
+    public
+    onlyBadgeOwner(
+      to,
+      GATED_BADGE_TOKEN_ID,
+      GATED_BADGE_MIN_VALUE,
+      HYDRA_S1_ACCOUNTBOUND_ATTESTER,
+      data
+    )
+  {
     uint256 nullifier = _getNulliferForAddress(to);
 
     if (isNullifierUsed(nullifier)) {
