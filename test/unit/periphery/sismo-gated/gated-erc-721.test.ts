@@ -271,7 +271,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           0,
           [] // empty bytes data
         )
-      ).to.be.revertedWith(`UserIsNotOwnerOfBadge(${badgeId})`);
+      ).to.be.revertedWith(`UserIsNotOwnerOfBadge(${badgeId}, ${1})`);
 
       expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
         BigNumber.from(0)
