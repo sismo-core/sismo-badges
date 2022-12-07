@@ -12,7 +12,13 @@ contract MockGatedERC721 is ERC721, SismoGated {
 
   error NFTAlreadyMinted();
 
-  constructor() ERC721('Sismo Gated NFT Contract', 'SGNFT') SismoGated() {}
+  constructor(
+    address badgesLocalAddress,
+    address hydraS1AccountboundLocalAddress
+  )
+    ERC721('Sismo Gated NFT Contract', 'SGNFT')
+    SismoGated(badgesLocalAddress, hydraS1AccountboundLocalAddress)
+  {}
 
   function safeMint(
     address to,
