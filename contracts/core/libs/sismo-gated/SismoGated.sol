@@ -41,48 +41,31 @@ contract SismoGated {
    * -> 18 free slots
    **************************************/
 
-  Badges public badges;
-  HydraS1AccountboundAttester public hydraS1AccountboundAttester;
+  Badges public immutable BADGES;
+  HydraS1AccountboundAttester public immutable HYDRA_S1_ACCOUNTBOUND_ATTESTER;
 
   uint256[18] private _storagePlaceHolders;
 
   error UnsupportedNetwork();
-  error UserIsNotOwnerOfBadge(uint256 badgeTokenId);
+  error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 badgeValue);
 
   /**
    * @dev Constructor
    */
   constructor() {
     // select the correct contract addresses based on the network
-    if (block.chainid == 137) {
-      badges = Badges(BADGES_POLYGON_ADDRESS);
-      hydraS1AccountboundAttester = HydraS1AccountboundAttester(
-        HYDRA_S1_ACCOUNTBOUND_POLYGON_ADDRESS
-      );
-    } else if (block.chainid == 5) {
-      badges = Badges(BADGES_GOERLI_ADDRESS);
-      hydraS1AccountboundAttester = HydraS1AccountboundAttester(
-        HYDRA_S1_ACCOUNTBOUND_GOERLI_ADDRESS
-      );
-    } else if (block.chainid == 80001) {
-      badges = Badges(BADGES_MUMBAI_ADDRESS);
-      hydraS1AccountboundAttester = HydraS1AccountboundAttester(
-        HYDRA_S1_ACCOUNTBOUND_MUMBAI_ADDRESS
-      );
-    } else if (block.chainid == 31337 || block.chainid == 1337) {
-      badges = Badges(BADGES_LOCAL_ADDRESS);
-      hydraS1AccountboundAttester = HydraS1AccountboundAttester(
-        HYDRA_S1_ACCOUNTBOUND_LOCAL_ADDRESS
-      );
-    } else {
-      revert UnsupportedNetwork();
-    }
+    (address badgesAddress, address hydraS1AccountboundAttesterAddress) = _getContractAddresses();
+    BADGES = Badges(badgesAddress);
+    HYDRA_S1_ACCOUNTBOUND_ATTESTER = HydraS1AccountboundAttester(
+      hydraS1AccountboundAttesterAddress
+    );
   }
 
   /**
    * @dev Modifier allowing only the owners of the `GATED_BADGE` to trigger the function
    * @param badgeOwnerAddress Address of the badge owner
    * @param gatedBadgeTokenId Token ID of the badge that the user needs to hold to access the function
+   * @param gatedBadgeMinimumValue Minimum value of the badge that the user needs to hold to access the function
    * @param data Data containing the user request and the proof associated to it
    * @param attester Attester contract used to verify the proof
    * @notice a proof can also be sent to allow non-holders to prove their eligibility
@@ -90,10 +73,23 @@ contract SismoGated {
   modifier onlyBadgesOwner(
     address badgeOwnerAddress,
     uint256 gatedBadgeTokenId,
+    uint256 gatedBadgeMinimumValue,
     Attester attester,
     bytes memory data
   ) {
-    _checkBadgeOwnership(badgeOwnerAddress, gatedBadgeTokenId, attester, data);
+    uint256[] memory gatedBadgeTokenIds = new uint256[](1);
+    gatedBadgeTokenIds[0] = gatedBadgeTokenId;
+
+    uint256[] memory gatedBadgeMinimumValues = new uint256[](1);
+    gatedBadgeMinimumValues[0] = gatedBadgeMinimumValue;
+
+    _checkBadgeOwnership(
+      badgeOwnerAddress,
+      gatedBadgeTokenIds,
+      gatedBadgeMinimumValues,
+      attester,
+      data
+    );
 
     _;
   }
@@ -116,21 +112,25 @@ contract SismoGated {
   /**
    * @dev Check if the user is the owner of the badge, a proof can be supplied to allow non-holders to prove they can mint a badge
    * @param account Address of the user
-   * @param badgeTokenId Token ID of the badge
+   * @param badgeTokenIds Token ID of the badges
+   * @param badgeMinimumValues Minimum value of the badges
    * @param attester Attester contract used to verify proofs
    * @param data Bytes containing the user request and the proof associated to it
    */
   function _checkBadgeOwnership(
     address account,
-    uint256 badgeTokenId,
+    uint256[] memory badgeTokenIds,
+    uint256[] memory badgeMinimumValues,
     Attester attester,
     bytes memory data
   ) internal {
-    if (badges.balanceOf(account, badgeTokenId) == 0) {
-      if (data.length == 0) {
-        revert UserIsNotOwnerOfBadge(badgeTokenId);
+    for (uint32 i = 0; i < badgeTokenIds.length; i++) {
+      if (BADGES.balanceOf(account, badgeTokenIds[i]) < badgeMinimumValues[i]) {
+        if (data.length == 0) {
+          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], badgeMinimumValues[i]);
+        }
+        proveWithSismo(attester, data);
       }
-      proveWithSismo(attester, data);
     }
   }
 
@@ -152,5 +152,31 @@ contract SismoGated {
     request.destination = newDestination;
 
     return (request, proofData);
+  }
+
+  /**
+   * @dev Get the contract addresses based on the network
+   */
+  function _getContractAddresses() internal view returns (address, address) {
+    address badgesAddress;
+    address hydraS1AccountboundAttesterAddress;
+
+    if (block.chainid == 137) {
+      badgesAddress = BADGES_POLYGON_ADDRESS;
+      hydraS1AccountboundAttesterAddress = HYDRA_S1_ACCOUNTBOUND_POLYGON_ADDRESS;
+    } else if (block.chainid == 5) {
+      badgesAddress = BADGES_GOERLI_ADDRESS;
+      hydraS1AccountboundAttesterAddress = HYDRA_S1_ACCOUNTBOUND_GOERLI_ADDRESS;
+    } else if (block.chainid == 80001) {
+      badgesAddress = BADGES_MUMBAI_ADDRESS;
+      hydraS1AccountboundAttesterAddress = HYDRA_S1_ACCOUNTBOUND_MUMBAI_ADDRESS;
+    } else if (block.chainid == 31337 || block.chainid == 1337) {
+      badgesAddress = BADGES_LOCAL_ADDRESS;
+      hydraS1AccountboundAttesterAddress = HYDRA_S1_ACCOUNTBOUND_LOCAL_ADDRESS;
+    } else {
+      revert UnsupportedNetwork();
+    }
+
+    return (badgesAddress, hydraS1AccountboundAttesterAddress);
   }
 }

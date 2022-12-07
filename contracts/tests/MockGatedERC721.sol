@@ -7,6 +7,7 @@ import {SismoGated, HydraS1AccountboundAttester} from '../core/libs/sismo-gated/
 
 contract MockGatedERC721 is ERC721, SismoGated {
   uint256 public constant GATED_BADGE_TOKEN_ID = 200001;
+  uint256 public constant GATED_BADGE_MIN_VALUE = 1;
   mapping(uint256 => bool) private _isNullifierUsed;
 
   error NFTAlreadyMinted();
@@ -17,7 +18,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     address to,
     uint256 tokenId,
     bytes calldata data
-  ) public onlyBadgesOwner(to, GATED_BADGE_TOKEN_ID, hydraS1AccountboundAttester, data) {
+  ) public onlyBadgesOwner(to, GATED_BADGE_TOKEN_ID, 1, HYDRA_S1_ACCOUNTBOUND_ATTESTER, data) {
     uint256 nullifier = _getNulliferForAddress(to);
 
     if (isNullifierUsed(nullifier)) {
@@ -33,7 +34,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     uint256 tokenId,
     bytes memory data
   ) public override(ERC721) {
-    proveWithSismo(hydraS1AccountboundAttester, data);
+    proveWithSismo(HYDRA_S1_ACCOUNTBOUND_ATTESTER, data);
     _transfer(from, to, tokenId);
   }
 
@@ -47,8 +48,8 @@ contract MockGatedERC721 is ERC721, SismoGated {
    * @param to destination address referenced in the proof with this nullifier
    */
   function _getNulliferForAddress(address to) internal view returns (uint256) {
-    bytes memory extraData = badges.getBadgeExtraData(to, GATED_BADGE_TOKEN_ID);
-    address badgeIssuerAddress = badges.getBadgeIssuer(to, GATED_BADGE_TOKEN_ID);
+    bytes memory extraData = BADGES.getBadgeExtraData(to, GATED_BADGE_TOKEN_ID);
+    address badgeIssuerAddress = BADGES.getBadgeIssuer(to, GATED_BADGE_TOKEN_ID);
     return HydraS1AccountboundAttester(badgeIssuerAddress).getNullifierFromExtraData(extraData);
   }
 
