@@ -35,6 +35,7 @@ contract SismoGated {
   error InvalidArgumentsLength();
   error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 balance);
   error AccountAndRequestDestinationDoNotMatch(address account, address requestDestination);
+  error AttestationValueIsLowerThanMinBalance(uint256 attestationValue, uint256 minBalance);
 
   /**
    * @dev Constructor
@@ -113,7 +114,15 @@ contract SismoGated {
         if (sismoProofDataArray[i].length == 0) {
           revert UserIsNotOwnerOfBadge(badgeTokenIds[i], minBalances[i]);
         }
-        proveWithSismo(account, attesters[i], sismoProofDataArray[i]);
+        Attestation memory attestation = proveWithSismo(
+          account,
+          attesters[i],
+          sismoProofDataArray[i]
+        );
+
+        if (attestation.value < minBalances[i]) {
+          revert AttestationValueIsLowerThanMinBalance(attestation.value, minBalances[i]);
+        }
       }
     }
   }
