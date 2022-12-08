@@ -41,7 +41,7 @@ export const generateHydraS1Accounts = async (
 /****************    DATA SOURCE     *************/
 /*************************************************/
 
-export type GroupData = { [address: string]: [value: number] };
+export type GroupData = { [address: string]: number };
 
 export const generateGroups = (S1Accounts: HydraS1Account[]): GroupData[] => {
   const List1 = {};

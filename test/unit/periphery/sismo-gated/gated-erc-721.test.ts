@@ -57,6 +57,8 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
   let destination2Signer: SignerWithAddress;
   let randomSigner: SignerWithAddress;
 
+  let hydraS1Accounts: HydraS1Account[];
+
   let chainId: number;
 
   let source: HydraS1Account;
@@ -98,10 +100,11 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
     commitmentMapper = await CommitmentMapperTester.generate();
     commitmentMapperPubKey = await commitmentMapper.getPubKey();
 
-    let hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
+    hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
     [source, destination, destination2, , , randomDestination] = hydraS1Accounts;
 
     allAvailableGroups = await generateGroups(hydraS1Accounts);
+
     const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups);
 
     registryTree = dataFormat.registryTree;
@@ -180,6 +183,11 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           group.properties.groupIndex
         )
       ).to.be.eql(cooldownDuration);
+
+      // set a cooldown of 1 day for second group
+      const setCooldownDurationTransaction2 = await hydraS1AccountboundAttester
+        .connect(deployer)
+        .setCooldownDurationForGroupIndex(group2.properties.groupIndex, cooldownDuration);
     });
 
     after(async () => {
@@ -725,8 +733,83 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
         BigNumber.from(1)
       );
+    });
 
-      evmRevert(hre, evmSnapshotId);
+    it('Should revert the safeTransferFrom because the user wants to generate an attestation with a value lower than the minimum balance required (nullifier already stored and proof is valid)', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+
+      allAvailableGroups = await generateGroups(hydraS1Accounts);
+      // introduce a new value of 0 for the source
+      allAvailableGroups[1] = {
+        ...allAvailableGroups[1],
+        [BigNumber.from(source.identifier).toHexString()]: 0,
+      };
+
+      const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups);
+
+      // create new merkle trees
+      registryTree = dataFormat.registryTree;
+      [accountsTree, accountsTree2] = dataFormat.accountsTrees;
+      [group, group2] = groups;
+
+      // get new source value
+      sourceValue2 = accountsTree2.getValue(BigNumber.from(source.identifier).toHexString());
+
+      prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
+
+      externalNullifier2 = await generateExternalNullifier(
+        hydraS1AccountboundAttester.address,
+        group2.properties.groupIndex
+      );
+
+      userParams2 = {
+        source: source,
+        destination: destination2,
+        claimedValue: sourceValue2,
+        chainId: chainId,
+        accountsTree: accountsTree2,
+        externalNullifier: externalNullifier2,
+        isStrict: !group2.properties.isScore,
+      };
+
+      inputs2 = await prover.generateInputs(userParams2);
+
+      proof2 = await prover.generateSnarkProof(userParams2);
+
+      request2 = {
+        claims: [
+          {
+            groupId: group2.id,
+            claimedValue: sourceValue2,
+            extraData: encodeGroupProperties(group2.properties),
+          },
+        ],
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
+
+      // register the new root
+      await availableRootsRegistry.registerRootForAttester(
+        hydraS1AccountboundAttester.address,
+        registryTree.getRoot()
+      );
+
+      // increaseTime to be able to generate the attestation with an already used nullifier
+      increaseTime(hre, cooldownDuration);
+
+      await expect(
+        mockGatedERC721
+          .connect(destinationSigner)
+          ['safeTransferFrom(address,address,uint256,bytes)'](
+            destinationSigner.address,
+            destination2Signer.address,
+            0,
+            packRequestAndProofToBytes(request2, proof2)
+          )
+      ).to.be.revertedWith(
+        `AttestationValueIsLowerThanMinBalance(${sourceValue2}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
+      );
+
+      await evmRevert(hre, evmSnapshotId);
     });
   });
 });
