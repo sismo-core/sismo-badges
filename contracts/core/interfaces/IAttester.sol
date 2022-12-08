@@ -28,6 +28,17 @@ interface IAttester {
   ) external returns (Attestation[] memory);
 
   /**
+   * @dev High level function to generate attestations by making a request and submitting proof
+   * @param request User request
+   * @param proofData Data sent along the request to prove its validity
+   * @return badges owners, badges tokenIds and badges values
+   */
+  function mintBadges(
+    Request calldata request,
+    bytes calldata proofData
+  ) external returns (address[] memory, uint256[] memory, uint256[] memory);
+
+  /**
    * @dev External facing function. Allows to delete an attestation by submitting proof
    * @param collectionIds Collection identifier of attestations to delete
    * @param attestationsOwner Owner of attestations to delete

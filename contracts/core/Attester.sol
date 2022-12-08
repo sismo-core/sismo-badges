@@ -49,7 +49,7 @@ abstract contract Attester is IAttester {
   function generateAttestations(
     Request calldata request,
     bytes calldata proofData
-  ) external override returns (Attestation[] memory) {
+  ) public override returns (Attestation[] memory) {
     // Verify if request is valid by verifying against proof
     _verifyRequest(request, proofData);
 
@@ -67,6 +67,31 @@ abstract contract Attester is IAttester {
     }
 
     return attestations;
+  }
+
+  /**
+   * @dev High level function to generate attestations by making a request and submitting proof
+   * @param request User request
+   * @param proofData Data sent along the request to prove its validity
+   * @return badges owners, badges tokenIds and badges values
+   */
+  function mintBadges(
+    Request calldata request,
+    bytes calldata proofData
+  ) external returns (address[] memory, uint256[] memory, uint256[] memory) {
+    Attestation[] memory attestations = generateAttestations(request, proofData);
+
+    address[] memory owners = new address[](attestations.length);
+    uint256[] memory collectionIds = new uint256[](attestations.length);
+    uint256[] memory values = new uint256[](attestations.length);
+
+    for (uint256 i = 0; i < attestations.length; i++) {
+      owners[i] = attestations[i].owner;
+      collectionIds[i] = attestations[i].collectionId;
+      values[i] = attestations[i].value;
+    }
+
+    return (owners, collectionIds, values);
   }
 
   /**
