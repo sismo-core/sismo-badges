@@ -73,25 +73,23 @@ abstract contract Attester is IAttester {
    * @dev High level function to generate attestations by making a request and submitting proof
    * @param request User request
    * @param proofData Data sent along the request to prove its validity
-   * @return badges owners, badges tokenIds and badges values
+   * @return badges owner, badges tokenIds and badges values
    */
   function mintBadges(
     Request calldata request,
     bytes calldata proofData
-  ) external returns (address[] memory, uint256[] memory, uint256[] memory) {
+  ) external returns (address, uint256[] memory, uint256[] memory) {
     Attestation[] memory attestations = generateAttestations(request, proofData);
 
-    address[] memory owners = new address[](attestations.length);
     uint256[] memory collectionIds = new uint256[](attestations.length);
     uint256[] memory values = new uint256[](attestations.length);
 
     for (uint256 i = 0; i < attestations.length; i++) {
-      owners[i] = attestations[i].owner;
       collectionIds[i] = attestations[i].collectionId;
       values[i] = attestations[i].value;
     }
 
-    return (owners, collectionIds, values);
+    return (attestations[0].owner, collectionIds, values);
   }
 
   /**
