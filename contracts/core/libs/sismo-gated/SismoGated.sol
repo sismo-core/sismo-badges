@@ -34,8 +34,7 @@ contract SismoGated {
   error UnsupportedNetwork();
   error InvalidArgumentsLength();
   error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 balance);
-  error AccountAndRequestDestinationDoNotMatch(address account, address requestDestination);
-  error AttestationValueIsLowerThanMinBalance(uint256 attestationValue, uint256 minBalance);
+  error UserDoesNotHoldAnyRequiredBadge();
 
   /**
    * @dev Constructor
@@ -52,22 +51,10 @@ contract SismoGated {
     );
   }
 
-  /**
-   * @dev Modifier allowing only:
-   *      - Owners of the badge with tokenId == badgeTokenId and a badge balance >= minBalance
-   *      - Addresses used in a valid proof of elibility that can be provided in `sismoProofData`
-   * @param account Address which holds the badge or is eligible for the badge (need to provide the correct proof for this account)
-   * @param badgeTokenId Token ID of the badge that the user needs to hold to access the function
-   * @param minBalance Minimum balance (= level) of the badge that the user needs to hold to access the function (if no proof is provided)
-   * @param attester Attester contract used to verify the proof
-   * @param sismoProofData Data containing the user request and the proof of eligibility associated to it
-   */
-  modifier onlyBadgeOwnerOrValidProof(
+  modifier ERC1155Gated(
     address account,
     uint256 badgeTokenId,
-    uint256 minBalance,
-    Attester attester,
-    bytes memory sismoProofData
+    uint256 minBalance
   ) {
     uint256[] memory badgeTokenIds = new uint256[](1);
     badgeTokenIds[0] = badgeTokenId;
@@ -75,120 +62,63 @@ contract SismoGated {
     uint256[] memory minBalances = new uint256[](1);
     minBalances[0] = minBalance;
 
-    Attester[] memory attesters = new Attester[](1);
-    attesters[0] = attester;
-
-    bytes[] memory sismoProofDataArray = new bytes[](1);
-    sismoProofDataArray[0] = sismoProofData;
-
-    checkAccountBadgesOrSismoProofs(
-      account,
-      badgeTokenIds,
-      minBalances,
-      attesters,
-      sismoProofDataArray
-    );
+    checkAccountBadges(account, badgeTokenIds, minBalances, false);
 
     _;
   }
 
-  /**
-   * @dev Check if the `account` address holds badges or is used in valid sismo proofs
-   * @param account Address which holds badges or is used in valid sismo proofs
-   * @param badgeTokenIds Token ID of the badges
-   * @param minBalances Minimum balances (= levels) of the badges
-   * @param attesters Attester contracts used to verify proofs
-   * @param sismoProofDataArray Array of bytes containing the user requests and the proofs of each badge eligibility
-   */
-  function checkAccountBadgesOrSismoProofs(
+  function checkAccountBadges(
     address account,
     uint256[] memory badgeTokenIds,
     uint256[] memory minBalances,
-    Attester[] memory attesters,
-    bytes[] memory sismoProofDataArray
-  ) public {
-    _checkArgumentsLength(badgeTokenIds, minBalances, attesters, sismoProofDataArray);
+    bool isInclusive
+  ) public view {
+    _checkArgumentsLength(badgeTokenIds, minBalances);
+
+    uint32 holdedBadgesByAccount = 0;
 
     for (uint32 i = 0; i < badgeTokenIds.length; i++) {
-      if (BADGES.balanceOf(account, badgeTokenIds[i]) < minBalances[i]) {
-        if (sismoProofDataArray[i].length == 0) {
-          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], minBalances[i]);
+      uint256 balance = BADGES.balanceOf(account, badgeTokenIds[i]);
+      if (balance < minBalances[i]) {
+        if (!isInclusive) {
+          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], balance);
         }
-        Attestation memory attestation = proveWithSismo(
-          account,
-          attesters[i],
-          sismoProofDataArray[i]
-        );
-
-        if (attestation.value < minBalances[i]) {
-          revert AttestationValueIsLowerThanMinBalance(attestation.value, minBalances[i]);
-        }
+      } else {
+        holdedBadgesByAccount += 1;
       }
+    }
+
+    if (holdedBadgesByAccount == 0) {
+      revert UserDoesNotHoldAnyRequiredBadge();
     }
   }
 
   /**
    * @dev Prove the eligibility of an address with Sismo
-   * @param account Address used in the proof of eligibility
-   * @param attester Attester contract used to verify proofs
-   * @param sismoProofData Bytes containing a request and the proof associated to it
+   * @param attester Attester contract used to verify request and proof
+   * @param request user request
+   * @param sismoProof Bytes containing the proof associated to the user request
    */
   function proveWithSismo(
-    address account,
     Attester attester,
-    bytes memory sismoProofData
-  ) public returns (Attestation memory) {
-    (Request memory request, bytes memory proofData) = _decodeRequestAndProofFromBytes(
-      sismoProofData
-    );
+    Request memory request,
+    bytes memory sismoProof
+  ) public returns (address, uint256[] memory) {
+    (address owner, , uint256[] memory values) = attester.mintBadges(request, sismoProof);
 
-    if (account != request.destination) {
-      revert AccountAndRequestDestinationDoNotMatch(account, request.destination);
-    }
-
-    Attestation[] memory attestations = attester.generateAttestations(request, proofData);
-
-    return attestations[0];
-  }
-
-  /**
-   * @dev Decode the user request and the proof from bytes
-   * @param data Bytes containing the user request and the proof associated to it
-   */
-  function _decodeRequestAndProofFromBytes(
-    bytes memory data
-  ) internal pure returns (Request memory, bytes memory) {
-    Claim[] memory claims = new Claim[](1);
-    address newDestination;
-    bytes memory proofData;
-    Request memory request;
-
-    (claims[0], newDestination, proofData) = abi.decode(data, (Claim, address, bytes));
-
-    request.claims = claims;
-    request.destination = newDestination;
-
-    return (request, proofData);
+    return (owner, values);
   }
 
   /**
    * @dev Check if the arguments have the same length
    * @param badgeTokenIds Token ID of the badges
    * @param minBalances Minimum balances (= levels) of the badges
-   * @param attesters Attester contracts used to verify proofs
-   * @param sismoProofDataArray Array of bytes containing the user requests and the proofs of each badge eligibility
    */
   function _checkArgumentsLength(
     uint256[] memory badgeTokenIds,
-    uint256[] memory minBalances,
-    Attester[] memory attesters,
-    bytes[] memory sismoProofDataArray
+    uint256[] memory minBalances
   ) internal pure {
-    if (
-      badgeTokenIds.length != minBalances.length ||
-      badgeTokenIds.length != attesters.length ||
-      badgeTokenIds.length != sismoProofDataArray.length
-    ) {
+    if (badgeTokenIds.length != minBalances.length) {
       revert InvalidArgumentsLength();
     }
   }

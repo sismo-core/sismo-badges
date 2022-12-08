@@ -3,7 +3,7 @@ pragma solidity ^0.8.14;
 import 'hardhat/console.sol';
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import {SismoGated, Attester, Attestation} from '../core/libs/sismo-gated/SismoGated.sol';
+import {SismoGated, Request} from '../core/libs/sismo-gated/SismoGated.sol';
 
 contract MockGatedERC721 is ERC721, SismoGated {
   uint256 public constant GATED_BADGE_TOKEN_ID = 200001;
@@ -11,6 +11,8 @@ contract MockGatedERC721 is ERC721, SismoGated {
   mapping(uint256 => bool) private _isNullifierUsed;
 
   error NFTAlreadyMinted();
+  error AccountAndRequestDestinationDoNotMatch(address account, address requestDestination);
+  error BadgeLevelIsLowerThanMinBalance(uint256 badgeLevel, uint256 minBalance);
 
   constructor(
     address badgesLocalAddress,
@@ -22,18 +24,8 @@ contract MockGatedERC721 is ERC721, SismoGated {
 
   function safeMint(
     address to,
-    uint256 tokenId,
-    bytes[] calldata sismoProofDataArray
-  )
-    public
-    onlyBadgeOwnerOrValidProof(
-      to,
-      GATED_BADGE_TOKEN_ID,
-      GATED_BADGE_MIN_LEVEL,
-      HYDRA_S1_ACCOUNTBOUND_ATTESTER,
-      sismoProofDataArray[0]
-    )
-  {
+    uint256 tokenId
+  ) public ERC1155Gated(to, GATED_BADGE_TOKEN_ID, GATED_BADGE_MIN_LEVEL) {
     uint256 nullifier = _getNulliferForAddress(to);
 
     if (isNullifierUsed(nullifier)) {
@@ -43,11 +35,32 @@ contract MockGatedERC721 is ERC721, SismoGated {
     _mint(to, tokenId);
   }
 
-  function safeMintWithTwoGatedBadges(
+  function mintWithSismo(
     address to,
     uint256 tokenId,
-    bytes[] calldata sismoProofDataArray
+    Request memory request,
+    bytes memory sismoProof
   ) public {
+    if (to != request.destination) {
+      revert AccountAndRequestDestinationDoNotMatch(to, request.destination);
+    }
+
+    (, uint256[] memory values) = proveWithSismo(
+      HYDRA_S1_ACCOUNTBOUND_ATTESTER,
+      request,
+      sismoProof
+    );
+
+    for (uint256 i = 0; i < values.length; i++) {
+      if (values[i] < GATED_BADGE_MIN_LEVEL) {
+        revert BadgeLevelIsLowerThanMinBalance(values[i], GATED_BADGE_MIN_LEVEL);
+      }
+    }
+
+    safeMint(to, tokenId);
+  }
+
+  function safeMintWithTwoGatedBadges(address to, uint256 tokenId) public {
     uint256[] memory badgeTokenIds = new uint256[](2);
     badgeTokenIds[0] = GATED_BADGE_TOKEN_ID;
     badgeTokenIds[1] = GATED_BADGE_TOKEN_ID + 1;
@@ -56,17 +69,9 @@ contract MockGatedERC721 is ERC721, SismoGated {
     badgeMinimumValues[0] = GATED_BADGE_MIN_LEVEL;
     badgeMinimumValues[1] = GATED_BADGE_MIN_LEVEL;
 
-    Attester[] memory attesters = new Attester[](2);
-    attesters[0] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
-    attesters[1] = HYDRA_S1_ACCOUNTBOUND_ATTESTER;
+    bool isInclusive = true;
 
-    checkAccountBadgesOrSismoProofs(
-      to,
-      badgeTokenIds,
-      badgeMinimumValues,
-      attesters,
-      sismoProofDataArray
-    );
+    checkAccountBadges(to, badgeTokenIds, badgeMinimumValues, isInclusive);
 
     uint256 nullifier = _getNulliferForAddress(to);
 
@@ -80,20 +85,35 @@ contract MockGatedERC721 is ERC721, SismoGated {
   function safeTransferFrom(
     address from,
     address to,
-    uint256 tokenId,
-    bytes memory sismoProofData
-  )
-    public
-    override(ERC721)
-    onlyBadgeOwnerOrValidProof(
-      to,
-      GATED_BADGE_TOKEN_ID,
-      GATED_BADGE_MIN_LEVEL,
-      HYDRA_S1_ACCOUNTBOUND_ATTESTER,
-      sismoProofData
-    )
-  {
+    uint256 tokenId
+  ) public override(ERC721) ERC1155Gated(to, GATED_BADGE_TOKEN_ID, GATED_BADGE_MIN_LEVEL) {
     _transfer(from, to, tokenId);
+  }
+
+  function transferWithSismo(
+    address from,
+    address to,
+    uint256 tokenId,
+    Request memory request,
+    bytes memory sismoProof
+  ) public {
+    if (to != request.destination) {
+      revert AccountAndRequestDestinationDoNotMatch(to, request.destination);
+    }
+
+    (, uint256[] memory values) = proveWithSismo(
+      HYDRA_S1_ACCOUNTBOUND_ATTESTER,
+      request,
+      sismoProof
+    );
+
+    for (uint256 i = 0; i < values.length; i++) {
+      if (values[i] < GATED_BADGE_MIN_LEVEL) {
+        revert BadgeLevelIsLowerThanMinBalance(values[i], GATED_BADGE_MIN_LEVEL);
+      }
+    }
+
+    safeTransferFrom(from, to, tokenId);
   }
 
   function _afterTokenTransfer(address, address to, uint256, uint256) internal override(ERC721) {

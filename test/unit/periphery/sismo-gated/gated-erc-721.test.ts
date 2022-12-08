@@ -254,7 +254,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
   /*************************************************************************************/
   /******************************* GENERATE ATTESTATIONS *******************************/
   /*************************************************************************************/
-  describe('Generate Attestations', () => {
+  describe('Generate Attestations and try minting without proofs', () => {
     it('Should generate a proof with Hydra S1 Prover and verify it onchain using the attester', async () => {
       evmSnapshotId = await evmSnapshot(hre);
 
@@ -306,21 +306,22 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         .true;
     });
 
-    it('Should revert because of a wrong destination address', async () => {
+    it('Should revert safeMint because of a wrong destination address', async () => {
       await expect(
-        mockGatedERC721.connect(destinationSigner).safeMint(
+        mockGatedERC721.connect(destinationSigner).safeMint(destination2Signer.address, 0)
+      ).to.be.revertedWith(
+        `UserIsNotOwnerOfBadge(${badgeId}, ${await badges.balanceOf(
           destination2Signer.address,
-          0,
-          [[]] // empty bytes array
-        )
-      ).to.be.revertedWith(`UserIsNotOwnerOfBadge(${badgeId}, ${1})`);
+          badgeId
+        )})`
+      );
 
       expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
         BigNumber.from(0)
       );
     });
 
-    it('Should mint a NFT with a nullifier not already stored and a correct destination address', async () => {
+    it('Should mint a NFT with a nullifier not already stored and a correct destination address (attestation already generated in AttestationsRegistry)', async () => {
       const extraData = await attestationsRegistry.getAttestationExtraData(
         (
           await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
@@ -328,11 +329,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         destinationSigner.address
       );
 
-      await mockGatedERC721.connect(destinationSigner).safeMint(
-        destinationSigner.address,
-        0,
-        [[]] // empty bytes array
-      );
+      await mockGatedERC721.connect(destinationSigner).safeMint(destinationSigner.address, 0);
 
       expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
         BigNumber.from(1)
@@ -341,11 +338,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
 
     it('Should revert the mint if nullifier already stored', async () => {
       await expect(
-        mockGatedERC721.connect(destinationSigner).safeMint(
-          destinationSigner.address,
-          1,
-          [[]] // empty bytes array
-        )
+        mockGatedERC721.connect(destinationSigner).safeMint(destinationSigner.address, 1)
       ).to.be.revertedWith(`NFTAlreadyMinted()`);
     });
 
@@ -431,57 +424,36 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
 
     it('Should revert the mint if the nft has already been minted for a specific nullifier', async () => {
       await expect(
-        mockGatedERC721.connect(destination2Signer).safeMint(
-          destination2Signer.address,
-          1,
-          [[]] // empty bytes array
-        )
+        mockGatedERC721.connect(destination2Signer).safeMint(destination2Signer.address, 1)
       ).to.be.revertedWith(`NFTAlreadyMinted()`);
     });
+  });
 
+  describe('Tests safeTransferFrom without proof', () => {
     it('Should revert the safeTransferFrom because the user wants to transfer to a destination NOT holding the badge (nullifier already stored and proof is valid)', async () => {
-      const newProof = await prover.generateSnarkProof({
-        ...userParams,
-        destination: destination2,
-      });
-
-      const newRequest = {
-        ...request,
-        destination: BigNumber.from(destination2.identifier).toHexString(),
-      };
-
       await expect(
         mockGatedERC721
           .connect(destinationSigner)
-          ['safeTransferFrom(address,address,uint256,bytes)'](
+          ['safeTransferFrom(address,address,uint256)'](
             destinationSigner.address,
             randomSigner.address,
-            0,
-            packRequestAndProofToBytes(newRequest, newProof)
+            0
           )
       ).to.be.revertedWith(
-        `AccountAndRequestDestinationDoNotMatch("${randomSigner.address}", "${destination2Signer.address}")`
+        `UserIsNotOwnerOfBadge(${badgeId}, ${await badges.balanceOf(
+          randomSigner.address,
+          badgeId
+        )})`
       );
     });
 
-    it('Should allow the safeTransferFrom because the proof is provided for another destination holding the badge (nullifier already stored)', async () => {
-      const newProof = await prover.generateSnarkProof({
-        ...userParams,
-        destination: destination2,
-      });
-
-      const newRequest = {
-        ...request,
-        destination: BigNumber.from(destination2.identifier).toHexString(),
-      };
-
+    it('Should allow the safeTransferFrom because the destination is holding the badge (nullifier already stored)', async () => {
       await mockGatedERC721
         .connect(destinationSigner)
-        ['safeTransferFrom(address,address,uint256,bytes)'](
+        ['safeTransferFrom(address,address,uint256)'](
           destinationSigner.address,
           destination2Signer.address,
-          0,
-          packRequestAndProofToBytes(newRequest, newProof)
+          0
         );
 
       // the previous holder should hold no NFT
@@ -495,17 +467,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       );
     });
 
-    it('Should be able to change the destination of the badge multiple times and transfer the nft with proof whenever the user wants', async () => {
-      let newProof = await prover.generateSnarkProof({
-        ...userParams,
-        destination: destination2,
-      });
-
-      let newRequest = {
-        ...request,
-        destination: BigNumber.from(destination2.identifier).toHexString(),
-      };
-
+    it('Should be able to change the destination of the badge multiple times and transfer the nft to a destination holding the badge whenever the user wants', async () => {
       increaseTime(hre, cooldownDuration);
       await hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes());
 
@@ -515,12 +477,12 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         )
       ).to.be.eql(2); // the burnCount should be incremented
 
-      newProof = await prover.generateSnarkProof({
+      let newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: randomDestination,
       });
 
-      newRequest = {
+      let newRequest = {
         ...request,
         destination: BigNumber.from(randomDestination.identifier).toHexString(),
       };
@@ -535,13 +497,13 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       ).to.be.eql(3); // the burnCount should be incremented
 
       increaseTime(hre, cooldownDuration);
+
       await mockGatedERC721
         .connect(destination2Signer)
-        ['safeTransferFrom(address,address,uint256,bytes)'](
+        ['safeTransferFrom(address,address,uint256)'](
           destination2Signer.address,
           randomSigner.address,
-          0,
-          packRequestAndProofToBytes(newRequest, newProof)
+          0
         );
 
       // the current holder should hold the NFT
@@ -554,10 +516,96 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
 
       evmRevert(hre, evmSnapshotId);
     }).timeout(80000);
+  });
 
-    it('Should allow the safeMint because the proof is provided (nullifier not stored and no attestations generated)', async () => {
+  describe('Tests mintWithSismo function with proofs', () => {
+    it('Should revert the mintWithSismo because a proof is provided but the destination does not match the `to` address', async () => {
       evmSnapshotId = await evmSnapshot(hre);
+      // verify that the address dos not hold any attestations
+      expect(await attestationsRegistry.hasAttestation(badgeId, destination2Signer.address)).to.be
+        .false;
+      // verify that the address does not hold any NFT
+      expect(await mockGatedERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
 
+      await expect(
+        mockGatedERC721.mintWithSismo(
+          destination2Signer.address, // wrong `to` address -> should be `destinationSigner.address`
+          1,
+          request,
+          proof.toBytes()
+        )
+      ).to.be.revertedWith(
+        `AccountAndRequestDestinationDoNotMatch("${destination2Signer.address}", "${request.destination}")`
+      );
+    });
+
+    it('Should revert the mintWithSismo because the user wants to generate a valid attestation with a value lower than the minimum balance required (nullifier not stored and no attestations generated)', async () => {
+      let newAllAvailableGroups = await generateGroups(hydraS1Accounts);
+      // introduce a new value of 0 for the source
+      newAllAvailableGroups[0] = {
+        ...newAllAvailableGroups[0],
+        [BigNumber.from(source.identifier).toHexString()]: 0,
+      };
+      const { dataFormat: newDataFormat, groups: newGroups } = await generateAttesterGroups(
+        newAllAvailableGroups
+      );
+
+      // create new merkle trees
+      const newRegistryTree = newDataFormat.registryTree;
+      const newAccountsTree = newDataFormat.accountsTrees[0];
+      // get new groups
+      const newGroup = newGroups[0];
+
+      // get new source value
+      const newSourceValue = newAccountsTree.getValue(
+        BigNumber.from(source.identifier).toHexString()
+      );
+      const newProver = new HydraS1Prover(newRegistryTree, commitmentMapperPubKey);
+      const newExternalNullifier = await generateExternalNullifier(
+        hydraS1AccountboundAttester.address,
+        newGroup.properties.groupIndex
+      );
+
+      const newUserParams = {
+        source: source,
+        destination: destination,
+        claimedValue: newSourceValue,
+        chainId: chainId,
+        accountsTree: newAccountsTree,
+        externalNullifier: newExternalNullifier,
+        isStrict: !newGroup.properties.isScore,
+      };
+
+      const newProof = await newProver.generateSnarkProof(newUserParams);
+      const newRequest = {
+        claims: [
+          {
+            groupId: newGroup.id,
+            claimedValue: newSourceValue,
+            extraData: encodeGroupProperties(newGroup.properties),
+          },
+        ],
+        destination: BigNumber.from(destination.identifier).toHexString(),
+      };
+
+      // register the new root
+      await availableRootsRegistry.registerRootForAttester(
+        hydraS1AccountboundAttester.address,
+        newRegistryTree.getRoot()
+      );
+
+      await expect(
+        mockGatedERC721
+          .connect(destinationSigner)
+          .mintWithSismo(destinationSigner.address, 0, newRequest, newProof.toBytes())
+      ).to.be.revertedWith(
+        `BadgeLevelIsLowerThanMinBalance(${newSourceValue}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
+      );
+    });
+
+    it('Should allow the mintWithSismo because the proof is provided (nullifier not stored and no attestations generated)', async () => {
       // verify that the address dos not hold any attestations
       expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
         .false;
@@ -567,9 +615,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         BigNumber.from(0)
       );
 
-      await mockGatedERC721.safeMint(destinationSigner.address, 0, [
-        packRequestAndProofToBytes(request, proof),
-      ]);
+      await mockGatedERC721.mintWithSismo(destinationSigner.address, 0, request, proof.toBytes());
 
       // verify that the address dos hold a new attestation
       expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
@@ -581,207 +627,105 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       );
     });
 
-    it('Should revert the safeMint because the proof is provided but nullifier is already stored', async () => {
+    it('Should revert the mintWithSismo because the proof is provided but nullifier is already stored', async () => {
       increaseTime(hre, cooldownDuration);
-
       const newProof = await prover.generateSnarkProof({
         ...userParams,
         destination: destination2,
       });
-
       const newRequest = {
         ...request,
         destination: BigNumber.from(destination2.identifier).toHexString(),
       };
+      // verify that the address dos not hold any attestations
+      expect(await attestationsRegistry.hasAttestation(badgeId, destination2Signer.address)).to.be
+        .false;
+      // verify that the address does not hold any NFT
+      expect(await mockGatedERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+      await expect(
+        mockGatedERC721.mintWithSismo(destination2Signer.address, 1, newRequest, newProof.toBytes())
+      ).to.be.revertedWith(`NFTAlreadyMinted()`);
+    });
+  });
+
+  describe('Tests transferWithSismo function with proofs', () => {
+    it('Should revert the transferWithSismo because a proof is provided but the destination does not match the `to` address', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+      // verify that the address does hold attestation
+      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
+        .true;
+      // verify that the address does hold the NFT
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(1)
+      );
 
       // verify that the address dos not hold any attestations
       expect(await attestationsRegistry.hasAttestation(badgeId, destination2Signer.address)).to.be
         .false;
-
       // verify that the address does not hold any NFT
       expect(await mockGatedERC721.balanceOf(destination2Signer.address)).to.be.eql(
         BigNumber.from(0)
       );
 
       await expect(
-        mockGatedERC721.safeMint(destination2Signer.address, 1, [
-          packRequestAndProofToBytes(newRequest, newProof),
-        ])
-      ).to.be.revertedWith(`NFTAlreadyMinted()`);
-
-      evmRevert(hre, evmSnapshotId);
-    });
-
-    it('Should revert the safeMint because only one proof is provided (nullifier not stored and no attestations generated)', async () => {
-      evmSnapshotId = await evmSnapshot(hre);
-
-      // verify that the address does hold the attestation for the first badge
-      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold the attestation for the second badge
-      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold any NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(0)
-      );
-
-      await expect(
-        mockGatedERC721.safeMintWithTwoGatedBadges(
+        mockGatedERC721.transferWithSismo(
           destinationSigner.address,
-          0,
-          // submit only one proof for the first badge
-          [packRequestAndProofToBytes(request, proof), []]
+          destination2Signer.address, // wrong `to` address -> should be `destinationSigner.address`
+          1,
+          request,
+          proof.toBytes()
         )
-      ).to.be.revertedWith(`UserIsNotOwnerOfBadge(${badgeId2}, 1)`);
-    });
-
-    it('Should revert the safeMint because arguments length are invalid (nullifier not stored and no attestations generated)', async () => {
-      // verify that the address does hold the attestation for the first badge
-      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold the attestation for the second badge
-      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold any NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(0)
-      );
-
-      await expect(
-        mockGatedERC721.safeMintWithTwoGatedBadges(
-          destinationSigner.address,
-          0,
-          // submit only one proof for the second badge
-          [packRequestAndProofToBytes(request, proof)]
-        )
-      ).to.be.revertedWith(`InvalidArgumentsLength()`);
-    });
-
-    it('Should allow the safeMint because the proofs are provided for the two badges (nullifier not stored and no attestations generated)', async () => {
-      evmSnapshotId = await evmSnapshot(hre);
-
-      // verify that the address dos not hold any attestations
-      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
-        .false;
-
-      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold any NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(0)
-      );
-
-      await mockGatedERC721.safeMintWithTwoGatedBadges(destinationSigner.address, 0, [
-        packRequestAndProofToBytes(request, proof),
-        packRequestAndProofToBytes(request2, proof2),
-      ]);
-
-      // verify that the address dos hold new attestations
-      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
-        .true;
-
-      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
-        .true;
-
-      // verify that the address does hold a new NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(1)
-      );
-
-      evmRevert(hre, evmSnapshotId);
-    });
-
-    it('Should allow the safeMint because one proof is provided for one badge and the destination address holds the other badge (nullifier not stored and one attestation generated)', async () => {
-      evmSnapshotId = await evmSnapshot(hre);
-
-      await hydraS1AccountboundAttester.generateAttestations(request, proof.toBytes());
-
-      // verify that the address does hold the attestation for the first badge
-      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
-        .true;
-
-      // verify that the address does not hold the attestation for the second badge
-      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
-        .false;
-
-      // verify that the address does not hold any NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(0)
-      );
-
-      await mockGatedERC721.safeMintWithTwoGatedBadges(
-        destinationSigner.address,
-        0,
-        // submit only one proof for the second badge
-        [[], packRequestAndProofToBytes(request2, proof2)]
-      );
-
-      // verify that the address does hold new attestations
-      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
-        .true;
-
-      expect(await attestationsRegistry.hasAttestation(badgeId2, destinationSigner.address)).to.be
-        .true;
-
-      // verify that the address does hold a new NFT
-      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
-        BigNumber.from(1)
+      ).to.be.revertedWith(
+        `AccountAndRequestDestinationDoNotMatch("${destination2Signer.address}", "${request.destination}")`
       );
     });
 
-    it('Should revert the safeTransferFrom because the user wants to generate an attestation with a value lower than the minimum balance required (nullifier already stored and proof is valid)', async () => {
-      evmSnapshotId = await evmSnapshot(hre);
-
-      allAvailableGroups = await generateGroups(hydraS1Accounts);
+    it('Should revert the transferWithSismo because the user wants to generate a valid attestation with a value lower than the minimum balance required', async () => {
+      let newAllAvailableGroups = await generateGroups(hydraS1Accounts);
       // introduce a new value of 0 for the source
-      allAvailableGroups[1] = {
-        ...allAvailableGroups[1],
+      newAllAvailableGroups[0] = {
+        ...newAllAvailableGroups[0],
         [BigNumber.from(source.identifier).toHexString()]: 0,
       };
-
-      const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups);
-
-      // create new merkle trees
-      registryTree = dataFormat.registryTree;
-      [accountsTree, accountsTree2] = dataFormat.accountsTrees;
-      [group, group2] = groups;
-
-      // get new source value
-      sourceValue2 = accountsTree2.getValue(BigNumber.from(source.identifier).toHexString());
-
-      prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
-
-      externalNullifier2 = await generateExternalNullifier(
-        hydraS1AccountboundAttester.address,
-        group2.properties.groupIndex
+      const { dataFormat: newDataFormat, groups: newGroups } = await generateAttesterGroups(
+        newAllAvailableGroups
       );
 
-      userParams2 = {
+      // create new merkle trees
+      const newRegistryTree = newDataFormat.registryTree;
+      const newAccountsTree = newDataFormat.accountsTrees[0];
+      // get new groups
+      const newGroup = newGroups[0];
+
+      // get new source value
+      const newSourceValue = newAccountsTree.getValue(
+        BigNumber.from(source.identifier).toHexString()
+      );
+      const newProver = new HydraS1Prover(newRegistryTree, commitmentMapperPubKey);
+      const newExternalNullifier = await generateExternalNullifier(
+        hydraS1AccountboundAttester.address,
+        newGroup.properties.groupIndex
+      );
+
+      const newUserParams = {
         source: source,
         destination: destination2,
-        claimedValue: sourceValue2,
+        claimedValue: newSourceValue,
         chainId: chainId,
-        accountsTree: accountsTree2,
-        externalNullifier: externalNullifier2,
-        isStrict: !group2.properties.isScore,
+        accountsTree: newAccountsTree,
+        externalNullifier: newExternalNullifier,
+        isStrict: !newGroup.properties.isScore,
       };
 
-      inputs2 = await prover.generateInputs(userParams2);
-
-      proof2 = await prover.generateSnarkProof(userParams2);
-
-      request2 = {
+      const newProof = await newProver.generateSnarkProof(newUserParams);
+      const newRequest = {
         claims: [
           {
-            groupId: group2.id,
-            claimedValue: sourceValue2,
-            extraData: encodeGroupProperties(group2.properties),
+            groupId: newGroup.id,
+            claimedValue: newSourceValue,
+            extraData: encodeGroupProperties(newGroup.properties),
           },
         ],
         destination: BigNumber.from(destination2.identifier).toHexString(),
@@ -790,26 +734,75 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       // register the new root
       await availableRootsRegistry.registerRootForAttester(
         hydraS1AccountboundAttester.address,
-        registryTree.getRoot()
+        newRegistryTree.getRoot()
       );
-
-      // increaseTime to be able to generate the attestation with an already used nullifier
-      increaseTime(hre, cooldownDuration);
 
       await expect(
         mockGatedERC721
           .connect(destinationSigner)
-          ['safeTransferFrom(address,address,uint256,bytes)'](
+          .transferWithSismo(
             destinationSigner.address,
             destination2Signer.address,
             0,
-            packRequestAndProofToBytes(request2, proof2)
+            newRequest,
+            newProof.toBytes()
           )
       ).to.be.revertedWith(
-        `AttestationValueIsLowerThanMinBalance(${sourceValue2}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
+        `BadgeLevelIsLowerThanMinBalance(${newSourceValue}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
+      );
+    });
+
+    it('Should allow the mintWithSismo because the proof is provided (nullifier stored and attestations already generated on address holding the NFT)', async () => {
+      // verify that the address does hold attestation
+      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
+        .true;
+      // verify that the address does hold the NFT
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(1)
       );
 
-      await evmRevert(hre, evmSnapshotId);
+      // verify that the address dos not hold any attestations
+      expect(await attestationsRegistry.hasAttestation(badgeId, destination2Signer.address)).to.be
+        .false;
+      // verify that the address does not hold any NFT
+      expect(await mockGatedERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      let newProof = await prover.generateSnarkProof({
+        ...userParams,
+        destination: destination2,
+      });
+
+      let newRequest = {
+        ...request,
+        destination: BigNumber.from(destination2.identifier).toHexString(),
+      };
+
+      await mockGatedERC721.transferWithSismo(
+        destinationSigner.address,
+        destination2Signer.address,
+        0,
+        newRequest,
+        newProof.toBytes()
+      );
+
+      // verify that the address does hold a new attestation
+      expect(await attestationsRegistry.hasAttestation(badgeId, destination2Signer.address)).to.be
+        .true;
+
+      // verify that the address does hold a new NFT
+      expect(await mockGatedERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(1)
+      );
+
+      // verify that the address dos not hold attestation anymore
+      expect(await attestationsRegistry.hasAttestation(badgeId, destinationSigner.address)).to.be
+        .false;
+      // verify that the address does not hold NFT anymore
+      expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
+        BigNumber.from(0)
+      );
     });
   });
 });
