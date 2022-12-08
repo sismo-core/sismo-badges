@@ -51,6 +51,12 @@ contract SismoGated {
     );
   }
 
+  /**
+   * @dev Modifier to check if the user is the owner of a specific badge with a minimum balance (=level)
+   * @param account Address to check
+   * @param badgeTokenId Token ID of the badge
+   * @param minBalance Minimum balance (= level) of the badge
+   */
   modifier ERC1155Gated(
     address account,
     uint256 badgeTokenId,
@@ -62,12 +68,20 @@ contract SismoGated {
     uint256[] memory minBalances = new uint256[](1);
     minBalances[0] = minBalance;
 
-    checkAccountBadges(account, badgeTokenIds, minBalances, false);
+    checkIfAccountHoldsBadgesWithRequiredLevels(account, badgeTokenIds, minBalances, false);
 
     _;
   }
 
-  function checkAccountBadges(
+  /**
+   * @dev Function to check if the user is the owner of several badges with a minimum level
+   * @param account Address to check
+   * @param badgeTokenIds Token IDs of the badges
+   * @param minBalances Minimum balances (= levels) of the badges
+   * @param isInclusive If true, the user must hold at least one badge with the minimum balance (=level) inputed.
+   *                    If false, it must hold them all with the minimum balances (=level) inputed.
+   */
+  function checkIfAccountHoldsBadgesWithRequiredLevels(
     address account,
     uint256[] memory badgeTokenIds,
     uint256[] memory minBalances,
