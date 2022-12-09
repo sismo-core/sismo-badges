@@ -11,6 +11,7 @@ import {
   SnarkProof,
   SNARK_FIELD,
   Inputs,
+  EddsaPublicKey,
 } from '@sismo-core/hydra-s1';
 import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
@@ -48,10 +49,12 @@ export const generateHydraS1Accounts = async (
 
 export type GroupData = { [address: string]: number };
 
-export const generateGroup = (S1Accounts: HydraS1Account[]): GroupData => {
+export const generateGroup = (S1Accounts: HydraS1Account[], value: number): GroupData => {
   const List = {};
   S1Accounts.forEach((account, index) => {
-    Object.assign(List, { [BigNumber.from(account.identifier).toHexString()]: index + 1 });
+    Object.assign(List, {
+      [BigNumber.from(account.identifier).toHexString()]: value ?? 0,
+    });
   });
   return List;
 };
@@ -204,10 +207,20 @@ export const decodeRequestAndProofFromBytes = (data: string) => {
  * ***********************************************/
 
 export type GenerateAttesterGroup = {
+  groupValue: number;
   generationTimestamp?: number;
   isScore?: boolean;
   groupIndex?: number;
   groups?: HydraS1SimpleGroup[];
+};
+
+export type ProvingDataStruct = {
+  accountsTrees: KVMerkleTree[];
+  registryTree: KVMerkleTree;
+  groups: HydraS1SimpleGroup[];
+  commitmentMapperPubKey: EddsaPublicKey;
+  sources: HydraS1Account[];
+  destinations: HydraS1Account[];
 };
 
 export const generateProvingData = async (options?: GenerateAttesterGroup) => {
@@ -218,20 +231,10 @@ export const generateProvingData = async (options?: GenerateAttesterGroup) => {
 
   const hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
 
-  const [
-    source1,
-    source2,
-    source3,
-    source4,
-    source5,
-    destination1,
-    destination2,
-    destination3,
-    destination4,
-    destination5,
-  ] = hydraS1Accounts;
+  const sources = hydraS1Accounts.slice(0, 10);
+  const destinations = hydraS1Accounts.slice(10, 20);
 
-  const availableGroup = generateGroup(hydraS1Accounts);
+  const availableGroup = generateGroup(hydraS1Accounts, options?.groupValue ?? 0);
 
   // append group
   const groups = options?.groups ?? [];
@@ -267,10 +270,30 @@ export const generateProvingData = async (options?: GenerateAttesterGroup) => {
 
   const registryTree = new KVMerkleTree(registryTreeData, poseidon, REGISTRY_TREE_HEIGHT);
 
-  const sources = [source1, source2, source3, source4, source5];
-  const destinations = [destination1, destination2, destination3, destination4, destination5];
-
   return { accountsTrees, registryTree, groups, commitmentMapperPubKey, sources, destinations };
+};
+
+export const getValuesFromAccountsTrees = (groups, accountsTrees) => {
+  const sourcesValues: BigNumber[][] = [[]];
+  const destinationsValues: BigNumber[][] = [[]];
+
+  let i = 0;
+  for (const group of groups) {
+    let j = 0;
+    sourcesValues[i] = [];
+    destinationsValues[i] = [];
+    for (const address of Object.keys(group.data)) {
+      j < 10
+        ? sourcesValues[i].push(accountsTrees[i].getValue(BigNumber.from(address).toHexString()))
+        : destinationsValues[i].push(
+            accountsTrees[i].getValue(BigNumber.from(address).toHexString())
+          );
+      j++;
+    }
+    i++;
+  }
+
+  return { sourcesValues, destinationsValues };
 };
 
 /****************************************************************

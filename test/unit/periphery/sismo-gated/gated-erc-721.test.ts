@@ -39,6 +39,8 @@ import {
   generateProvingData,
   GenerateRequestAndProofReturnType,
   generateRequestAndProof,
+  ProvingDataStruct,
+  getValuesFromAccountsTrees,
 } from '../../../utils';
 import { formatBytes32String } from 'ethers/lib/utils';
 
@@ -50,10 +52,6 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
   let availableRootsRegistry: AvailableRootsRegistry;
   let badges: Badges;
   let mockGatedERC721: MockGatedERC721;
-
-  let prover: HydraS1Prover;
-  let commitmentMapper: CommitmentMapperTester;
-  let commitmentMapperPubKey: EddsaPublicKey;
 
   let deployer: SignerWithAddress;
   let destinationSigner: SignerWithAddress;
@@ -70,16 +68,11 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
   let destination2: HydraS1Account;
   let randomDestination: HydraS1Account;
 
-  let sources: HydraS1Account[];
-  let destinations: HydraS1Account[];
-
   let sourceValue: BigNumber;
   let otherSourceValue: BigNumber;
   let sourceValue2: BigNumber;
-  let registryTree: KVMerkleTree;
   let accountsTree: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
-  let accountsTrees: KVMerkleTree[];
   let group: HydraS1SimpleGroup;
   let group2: HydraS1SimpleGroup;
   let allAvailableGroups: GroupData[];
@@ -95,57 +88,61 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
   let request: RequestStruct;
   let request2: RequestStruct;
 
+  let sourcesSigners: SignerWithAddress[];
+  let destinationsSigners: SignerWithAddress[];
+
   let badgeId: BigNumber;
   let badgeId2: BigNumber;
+
+  let provingData: ProvingDataStruct;
+  let accountsTrees: KVMerkleTree[];
+  let registryTree: KVMerkleTree;
+  let groups: HydraS1SimpleGroup[];
+  let sources: HydraS1Account[];
+  let sourcesValues: BigNumber[][] = [[]];
+  let destinations: HydraS1Account[];
+  let destinationsValues: BigNumber[][] = [[]];
+
+  let prover: HydraS1Prover;
+  let commitmentMapper: CommitmentMapperTester;
+  let commitmentMapperPubKey: EddsaPublicKey;
 
   let evmSnapshotId: string;
 
   before(async () => {
-    const signers = await hre.ethers.getSigners();
-    [deployer, destinationSigner, destination2Signer, , , randomSigner] = signers;
-
     chainId = parseInt(await hre.getChainId());
 
-    commitmentMapper = await CommitmentMapperTester.generate();
-    commitmentMapperPubKey = await commitmentMapper.getPubKey();
+    sourcesSigners = await (await ethers.getSigners()).slice(0, 10);
+    destinationsSigners = await (await ethers.getSigners()).slice(10, 20);
 
-    hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
-    [source, destination, destination2, , , randomDestination] = hydraS1Accounts;
+    deployer = sourcesSigners[0];
 
-    allAvailableGroups = await generateGroups(hydraS1Accounts);
+    // create a first group in the merkle tree with all values 1
+    const firstProvingData = await generateProvingData({ groupValue: 1 });
 
-    const { dataFormat, groups } = await generateAttesterGroups(allAvailableGroups);
+    // create a second group in the merkle tree with all values 0
+    const secondProvingData = await generateProvingData({
+      groups: firstProvingData.groups, // reuse all groups from the first proving data
+      groupValue: 0,
+    });
 
-    registryTree = dataFormat.registryTree;
-    [accountsTree, accountsTree2] = dataFormat.accountsTrees;
-    [group, group2] = groups;
-    sourceValue = accountsTree.getValue(BigNumber.from(source.identifier).toHexString());
-    sourceValue2 = accountsTree2.getValue(BigNumber.from(source.identifier).toHexString());
+    // create a third group in the merkle tree with all values 42
+    provingData = await generateProvingData({
+      groups: secondProvingData.groups, // reuse all groups from the second proving data
+      groupValue: 42,
+    });
 
-    prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
+    accountsTrees = provingData.accountsTrees;
+    registryTree = provingData.registryTree;
+    groups = provingData.groups;
+    sources = provingData.sources;
+    destinations = provingData.destinations;
 
-    // new future way of generating proving data
-    // but not correct for now so just commenting it out
+    const values = getValuesFromAccountsTrees(groups, accountsTrees);
+    sourcesValues = values.sourcesValues;
+    destinationsValues = values.destinationsValues;
 
-    // const res = await generateProvingData();
-    // const provingData = await generateProvingData({
-    //   groups: res.groups,
-    // });
-
-    // accountsTrees = provingData.accountsTrees;
-    // registryTree = provingData.registryTree;
-    // sources = provingData.sources;
-    // destinations = provingData.destinations;
-
-    // source = sources[0];
-    // destination = destinations[0];
-
-    // [group, group2] = provingData.groups;
-
-    // sourceValue = accountsTrees[0].getValue(BigNumber.from(source.identifier).toHexString());
-    // sourceValue2 = accountsTrees[1].getValue(BigNumber.from(source.identifier).toHexString());
-
-    // prover = new HydraS1Prover(provingData.registryTree, provingData.commitmentMapperPubKey);
+    prover = new HydraS1Prover(provingData.registryTree, provingData.commitmentMapperPubKey);
 
     cooldownDuration = 60 * 60 * 24;
   });
