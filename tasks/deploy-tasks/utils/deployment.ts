@@ -66,7 +66,7 @@ export const afterDeployment = async (
     ************************************
     Deployed: ${contractName} at ${deployed.address}
     * Deployment Receipt ***************
-    Receipt: ${Object.keys(deployed.receipt as Object).map(
+    Receipt: ${Object.keys(deployed.receipt || ({} as Object)).map(
       (key) => `
     ${key}: ${deployed.receipt?.[key]}`
     )}
@@ -106,6 +106,8 @@ export const customDeployContract = async (
     args,
     // If deployment name is already used, it means we are upgrading the implementation
     skipIfAlreadyDeployed: false,
+    deterministicDeployment: options?.deterministicDeployment || false,
+    log: true,
   };
   const deploymentDifference = await hre.deployments.fetchIfDifferent(
     finalDeploymentName,
@@ -152,8 +154,10 @@ export const customDeployContract = async (
       contract:
         'contracts/periphery/utils/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy',
       from: deployer.address,
+      deterministicDeployment: options?.deterministicDeployment || false,
       // note proxyData is the encoded call (i.e initialize(params))
       args: [deployed.address, options?.proxyAdmin, options?.proxyData],
+      log: true,
     });
     const implem = deployed;
     await hre.deployments.save(deploymentName, { ...implem, address: proxy.address });

@@ -13,6 +13,8 @@ export interface DeployOptions extends CommonTaskOptions {
   isImplementationUpgrade?: boolean;
   // proxy address, required in case of implementation upgrade
   proxyAddress?: string;
+  // deterministic deployment
+  deterministicDeployment?: boolean;
 }
 
 export type DeploymentsConfigTypes = {
@@ -75,6 +77,9 @@ export type DeploymentsConfigTypes = {
       address: string;
       collectionIdFirst: string;
       collectionIdLast: string;
+    };
+    sismoContractsRegistry: {
+      address: string;
     };
   };
 };
