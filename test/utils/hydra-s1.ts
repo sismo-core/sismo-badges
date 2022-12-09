@@ -1,15 +1,20 @@
-import { getOwnershipMsg } from '@sismo-core/commitment-mapper-tester-js';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { CommitmentMapperTester, getOwnershipMsg } from '@sismo-core/commitment-mapper-tester-js';
 import {
   ACCOUNTS_TREE_HEIGHT,
   buildPoseidon,
   HydraS1Account,
+  HydraS1Prover,
   KVMerkleTree,
   MerkleTreeData,
   REGISTRY_TREE_HEIGHT,
   SnarkProof,
   SNARK_FIELD,
+  Inputs,
 } from '@sismo-core/hydra-s1';
 import { BigNumber, ethers } from 'ethers';
+import hre from 'hardhat';
+import { HydraS1AccountboundAttester } from 'types';
 import { RequestStruct } from 'types/HydraS1SimpleAttester';
 
 /*************************************************/
@@ -42,6 +47,14 @@ export const generateHydraS1Accounts = async (
 /*************************************************/
 
 export type GroupData = { [address: string]: number };
+
+export const generateGroup = (S1Accounts: HydraS1Account[]): GroupData => {
+  const List = {};
+  S1Accounts.forEach((account, index) => {
+    Object.assign(List, { [BigNumber.from(account.identifier).toHexString()]: index + 1 });
+  });
+  return List;
+};
 
 export const generateGroups = (S1Accounts: HydraS1Account[]): GroupData[] => {
   const List1 = {};
@@ -184,4 +197,135 @@ export const decodeRequestAndProofFromBytes = (data: string) => {
     ['tuple(uint256, uint256, bytes)', 'address', 'bytes'],
     data
   );
+};
+
+/*************************************************
+ ************ PROVING DATA GENERATION  ************
+ * ***********************************************/
+
+export type GenerateAttesterGroup = {
+  generationTimestamp?: number;
+  isScore?: boolean;
+  groupIndex?: number;
+  groups?: HydraS1SimpleGroup[];
+};
+
+export const generateProvingData = async (options?: GenerateAttesterGroup) => {
+  const signers: SignerWithAddress[] = await hre.ethers.getSigners();
+
+  const commitmentMapper = await CommitmentMapperTester.generate();
+  const commitmentMapperPubKey = await commitmentMapper.getPubKey();
+
+  const hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
+
+  const [
+    source1,
+    source2,
+    source3,
+    source4,
+    source5,
+    destination1,
+    destination2,
+    destination3,
+    destination4,
+    destination5,
+  ] = hydraS1Accounts;
+
+  const availableGroup = generateGroup(hydraS1Accounts);
+
+  // append group
+  const groups = options?.groups ?? [];
+  let generationTimestamp = Math.round(Date.now() / 1000);
+
+  if (options && options.generationTimestamp) {
+    generationTimestamp = options.generationTimestamp;
+  }
+
+  const properties: HydraS1SimpleGroupProperties = {
+    groupIndex: groups.length + 1,
+    generationTimestamp,
+    isScore: options?.isScore ?? false,
+  };
+
+  groups.push({
+    data: availableGroup,
+    properties,
+    id: generateGroupIdFromProperties(properties).toHexString(),
+  });
+
+  // format data
+  const accountsTrees: KVMerkleTree[] = [];
+  const registryTreeData: MerkleTreeData = {};
+
+  let poseidon = await buildPoseidon();
+
+  for (let i = 0; i < groups.length; i++) {
+    let _accountsTree = new KVMerkleTree(groups[i].data, poseidon, ACCOUNTS_TREE_HEIGHT);
+    accountsTrees.push(_accountsTree);
+    registryTreeData[_accountsTree.getRoot().toHexString()] = groups[i].id;
+  }
+
+  const registryTree = new KVMerkleTree(registryTreeData, poseidon, REGISTRY_TREE_HEIGHT);
+
+  const sources = [source1, source2, source3, source4, source5];
+  const destinations = [destination1, destination2, destination3, destination4, destination5];
+
+  return { accountsTrees, registryTree, groups, commitmentMapperPubKey, sources, destinations };
+};
+
+/****************************************************************
+ * ************  REQUESTS AND PROOFS GENERATIONS  ***************
+ * **************************************************************/
+
+export type GenerateRequestAndProofArgs = {
+  prover: HydraS1Prover;
+  attester: HydraS1AccountboundAttester;
+  group: HydraS1SimpleGroup;
+  source: HydraS1Account;
+  destination: HydraS1Account;
+  sourceValue: BigNumber;
+  chainId: number;
+  accountsTree: KVMerkleTree;
+};
+
+export type GenerateRequestAndProofReturnType = {
+  request: RequestStruct;
+  proof: SnarkProof;
+  inputs: Inputs;
+  userParams: any;
+  externalNullifier: BigNumber;
+};
+
+export const generateRequestAndProof = async (args: GenerateRequestAndProofArgs) => {
+  const externalNullifier = await generateExternalNullifier(
+    args.attester.address,
+    args.group.properties.groupIndex
+  );
+
+  const userParams = {
+    source: args.source,
+    destination: args.destination,
+    claimedValue: args.sourceValue,
+    chainId: args.chainId,
+    accountsTree: args.accountsTree,
+    externalNullifier: externalNullifier,
+    isStrict: !args.group.properties.isScore,
+  };
+
+  const inputs = await args.prover.generateInputs(userParams);
+
+  const proof = await args.prover.generateSnarkProof(userParams);
+
+  const request = {
+    claims: [
+      {
+        groupId: args.group.id,
+        claimedValue: args.sourceValue,
+        extraData: encodeGroupProperties(args.group.properties),
+      },
+    ],
+    destination: BigNumber.from(args.destination.identifier).toHexString(),
+  };
+
+  return { inputs, proof, request, userParams, externalNullifier };
 };

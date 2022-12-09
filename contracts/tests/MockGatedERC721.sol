@@ -16,11 +16,17 @@ import {SismoGated, Request} from '../core/libs/sismo-gated/SismoGated.sol';
 contract MockGatedERC721 is ERC721, SismoGated {
   uint256 public constant GATED_BADGE_TOKEN_ID = 200001;
   uint256 public constant GATED_BADGE_MIN_LEVEL = 1;
+
   mapping(uint256 => bool) private _isNullifierUsed;
+  // store nullifier used for each ERC721 token
+  mapping(uint256 => uint256) private _tokenIdNullifiers;
 
   error NFTAlreadyMinted();
-  error AccountAndRequestDestinationDoNotMatch(address account, address requestDestination);
-  error BadgeLevelIsLowerThanMinBalance(uint256 badgeLevel, uint256 minBalance);
+  error NFTAlreadyOwned(address owner, uint256 balance);
+  error BadgeNullifierAndERC721NullifierAreDifferent(
+    uint256 badgeNullifier,
+    uint256 erc721Nullifier
+  );
 
   constructor(
     address badgesLocalAddress,
@@ -38,10 +44,16 @@ contract MockGatedERC721 is ERC721, SismoGated {
   function safeMint(
     address to,
     uint256 tokenId
-  ) public ERC1155Gated(to, GATED_BADGE_TOKEN_ID, GATED_BADGE_MIN_LEVEL) {
+  ) public onlySismoBadgeHolder(to, GATED_BADGE_TOKEN_ID, GATED_BADGE_MIN_LEVEL) {
     uint256 nullifier = _getNulliferForAddress(to);
 
+    // prevent minting with same badge twice
     if (isNullifierUsed(nullifier)) {
+      revert NFTAlreadyMinted();
+    }
+
+    // prevent minting if `to` already has an ERC721 token (only one ERC721 token per account)
+    if (ERC721.balanceOf(to) > 0) {
       revert NFTAlreadyMinted();
     }
 
@@ -61,54 +73,13 @@ contract MockGatedERC721 is ERC721, SismoGated {
     Request memory request,
     bytes memory sismoProof
   ) public {
-    if (to != request.destination) {
-      revert AccountAndRequestDestinationDoNotMatch(to, request.destination);
-    }
-
-    (, uint256[] memory values) = proveWithSismo(
-      HYDRA_S1_ACCOUNTBOUND_ATTESTER,
-      request,
-      sismoProof
-    );
-
-    for (uint256 i = 0; i < values.length; i++) {
-      if (values[i] < GATED_BADGE_MIN_LEVEL) {
-        revert BadgeLevelIsLowerThanMinBalance(values[i], GATED_BADGE_MIN_LEVEL);
-      }
-    }
+    proveWithSismo(request, sismoProof);
 
     safeMint(to, tokenId);
   }
 
   /**
-   * @dev Mint a new NFT if the user has the required badges
-   * @param to Address to mint the NFT to
-   * @param tokenId Token ID of the NFT
-   */
-  function safeMintWithTwoGatedBadges(address to, uint256 tokenId) public {
-    uint256[] memory badgeTokenIds = new uint256[](2);
-    badgeTokenIds[0] = GATED_BADGE_TOKEN_ID;
-    badgeTokenIds[1] = GATED_BADGE_TOKEN_ID + 1;
-
-    uint256[] memory badgeMinimumValues = new uint256[](2);
-    badgeMinimumValues[0] = GATED_BADGE_MIN_LEVEL;
-    badgeMinimumValues[1] = GATED_BADGE_MIN_LEVEL;
-
-    bool isInclusive = true;
-
-    checkIfAccountHoldsBadgesWithRequiredLevels(to, badgeTokenIds, badgeMinimumValues, isInclusive);
-
-    uint256 nullifier = _getNulliferForAddress(to);
-
-    if (isNullifierUsed(nullifier)) {
-      revert NFTAlreadyMinted();
-    }
-
-    _mint(to, tokenId);
-  }
-
-  /**
-   * @dev Transfer a NFT if the receiver has the required badge
+   * @dev Transfer a NFT if the user has the required badge
    * @param from Address to transfer the NFT from
    * @param to Address to transfer the NFT to
    * @param tokenId Token ID of the NFT
@@ -117,8 +88,20 @@ contract MockGatedERC721 is ERC721, SismoGated {
     address from,
     address to,
     uint256 tokenId
-  ) public override(ERC721) ERC1155Gated(to, GATED_BADGE_TOKEN_ID, GATED_BADGE_MIN_LEVEL) {
-    _transfer(from, to, tokenId);
+  ) public override(ERC721) onlySismoBadgeHolder(to, GATED_BADGE_TOKEN_ID, GATED_BADGE_MIN_LEVEL) {
+    // prevent transfer if `to` already has an ERC721 token (only one ERC721 token per account)
+    if (ERC721.balanceOf(to) > 0) {
+      revert NFTAlreadyOwned(to, ERC721.balanceOf(to));
+    }
+
+    // prevent transfer if the nullifier used for the ERC721 tokenId is different from the badge nullifier
+    uint256 badgeNullifier = _getNulliferForAddress(to);
+    uint256 erc721Nullifier = _tokenIdNullifiers[tokenId];
+    if (erc721Nullifier != badgeNullifier) {
+      revert BadgeNullifierAndERC721NullifierAreDifferent(badgeNullifier, erc721Nullifier);
+    }
+
+    ERC721.safeTransferFrom(from, to, tokenId);
   }
 
   /**
@@ -136,21 +119,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     Request memory request,
     bytes memory sismoProof
   ) public {
-    if (to != request.destination) {
-      revert AccountAndRequestDestinationDoNotMatch(to, request.destination);
-    }
-
-    (, uint256[] memory values) = proveWithSismo(
-      HYDRA_S1_ACCOUNTBOUND_ATTESTER,
-      request,
-      sismoProof
-    );
-
-    for (uint256 i = 0; i < values.length; i++) {
-      if (values[i] < GATED_BADGE_MIN_LEVEL) {
-        revert BadgeLevelIsLowerThanMinBalance(values[i], GATED_BADGE_MIN_LEVEL);
-      }
-    }
+    proveWithSismo(request, sismoProof);
 
     safeTransferFrom(from, to, tokenId);
   }
@@ -159,9 +128,15 @@ contract MockGatedERC721 is ERC721, SismoGated {
    * @dev Set nullifier as used after a token transfer
    * @param to Address to transfer the NFT to
    */
-  function _afterTokenTransfer(address, address to, uint256, uint256) internal override(ERC721) {
+  function _afterTokenTransfer(
+    address,
+    address to,
+    uint256 firstTokenId,
+    uint256
+  ) internal override(ERC721) {
     uint256 nullifier = _getNulliferForAddress(to);
     _setNullifierAsUsed(nullifier);
+    _setNullifierForTokenId(firstTokenId, nullifier);
   }
 
   /**
@@ -174,6 +149,14 @@ contract MockGatedERC721 is ERC721, SismoGated {
   }
 
   /**
+   * @dev Marks a nullifier as used
+   * @param nullifier Nullifier to mark as used
+   */
+  function _setNullifierAsUsed(uint256 nullifier) internal {
+    _isNullifierUsed[nullifier] = true;
+  }
+
+  /**
    * @dev Getter to know if a nullifier has been used
    * @param nullifier Nullifier to check
    */
@@ -181,11 +164,7 @@ contract MockGatedERC721 is ERC721, SismoGated {
     return _isNullifierUsed[nullifier];
   }
 
-  /**
-   * @dev Marks a nullifier as used
-   * @param nullifier Nullifier to mark as used
-   */
-  function _setNullifierAsUsed(uint256 nullifier) internal {
-    _isNullifierUsed[nullifier] = true;
+  function _setNullifierForTokenId(uint256 tokenId, uint256 nullifier) internal {
+    _tokenIdNullifiers[tokenId] = nullifier;
   }
 }

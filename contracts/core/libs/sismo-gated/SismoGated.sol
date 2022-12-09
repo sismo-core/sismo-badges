@@ -33,7 +33,7 @@ contract SismoGated {
 
   error UnsupportedNetwork();
   error InvalidArgumentsLength();
-  error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 balance);
+  error UserIsNotOwnerOfBadge(uint256 badgeTokenId, uint256 minBalance);
   error UserDoesNotHoldAnyRequiredBadge();
 
   /**
@@ -57,7 +57,7 @@ contract SismoGated {
    * @param badgeTokenId Token ID of the badge
    * @param minBalance Minimum balance (= level) of the badge
    */
-  modifier ERC1155Gated(
+  modifier onlySismoBadgeHolder(
     address account,
     uint256 badgeTokenId,
     uint256 minBalance
@@ -89,36 +89,37 @@ contract SismoGated {
   ) public view {
     _checkArgumentsLength(badgeTokenIds, minBalances);
 
-    uint32 holdedBadgesByAccount = 0;
+    bool isAccountHoldingAtLeastOneRequiredBadge = false;
 
     for (uint32 i = 0; i < badgeTokenIds.length; i++) {
       uint256 balance = BADGES.balanceOf(account, badgeTokenIds[i]);
       if (balance < minBalances[i]) {
         if (!isInclusive) {
-          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], balance);
+          revert UserIsNotOwnerOfBadge(badgeTokenIds[i], minBalances[i]);
         }
       } else {
-        holdedBadgesByAccount += 1;
+        isAccountHoldingAtLeastOneRequiredBadge = true;
       }
     }
 
-    if (holdedBadgesByAccount == 0) {
+    if (!isAccountHoldingAtLeastOneRequiredBadge) {
       revert UserDoesNotHoldAnyRequiredBadge();
     }
   }
 
   /**
    * @dev Prove the eligibility of an address with Sismo
-   * @param attester Attester contract used to verify request and proof
    * @param request user request
    * @param sismoProof Bytes containing the proof associated to the user request
    */
   function proveWithSismo(
-    Attester attester,
     Request memory request,
     bytes memory sismoProof
   ) public returns (address, uint256[] memory) {
-    (address owner, , uint256[] memory values) = attester.mintBadges(request, sismoProof);
+    (address owner, , uint256[] memory values) = HYDRA_S1_ACCOUNTBOUND_ATTESTER.mintBadges(
+      request,
+      sismoProof
+    );
 
     return (owner, values);
   }

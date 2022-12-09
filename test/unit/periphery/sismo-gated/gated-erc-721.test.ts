@@ -36,6 +36,9 @@ import {
   encodeGroupProperties,
   generateGroupIdFromProperties,
   packRequestAndProofToBytes,
+  generateProvingData,
+  GenerateRequestAndProofReturnType,
+  generateRequestAndProof,
 } from '../../../utils';
 import { formatBytes32String } from 'ethers/lib/utils';
 
@@ -62,15 +65,21 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
   let chainId: number;
 
   let source: HydraS1Account;
+  let otherSource: HydraS1Account;
   let destination: HydraS1Account;
   let destination2: HydraS1Account;
   let randomDestination: HydraS1Account;
 
+  let sources: HydraS1Account[];
+  let destinations: HydraS1Account[];
+
   let sourceValue: BigNumber;
+  let otherSourceValue: BigNumber;
   let sourceValue2: BigNumber;
   let registryTree: KVMerkleTree;
   let accountsTree: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
+  let accountsTrees: KVMerkleTree[];
   let group: HydraS1SimpleGroup;
   let group2: HydraS1SimpleGroup;
   let allAvailableGroups: GroupData[];
@@ -114,6 +123,29 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
     sourceValue2 = accountsTree2.getValue(BigNumber.from(source.identifier).toHexString());
 
     prover = new HydraS1Prover(registryTree, commitmentMapperPubKey);
+
+    // new future way of generating proving data
+    // but not correct for now so just commenting it out
+
+    // const res = await generateProvingData();
+    // const provingData = await generateProvingData({
+    //   groups: res.groups,
+    // });
+
+    // accountsTrees = provingData.accountsTrees;
+    // registryTree = provingData.registryTree;
+    // sources = provingData.sources;
+    // destinations = provingData.destinations;
+
+    // source = sources[0];
+    // destination = destinations[0];
+
+    // [group, group2] = provingData.groups;
+
+    // sourceValue = accountsTrees[0].getValue(BigNumber.from(source.identifier).toHexString());
+    // sourceValue2 = accountsTrees[1].getValue(BigNumber.from(source.identifier).toHexString());
+
+    // prover = new HydraS1Prover(provingData.registryTree, provingData.commitmentMapperPubKey);
 
     cooldownDuration = 60 * 60 * 24;
   });
@@ -191,63 +223,22 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
     });
 
     after(async () => {
-      externalNullifier = await generateExternalNullifier(
-        hydraS1AccountboundAttester.address,
-        group.properties.groupIndex
-      );
-
-      externalNullifier2 = await generateExternalNullifier(
-        hydraS1AccountboundAttester.address,
-        group2.properties.groupIndex
-      );
-
-      userParams = {
-        source: source,
-        destination: destination,
-        claimedValue: sourceValue,
-        chainId: chainId,
+      const requestAndProof: GenerateRequestAndProofReturnType = await generateRequestAndProof({
+        prover,
+        attester: hydraS1AccountboundAttester,
+        group,
+        source,
+        destination,
+        sourceValue,
+        chainId,
         accountsTree: accountsTree,
-        externalNullifier: externalNullifier,
-        isStrict: !group.properties.isScore,
-      };
+      });
 
-      userParams2 = {
-        source: source,
-        destination: destination,
-        claimedValue: sourceValue2,
-        chainId: chainId,
-        accountsTree: accountsTree2,
-        externalNullifier: externalNullifier2,
-        isStrict: !group2.properties.isScore,
-      };
-
-      inputs = await prover.generateInputs(userParams);
-      inputs2 = await prover.generateInputs(userParams2);
-
-      proof = await prover.generateSnarkProof(userParams);
-      proof2 = await prover.generateSnarkProof(userParams2);
-
-      request = {
-        claims: [
-          {
-            groupId: group.id,
-            claimedValue: sourceValue,
-            extraData: encodeGroupProperties(group.properties),
-          },
-        ],
-        destination: BigNumber.from(destination.identifier).toHexString(),
-      };
-
-      request2 = {
-        claims: [
-          {
-            groupId: group2.id,
-            claimedValue: sourceValue2,
-            extraData: encodeGroupProperties(group2.properties),
-          },
-        ],
-        destination: BigNumber.from(destination.identifier).toHexString(),
-      };
+      proof = requestAndProof.proof;
+      request = requestAndProof.request;
+      inputs = requestAndProof.inputs;
+      userParams = requestAndProof.userParams;
+      externalNullifier = requestAndProof.externalNullifier;
     });
   });
 
@@ -310,10 +301,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
       await expect(
         mockGatedERC721.connect(destinationSigner).safeMint(destination2Signer.address, 0)
       ).to.be.revertedWith(
-        `UserIsNotOwnerOfBadge(${badgeId}, ${await badges.balanceOf(
-          destination2Signer.address,
-          badgeId
-        )})`
+        `UserIsNotOwnerOfBadge(${badgeId}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
       );
 
       expect(await mockGatedERC721.balanceOf(destinationSigner.address)).to.be.eql(
@@ -440,10 +428,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
             0
           )
       ).to.be.revertedWith(
-        `UserIsNotOwnerOfBadge(${badgeId}, ${await badges.balanceOf(
-          randomSigner.address,
-          badgeId
-        )})`
+        `UserIsNotOwnerOfBadge(${badgeId}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
       );
     });
 
@@ -537,7 +522,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           proof.toBytes()
         )
       ).to.be.revertedWith(
-        `AccountAndRequestDestinationDoNotMatch("${destination2Signer.address}", "${request.destination}")`
+        `UserIsNotOwnerOfBadge(${badgeId}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
       );
     });
 
@@ -601,7 +586,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           .connect(destinationSigner)
           .mintWithSismo(destinationSigner.address, 0, newRequest, newProof.toBytes())
       ).to.be.revertedWith(
-        `BadgeLevelIsLowerThanMinBalance(${newSourceValue}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
+        `UserIsNotOwnerOfBadge(${badgeId}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
       );
     });
 
@@ -678,7 +663,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
           proof.toBytes()
         )
       ).to.be.revertedWith(
-        `AccountAndRequestDestinationDoNotMatch("${destination2Signer.address}", "${request.destination}")`
+        `UserIsNotOwnerOfBadge(${badgeId}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
       );
     });
 
@@ -748,7 +733,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
             newProof.toBytes()
           )
       ).to.be.revertedWith(
-        `BadgeLevelIsLowerThanMinBalance(${newSourceValue}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
+        `UserIsNotOwnerOfBadge(${badgeId}, ${await mockGatedERC721.GATED_BADGE_MIN_LEVEL()})`
       );
     });
 
@@ -779,13 +764,15 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         destination: BigNumber.from(destination2.identifier).toHexString(),
       };
 
-      await mockGatedERC721.transferWithSismo(
-        destinationSigner.address,
-        destination2Signer.address,
-        0,
-        newRequest,
-        newProof.toBytes()
-      );
+      await mockGatedERC721
+        .connect(destinationSigner)
+        .transferWithSismo(
+          destinationSigner.address,
+          destination2Signer.address,
+          0,
+          newRequest,
+          newProof.toBytes()
+        );
 
       // verify that the address does hold a new attestation
       expect(await attestationsRegistry.hasAttestation(badgeId, destination2Signer.address)).to.be
