@@ -52,7 +52,7 @@
     "ethers": "^5.6.8",
     "fast-glob": "^3.2.11",
     "hardhat": "^2.9.7",
-    "hardhat-deploy": "^0.10.5",
+    "hardhat-deploy": "^0.11.22",
     "hardhat-gas-reporter": "^1.0.7",
     "hardhat-storage-layout": "^0.1.6",
     "husky": "4.2.5",

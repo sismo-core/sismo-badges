@@ -108,6 +108,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
+    sismoContractsRegistry: {
+      address: '',
+    },
   },
   polygon: {
     deployOptions: {
@@ -168,6 +171,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_POLYGON_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoContractsRegistry: {
+      address: '',
     },
   },
   // deployer "alpha-testnets-mumbai-mnemonic-deployer-october-13-2022"
@@ -231,6 +237,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
     },
+    sismoContractsRegistry: {
+      address: '',
+    },
   },
   // deployer "alpha-testnets-goerli-mnemonic-deployer-october-4-2022"
   goerli: {
@@ -292,6 +301,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_GOERLI_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
+    },
+    sismoContractsRegistry: {
+      address: '',
     },
   },
   local: {
@@ -355,6 +367,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: '0x1e468ad0fcde4edec429cd41eb28a0e78d4f31fa2c25172ef677468b2b38a9dc',
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
     },
+    sismoContractsRegistry: {
+      address: '0xC3984B1d94198E330904432487baec09a81a1665',
+    },
   },
   hardhat: {
     deployOptions: {
@@ -416,6 +431,9 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
       EdDSAPubKeyX: COMMITMENT_MAPPER_TESTER[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_TESTER[1],
+    },
+    sismoContractsRegistry: {
+      address: '',
     },
   },
 };
