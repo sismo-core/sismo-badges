@@ -22,12 +22,12 @@ async function deploymentAction(
   }
 
   const { sismoContractsRegistry } = (await hre.run('deploy-sismo-contracts-registry', {
-    options,
     badges: config.badges.address,
     attestationsRegistry: config.attestationsRegistry.address,
     front: config.front.address,
     hydraS1AccountboundAttester: config.hydraS1AccountboundAttester.address,
     owner: config.sismoContractsRegistry.owner,
+    options: { ...options, proxyAdmin: config.deployOptions.proxyAdmin },
   })) as DeployedSismoContractsRegistry;
 
   return {

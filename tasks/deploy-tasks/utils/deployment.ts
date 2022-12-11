@@ -124,6 +124,7 @@ export const customDeployContract = async (
     }
   }
   const deployed = await hre.deployments.deploy(finalDeploymentName, deploymentOptions);
+  console.log('deployed', deployed);
   if (!options?.behindProxy) {
     return deployed;
   } else if (options?.isImplementationUpgrade) {
@@ -159,6 +160,7 @@ export const customDeployContract = async (
       args: [deployed.address, options?.proxyAdmin, options?.proxyData],
       log: true,
     });
+    console.log('proxy', proxy);
     const implem = deployed;
     await hre.deployments.save(deploymentName, { ...implem, address: proxy.address });
     if (options?.log) {
