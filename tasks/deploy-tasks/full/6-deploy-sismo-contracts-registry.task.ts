@@ -27,6 +27,7 @@ async function deploymentAction(
     attestationsRegistry: config.attestationsRegistry.address,
     front: config.front.address,
     hydraS1AccountboundAttester: config.hydraS1AccountboundAttester.address,
+    owner: config.sismoContractsRegistry.owner,
   })) as DeployedSismoContractsRegistry;
 
   return {

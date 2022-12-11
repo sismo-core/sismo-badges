@@ -14,9 +14,10 @@ import 'hardhat-storage-layout';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 import 'hardhat-deploy';
-import { Wallet } from 'ethers';
+import { BigNumber, Wallet } from 'ethers';
 import fg from 'fast-glob';
-import { HardhatNetworkForkingUserConfig } from 'hardhat/types';
+import { getSingletonFactoryInfo } from '@gnosis.pm/safe-singleton-factory';
+import { NetworkUserConfig } from 'hardhat/types';
 
 dotenv.config();
 
@@ -83,6 +84,16 @@ const accounts = Array.from(Array(20), (_, index) => {
   };
 });
 
+const deterministicDeployment = (network: string) => {
+  const info = getSingletonFactoryInfo(parseInt(network));
+  return {
+    factory: info!.address,
+    deployer: info!.signerAddress,
+    funding: BigNumber.from(info!.gasLimit).mul(BigNumber.from(info!.gasPrice)).toString(),
+    signedTx: info!.transaction,
+  };
+};
+
 const LOCAL_CHAIN_ID = process.env.LOCAL_CHAIN_ID ? parseInt(process.env.LOCAL_CHAIN_ID) : 31337;
 const LOCAL_HOSTNAME = process.env.LOCAL_HOSTNAME ?? 'localhost';
 const LOCAL_PORT = process.env.LOCAL_PORT ? parseInt(process.env.LOCAL_PORT) : 8545;
@@ -144,6 +155,7 @@ const config: HardhatUserConfig = {
       url: 'http://localhost:8555',
     },
   },
+  deterministicDeployment,
 };
 
 export default config;

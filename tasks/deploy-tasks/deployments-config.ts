@@ -110,6 +110,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     sismoContractsRegistry: {
       address: '',
+      owner: SANDBOX_POLYGON_OWNER,
     },
   },
   polygon: {
@@ -174,6 +175,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     sismoContractsRegistry: {
       address: '',
+      owner: ALPHA_POLYGON_OWNER,
     },
   },
   // deployer "alpha-testnets-mumbai-mnemonic-deployer-october-13-2022"
@@ -239,6 +241,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     sismoContractsRegistry: {
       address: '',
+      owner: ALPHA_MUMBAI_OWNER,
     },
   },
   // deployer "alpha-testnets-goerli-mnemonic-deployer-october-4-2022"
@@ -304,6 +307,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     sismoContractsRegistry: {
       address: '',
+      owner: ALPHA_GOERLI_OWNER,
     },
   },
   local: {
@@ -369,6 +373,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     sismoContractsRegistry: {
       address: '0xC3984B1d94198E330904432487baec09a81a1665',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
   },
   hardhat: {
@@ -434,6 +439,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     sismoContractsRegistry: {
       address: '',
+      owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
     },
   },
 };

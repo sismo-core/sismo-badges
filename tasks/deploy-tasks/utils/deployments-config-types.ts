@@ -80,6 +80,7 @@ export type DeploymentsConfigTypes = {
     };
     sismoContractsRegistry: {
       address: string;
+      owner: string;
     };
   };
 };

@@ -36,6 +36,7 @@
     }
   },
   "dependencies": {
+    "@gnosis.pm/safe-singleton-factory": "^1.0.11",
     "@metamask/eth-sig-util": "^4.0.0",
     "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@openzeppelin/contracts": "^4.5.0",
