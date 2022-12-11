@@ -312,8 +312,8 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
   },
   local: {
     deployOptions: {
-      manualConfirm: true,
-      log: false,
+      manualConfirm: false,
+      log: true,
       behindProxy: true,
       // account 18 of shared mnemonic
       proxyAdmin: '0x41EA85211c08227BD62B03f3EFc65FaAa6CBd1C3',

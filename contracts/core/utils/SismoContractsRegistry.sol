@@ -3,10 +3,10 @@ pragma solidity ^0.8.14;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.sol';
-import {AttestationsRegistry} from './AttestationsRegistry.sol';
-import {Badges} from './Badges.sol';
-import {Front} from './Front.sol';
-import {HydraS1AccountboundAttester} from '../attesters/hydra-s1/HydraS1AccountboundAttester.sol';
+import {AttestationsRegistry} from '../AttestationsRegistry.sol';
+import {Badges} from '../Badges.sol';
+import {Front} from '../Front.sol';
+import {HydraS1AccountboundAttester} from '../../attesters/hydra-s1/HydraS1AccountboundAttester.sol';
 
 contract SismoContractsRegistry is Initializable, Ownable {
   uint8 public constant IMPLEMENTATION_VERSION = 1;
