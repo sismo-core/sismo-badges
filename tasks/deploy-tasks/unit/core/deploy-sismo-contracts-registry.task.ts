@@ -13,6 +13,7 @@ import {
 import { SismoContractsRegistry, SismoContractsRegistry__factory } from '../../../../types';
 
 export interface DeploySismoContractsRegistry {
+  owner: string;
   badges: string;
   attestationsRegistry: string;
   front: string;
@@ -28,6 +29,7 @@ const CONTRACT_NAME = 'SismoContractsRegistry';
 
 async function deploymentAction(
   {
+    owner,
     badges,
     attestationsRegistry,
     front,
@@ -38,11 +40,16 @@ async function deploymentAction(
 ): Promise<DeployedSismoContractsRegistry> {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [badges, attestationsRegistry, front, hydraS1AccountboundAttester];
+
+  // always start by giving the ownership of the deployer
+  const deploymentArgs = [deployer.address];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
-  const initData = '0x';
+  const initData = new SismoContractsRegistry__factory(deployer).interface.encodeFunctionData(
+    'initialize',
+    [deployer.address]
+  );
 
   const deployed = await customDeployContract(
     hre,
@@ -64,10 +71,23 @@ async function deploymentAction(
     deployed.address,
     deployer
   );
+
+  // set contracts addresses
+  await sismoContractsRegistry.setbatchAddresses(
+    badges,
+    attestationsRegistry,
+    front,
+    hydraS1AccountboundAttester
+  );
+
+  // // transfer ownership to the owner
+  // await sismoContractsRegistry.transferOwnership(owner);
+
   return { sismoContractsRegistry };
 }
 
 task('deploy-sismo-contracts-registry')
+  .addParam('owner', 'Address of the owner of the contracts registry')
   .addParam('badges', 'Address of the badges contract')
   .addParam('attestationsRegistry', 'Address of the attestationsRegistry contract')
   .addParam('front', 'Address of the front contract')
