@@ -24,6 +24,9 @@ export interface DeploySismoContractsRegistry {
   attestationsRegistry: string;
   front: string;
   hydraS1AccountboundAttester: string;
+  synapsPythia1SimpleAttester: string;
+  commitmentMapperRegistry: string;
+  availableRootsRegistry: string;
   options?: DeployOptions;
 }
 
@@ -40,6 +43,9 @@ async function deploymentAction(
     attestationsRegistry,
     front,
     hydraS1AccountboundAttester,
+    synapsPythia1SimpleAttester,
+    commitmentMapperRegistry,
+    availableRootsRegistry,
     options,
   }: DeploySismoContractsRegistry,
   hre: HardhatRuntimeEnvironment
@@ -179,7 +185,10 @@ async function deploymentAction(
     badges,
     attestationsRegistry,
     front,
-    hydraS1AccountboundAttester
+    hydraS1AccountboundAttester,
+    synapsPythia1SimpleAttester,
+    commitmentMapperRegistry,
+    availableRootsRegistry
   );
   await setAddressesTx.wait();
 
@@ -198,4 +207,7 @@ task('deploy-sismo-contracts-registry')
   .addParam('attestationsRegistry', 'Address of the attestationsRegistry contract')
   .addParam('front', 'Address of the front contract')
   .addParam('hydraS1AccountboundAttester', 'Address of the hydraS1AccountboundAttester contract')
+  .addParam('availableRootsRegistry', 'Address of the availableRootsRegistry contract')
+  .addParam('commitmentMapperRegistry', 'Address of the commitmentMapperRegistry contract')
+  .addParam('synapsPythia1SimpleAttester', 'Address of the synapsPythia1SimpleAttester contract')
   .setAction(wrapCommonDeployOptions(deploymentAction));

@@ -1,9 +1,17 @@
+import { AvailableRootsRegistry } from './../../../../types/AvailableRootsRegistry';
+import { CommitmentMapperRegistry } from './../../../../types/CommitmentMapperRegistry';
 import { SismoContractsRegistry } from '../../../../types/SismoContractsRegistry';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import hre from 'hardhat';
 import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1.task';
-import { AttestationsRegistry, Badges, Front, HydraS1AccountboundAttester } from 'types';
+import {
+  AttestationsRegistry,
+  Badges,
+  Front,
+  HydraS1AccountboundAttester,
+  Pythia1SimpleAttester,
+} from 'types';
 
 const SismoContractsAddress = '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05';
 
@@ -15,20 +23,28 @@ describe('Test Sismo Contracts Registry', () => {
   let badges: Badges;
   let front: Front;
   let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
+  let commitmentMapperRegistry: CommitmentMapperRegistry;
+  let availableRootsRegistry: AvailableRootsRegistry;
+  let pythia1SimpleAttester: Pythia1SimpleAttester;
 
   let sismoContractsRegistry: SismoContractsRegistry;
 
   before(async () => {
     const signers = await hre.ethers.getSigners();
     [deployer, , proxyAdminSigner] = signers;
-    ({ attestationsRegistry, badges, hydraS1AccountboundAttester, front } = (await hre.run(
-      '0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1',
-      {
-        options: {
-          proxyAdmin: proxyAdminSigner.address,
-        },
-      }
-    )) as Deployed0);
+    ({
+      attestationsRegistry,
+      badges,
+      hydraS1AccountboundAttester,
+      front,
+      commitmentMapperRegistry,
+      availableRootsRegistry,
+      pythia1SimpleAttester,
+    } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1', {
+      options: {
+        proxyAdmin: proxyAdminSigner.address,
+      },
+    })) as Deployed0);
   });
 
   /*************************************************************************************/
@@ -41,6 +57,9 @@ describe('Test Sismo Contracts Registry', () => {
         attestationsRegistry: attestationsRegistry.address,
         front: front.address,
         hydraS1AccountboundAttester: hydraS1AccountboundAttester.address,
+        commitmentMapperRegistry: commitmentMapperRegistry.address,
+        availableRootsRegistry: availableRootsRegistry.address,
+        synapsPythia1SimpleAttester: pythia1SimpleAttester.address,
         owner: deployer.address,
         options: {
           deploymentNamePrefix: 'firstDeployment',
