@@ -16,8 +16,7 @@ import 'solidity-coverage';
 import 'hardhat-deploy';
 import { BigNumber, Wallet } from 'ethers';
 import fg from 'fast-glob';
-import { getSingletonFactoryInfo } from '@gnosis.pm/safe-singleton-factory';
-import { NetworkUserConfig } from 'hardhat/types';
+import { singletonFactory } from './utils/singletonFactory';
 
 dotenv.config();
 
@@ -85,7 +84,13 @@ const accounts = Array.from(Array(20), (_, index) => {
 });
 
 const deterministicDeployment = (network: string) => {
-  const info = getSingletonFactoryInfo(parseInt(network));
+  const info = singletonFactory[parseInt(network)];
+  console.log({
+    factory: info!.address,
+    deployer: info!.signerAddress,
+    funding: BigNumber.from(info!.gasLimit).mul(BigNumber.from(info!.gasPrice)).toString(),
+    signedTx: info!.transaction,
+  });
   return {
     factory: info!.address,
     deployer: info!.signerAddress,
