@@ -1,4 +1,4 @@
-import { SismoContractsRegistry } from './../../../types/SismoContractsRegistry';
+import { SismoContractsRegistry } from '../../../../types/SismoContractsRegistry';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import hre from 'hardhat';
