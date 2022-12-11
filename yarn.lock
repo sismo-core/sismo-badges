@@ -503,6 +503,11 @@
     "@ethersproject/properties" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
 
+"@gnosis.pm/safe-singleton-factory@^1.0.11":
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/@gnosis.pm/safe-singleton-factory/-/safe-singleton-factory-1.0.11.tgz#02e5a4a2991109b6a2da9744d2c0705a5f3a2338"
+  integrity sha512-+P9oamkofzQ7Q4EHa2WOix3+YCnblUyc4nCXMZEPK4wKzIhHJsEbFPoyTObPC7J2S15m62CRNsEhp5EnJ82dhQ==
+
 "@humanwhocodes/config-array@^0.11.6":
   version "0.11.7"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.11.7.tgz#38aec044c6c828f6ed51d5d7ae3d9b9faf6dbb0f"

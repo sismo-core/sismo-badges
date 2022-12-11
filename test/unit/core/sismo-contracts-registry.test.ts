@@ -11,7 +11,7 @@ import {
   SismoContractsRegistry,
 } from 'types';
 
-const SismoContractsAddress = '0xfe8858be5fF6714BA655f557C00c18763cFc2a5c';
+const SismoContractsAddress = '0x0C567Ef02C88c1737B6819C2b03b12f5693Cc748';
 
 describe('Test Sismo Contracts Registry', () => {
   let deployer: SignerWithAddress;
@@ -46,7 +46,6 @@ describe('Test Sismo Contracts Registry', () => {
 
     it('Should deploy the Sismo Contract Registry', async () => {
       firstDeploumentStartingNonce = await deployer.getTransactionCount();
-      console.log('firstDeploumentStartingNonce', firstDeploumentStartingNonce);
 
       const snapshotId = await evmSnapshot(hre);
       const { sismoContractsRegistry } = await hre.run('deploy-sismo-contracts-registry', {
