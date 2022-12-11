@@ -107,7 +107,6 @@ export const customDeployContract = async (
     // If deployment name is already used, it means we are upgrading the implementation
     skipIfAlreadyDeployed: false,
     deterministicDeployment: options?.deterministicDeployment || false,
-    log: true,
   };
   const deploymentDifference = await hre.deployments.fetchIfDifferent(
     finalDeploymentName,
@@ -124,7 +123,6 @@ export const customDeployContract = async (
     }
   }
   const deployed = await hre.deployments.deploy(finalDeploymentName, deploymentOptions);
-  console.log('deployed', deployed);
   if (!options?.behindProxy) {
     return deployed;
   } else if (options?.isImplementationUpgrade) {
@@ -158,9 +156,7 @@ export const customDeployContract = async (
       deterministicDeployment: options?.deterministicDeployment || false,
       // note proxyData is the encoded call (i.e initialize(params))
       args: [deployed.address, options?.proxyAdmin, options?.proxyData],
-      log: true,
     });
-    console.log('proxy', proxy);
     const implem = deployed;
     await hre.deployments.save(deploymentName, { ...implem, address: proxy.address });
     if (options?.log) {

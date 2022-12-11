@@ -85,12 +85,6 @@ const accounts = Array.from(Array(20), (_, index) => {
 
 const deterministicDeployment = (network: string) => {
   const info = singletonFactory[parseInt(network)];
-  console.log({
-    factory: info!.address,
-    deployer: info!.signerAddress,
-    funding: BigNumber.from(info!.gasLimit).mul(BigNumber.from(info!.gasPrice)).toString(),
-    signedTx: info!.transaction,
-  });
   return {
     factory: info!.address,
     deployer: info!.signerAddress,

@@ -1,3 +1,4 @@
+import { SismoContractsRegistry } from './../../../types/SismoContractsRegistry';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import hre from 'hardhat';
@@ -14,6 +15,8 @@ describe('Test Sismo Contracts Registry', () => {
   let badges: Badges;
   let front: Front;
   let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
+
+  let sismoContractsRegistry: SismoContractsRegistry;
 
   before(async () => {
     const signers = await hre.ethers.getSigners();
@@ -33,7 +36,7 @@ describe('Test Sismo Contracts Registry', () => {
   /*************************************************************************************/
   describe('Deployments', () => {
     it('Should deploy the Sismo Contract Registry', async () => {
-      const { sismoContractsRegistry } = await hre.run('deploy-sismo-contracts-registry', {
+      ({ sismoContractsRegistry } = await hre.run('deploy-sismo-contracts-registry', {
         badges: badges.address,
         attestationsRegistry: attestationsRegistry.address,
         front: front.address,
@@ -42,21 +45,21 @@ describe('Test Sismo Contracts Registry', () => {
         options: {
           deploymentNamePrefix: 'firstDeployment',
         },
-      });
+      }));
       expect(sismoContractsRegistry.address).to.be.eql(SismoContractsAddress);
     });
   });
 
   describe('Getters', () => {
     it('Should get the sismo contracts addresses', async () => {
-      // expect(await sismoContractsRegistry.getBadges()).to.be.eql(badges.address);
-      // expect(await sismoContractsRegistry.getAttestationsRegistry()).to.be.eql(
-      //   attestationsRegistry.address
-      // );
-      // expect(await sismoContractsRegistry.getFront()).to.be.eql(front.address);
-      // expect(await sismoContractsRegistry.getHydraS1AccountboundAttester()).to.be.eql(
-      //   hydraS1AccountboundAttester.address
-      // );
+      expect(await sismoContractsRegistry.getBadges()).to.be.eql(badges.address);
+      expect(await sismoContractsRegistry.getAttestationsRegistry()).to.be.eql(
+        attestationsRegistry.address
+      );
+      expect(await sismoContractsRegistry.getFront()).to.be.eql(front.address);
+      expect(await sismoContractsRegistry.getHydraS1AccountboundAttester()).to.be.eql(
+        hydraS1AccountboundAttester.address
+      );
     });
   });
 });

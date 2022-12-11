@@ -313,7 +313,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
   local: {
     deployOptions: {
       manualConfirm: true,
-      log: true,
+      log: false,
       behindProxy: true,
       // account 18 of shared mnemonic
       proxyAdmin: '0x41EA85211c08227BD62B03f3EFc65FaAa6CBd1C3',
@@ -372,7 +372,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
     },
     sismoContractsRegistry: {
-      address: '0xC3984B1d94198E330904432487baec09a81a1665',
+      address: '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05',
       owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
   },
@@ -438,7 +438,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyY: COMMITMENT_MAPPER_TESTER[1],
     },
     sismoContractsRegistry: {
-      address: '',
+      address: '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05',
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
     },
   },
