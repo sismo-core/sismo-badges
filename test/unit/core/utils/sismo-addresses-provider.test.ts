@@ -58,7 +58,7 @@ describe('Test Sismo Addresses Provider', () => {
   /********************************** DEPLOYMENTS **************************************/
   /*************************************************************************************/
   describe('Deployments', () => {
-    it('Should deploy the Sismo Contract Registry', async () => {
+    it('Should deploy the Sismo Addresses Provider', async () => {
       ({ sismoAddressesProvider } = await hre.run('deploy-sismo-addresses-provider', {
         owner: deployer.address,
         badges: badges.address,
@@ -105,25 +105,25 @@ describe('Test Sismo Addresses Provider', () => {
 
     it('Should get the sismo contracts addresses via get (bytes)', async () => {
       const badgesAddress = await sismoAddressesProvider['get(bytes32)'](
-        '0x15d2933074e73f086bfb9519dba2cdd49365b34eb1249e7af583c2103fa36b20'
+        ethers.utils.keccak256(toUtf8Bytes('Badges'))
       );
       const attestationsRegistryAddress = await sismoAddressesProvider['get(bytes32)'](
-        '0x104a0d9235908d95cabc17e4ed670e9ff552850136bf8891e85aac4e7f8377a9'
+        ethers.utils.keccak256(toUtf8Bytes('AttestationsRegistry'))
       );
       const frontAddress = await sismoAddressesProvider['get(bytes32)'](
-        '0x144c56ac1dee5ecf8bec5f9d3b444fd95f6723c5aebe99eebdbe8ee99562055e'
+        ethers.utils.keccak256(toUtf8Bytes('Front'))
       );
       const hydraS1AccountboundAttesterAddress = await sismoAddressesProvider['get(bytes32)'](
-        '0x261eee5b5685c8c5c058afb720adf3f868b47e35bd626cd373381d93303c94b3'
+        ethers.utils.keccak256(toUtf8Bytes('HydraS1AccountboundAttester'))
       );
       const commitmentMapperRegistryAddress = await sismoAddressesProvider['get(bytes32)'](
-        '0x4bd7025fe70d7eceb8faea0c50144406ca8ccfd19e85adc6df146f7595a5cd5a'
+        ethers.utils.keccak256(toUtf8Bytes('CommitmentMapperRegistry'))
       );
       const availableRootsRegistryAddress = await sismoAddressesProvider['get(bytes32)'](
-        '0xd2452158462d5f6fd63e910f75849c6d0cc5a46a8e47f9e81ade14763cfc98ea'
+        ethers.utils.keccak256(toUtf8Bytes('AvailableRootsRegistry'))
       );
       const hydraS1VerifierAddress = await sismoAddressesProvider['get(bytes32)'](
-        '0x11844776da8f5d1b2f51315d8aad249394b4829839accacf4a22459265d79e1e'
+        ethers.utils.keccak256(toUtf8Bytes('HydraS1Verifier'))
       );
 
       expect(badgesAddress).to.be.eql(badges.address);
@@ -135,8 +135,8 @@ describe('Test Sismo Addresses Provider', () => {
       expect(hydraS1VerifierAddress).to.be.eql(hydraS1Verifier.address);
     });
 
-    it('Should get the sismo contracts addresses via getAll', async () => {
-      const allContractInfos = await sismoAddressesProvider.getAll();
+    it('Should get the sismo contracts addresses via getBatch', async () => {
+      const allContractInfos = await sismoAddressesProvider.getBatch();
       const [allNames, allNamesHash, allAddresses] = allContractInfos;
 
       expect(allNames).to.be.eql([
@@ -230,7 +230,6 @@ describe('Test Sismo Addresses Provider', () => {
       const CONTRACT_NAME = 'AddressesProvider';
 
       const deploymentArgs = [
-        deployer.address,
         badges.address,
         attestationsRegistry.address,
         front.address,
@@ -238,6 +237,7 @@ describe('Test Sismo Addresses Provider', () => {
         availableRootsRegistry.address,
         commitmentMapperRegistry.address,
         hydraS1Verifier.address,
+        deployer.address,
       ];
 
       const newSismoAddressesProvider = await hre.deployments.deploy(CONTRACT_NAME, {
