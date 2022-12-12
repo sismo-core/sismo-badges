@@ -1,12 +1,7 @@
 import { BigNumberish } from 'ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import {
-  MockAttestationsRegistry,
-  MockAttestationsRegistry__factory,
-  MockGatedERC721,
-  MockGatedERC721__factory,
-} from '../../../types';
+import { ZKBadgeboundERC721, ZKBadgeboundERC721__factory } from '../../../types';
 import {
   afterDeployment,
   beforeDeployment,
@@ -17,20 +12,20 @@ import {
   wrapCommonDeployOptions,
 } from '../utils';
 
-export interface DeployMockGatedERC721Args {
+export interface DeployZKBadgeboundERC721Args {
   badgesLocalAddress: BigNumberish;
   hydraS1AccountboundLocalAddress: BigNumberish;
   options?: DeployOptions;
 }
 
-export interface DeployedMockGatedERC721 {
-  mockGatedERC721: MockGatedERC721;
+export interface DeployedZkBadgeboundERC721 {
+  zkBadgeboundERC721: ZKBadgeboundERC721;
 }
 
-const CONTRACT_NAME = 'MockGatedERC721';
+const CONTRACT_NAME = 'ZKBadgeboundERC721';
 
 async function deploymentAction(
-  { badgesLocalAddress, hydraS1AccountboundLocalAddress, options }: DeployMockGatedERC721Args,
+  { badgesLocalAddress, hydraS1AccountboundLocalAddress, options }: DeployZKBadgeboundERC721Args,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
@@ -50,9 +45,11 @@ async function deploymentAction(
     })
   );
 
+  console.log('deployed.address', deployed.address);
+
   await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
-  const mockGatedERC721 = MockGatedERC721__factory.connect(deployed.address, deployer);
-  return { mockGatedERC721 };
+  const zkBadgeboundERC721 = ZKBadgeboundERC721__factory.connect(deployed.address, deployer);
+  return { zkBadgeboundERC721 };
 }
 
-task('deploy-mock-gated-erc-721').setAction(wrapCommonDeployOptions(deploymentAction));
+task('deploy-zk-badgebound-erc721').setAction(wrapCommonDeployOptions(deploymentAction));

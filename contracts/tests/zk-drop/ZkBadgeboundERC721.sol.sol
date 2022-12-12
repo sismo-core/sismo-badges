@@ -16,7 +16,7 @@ import {UsingSismo, Request} from '../../core/SismoLib.sol';
  * Each time a NFT is minted or transferred, we make sure that the ZK Badge owned by the account is the same as the one used to mint or transfer the NFT
  */
 
-contract ZkBadgeboundERC721 is ERC721, UsingSismo {
+contract ZKBadgeboundERC721 is ERC721, UsingSismo {
   uint256 public constant MERGOOOR_PASS_BADGE_ID = 200001;
 
   error NFTAlreadyMinted();

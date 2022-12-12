@@ -1,4 +1,3 @@
-import { encodeAccountBoundAttestationExtraData } from '../../../utils/hydra-s1-accountbound';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
 import {
@@ -20,6 +19,7 @@ import {
   HydraS1AccountboundAttester,
   HydraS1Verifier,
   MockGatedERC721,
+  ZkBadgeboundERC721,
 } from 'types';
 import { RequestStruct } from 'types/HydraS1SimpleAttester';
 import {
@@ -44,14 +44,14 @@ import {
 } from '../../../utils';
 import { formatBytes32String } from 'ethers/lib/utils';
 
-describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
+describe('Test ZK Badgebound ERC721 Contract', () => {
   let attestationsRegistry: AttestationsRegistry;
   let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   let hydraS1Verifier: HydraS1Verifier;
   let commitmentMapperRegistry: CommitmentMapperRegistry;
   let availableRootsRegistry: AvailableRootsRegistry;
   let badges: Badges;
-  let mockGatedERC721: MockGatedERC721;
+  let zkBadgeboundERC721: ZkBadgeboundERC721;
 
   let deployer: SignerWithAddress;
   let destinationSigner: SignerWithAddress;
@@ -176,7 +176,7 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
         commitmentMapperRegistry,
         availableRootsRegistry,
       } = await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1', {
-        options: { deploymentNamePrefix: 'gated-erc721' },
+        options: { deploymentNamePrefix: 'zk-badgebound-erc721' },
       }));
 
       const root = registryTree.getRoot();
@@ -187,7 +187,9 @@ describe('Test Gated ERC721 Mock Contract with accountbound behaviour', () => {
 
       expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
 
-      ({ mockGatedERC721 } = await hre.run('deploy-mock-gated-erc-721', {
+      console.log('before');
+
+      ({ zkBadgeboundERC721 } = await hre.run('deploy-zk-badgebound-erc721', {
         badgesLocalAddress: badges.address,
         hydraS1AccountboundLocalAddress: hydraS1AccountboundAttester.address,
       }));
