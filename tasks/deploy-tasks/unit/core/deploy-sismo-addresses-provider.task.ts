@@ -126,7 +126,6 @@ async function deploymentAction(
 
   // always start by giving the ownership of the deployer
   const deploymentArgs = [
-    deployer.address,
     badges,
     attestationsRegistry,
     front,
@@ -134,6 +133,7 @@ async function deploymentAction(
     availableRootsRegistry,
     commitmentMapperRegistry,
     hydraS1Verifier,
+    deployer.address,
   ];
 
   // Deploy the SismoContractsRegistry implementation in local
