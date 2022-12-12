@@ -22,11 +22,14 @@ async function deploymentAction(
   }
 
   const { sismoAddressesProvider } = (await hre.run('deploy-sismo-addresses-provider', {
+    owner: config.sismoContractsRegistry.owner,
     badges: config.badges.address,
     attestationsRegistry: config.attestationsRegistry.address,
     front: config.front.address,
     hydraS1AccountboundAttester: config.hydraS1AccountboundAttester.address,
-    owner: config.sismoContractsRegistry.owner,
+    commitmentMapperRegistry: config.commitmentMapper.address,
+    availableRootsRegistry: config.availableRootsRegistry.address,
+    hydraS1Verifier: config.hydraS1Verifier.address,
     options: { ...options, proxyAdmin: config.deployOptions.proxyAdmin },
   })) as DeployedSismoAddressesProvider;
 

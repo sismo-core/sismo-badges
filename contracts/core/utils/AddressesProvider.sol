@@ -18,9 +18,6 @@ contract AddressesProvider is Initializable, Ownable {
   mapping(bytes32 => address) private _contractAddresses;
   string[] private _contractNames;
 
-  // keeping some space for future upgrade
-  uint256[18] private _placeHoldersAddressesProvider;
-
   event ContractAddressSet(address contractAddress, string contractName);
 
   constructor(
@@ -66,8 +63,11 @@ contract AddressesProvider is Initializable, Ownable {
   function set(address contractAddress, string memory contractName) public onlyOwner {
     bytes32 contractNameHash = keccak256(abi.encodePacked(contractName));
 
+    if (_contractAddresses[contractNameHash] == address(0)) {
+      _contractNames.push(contractName);
+    }
+
     _contractAddresses[contractNameHash] = contractAddress;
-    _contractNames.push(contractName);
 
     emit ContractAddressSet(contractAddress, contractName);
   }
@@ -107,8 +107,8 @@ contract AddressesProvider is Initializable, Ownable {
   }
 
   /**
-   * @dev Returns the addresses of all contracts.
-   * @return Addresses of all contracts.
+   * @dev Returns the addresses of all contracts in `_contractNames`
+   * @return Names, Hashed Names and Addresses of all contracts.
    */
   function getAll() external view returns (string[] memory, bytes32[] memory, address[] memory) {
     string[] memory contractNames = _contractNames;
@@ -116,11 +116,8 @@ contract AddressesProvider is Initializable, Ownable {
     address[] memory contractAddresses = new address[](contractNames.length);
 
     for (uint256 i = 0; i < contractNames.length; i++) {
-      address contractAddress = get(contractNames[i]);
-      if (contractAddress != address(0)) {
-        contractAddresses[i] = contractAddress;
-        contractNamesHash[i] = keccak256(abi.encodePacked(contractNames[i]));
-      }
+      contractAddresses[i] = get(contractNames[i]);
+      contractNamesHash[i] = keccak256(abi.encodePacked(contractNames[i]));
     }
 
     return (contractNames, contractNamesHash, contractAddresses);
