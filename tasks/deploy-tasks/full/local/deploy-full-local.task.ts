@@ -25,6 +25,7 @@ import {
   DeployedPythia1SimpleAttester,
   DeployPythia1SimpleAttesterArgs,
 } from 'tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
+import { DeployedFrontendLib } from 'tasks/deploy-tasks/unit/periphery/deploy-frontend-lib.task';
 
 async function deploymentAction(
   { options }: { options: DeployOptions },
@@ -84,6 +85,11 @@ async function deploymentAction(
     commitmentSignerPubKeyY: config.synapsPythia1SimpleAttester.commitmentSignerPubKeyY,
     options,
   } as DeployPythia1SimpleAttesterArgs)) as DeployedPythia1SimpleAttester;
+
+  await hre.run('deploy-frontend-lib', {
+    hydraS1AccountboundAttester: hydraS1AccountboundAttester.address,
+    options,
+  });
 
   if (hydraS1SimpleAttester) {
     await hre.run('register-for-attester', {
