@@ -1,4 +1,4 @@
-import { singletonFactory } from './../../../../utils/singletonFactory';
+import { singletonFactory } from '../../../../utils/singletonFactory';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import {
@@ -12,29 +12,29 @@ import {
 } from '../../utils';
 
 import {
-  SismoContractsRegistry,
-  SismoContractsRegistry__factory,
+  AddressesProvider,
+  AddressesProvider__factory,
   TransparentUpgradeableProxy__factory,
 } from '../../../../types';
 import { utils } from 'ethers';
 
-export interface DeploySismoContractsRegistry {
+export interface DeploySismoAddressesProvider {
   owner: string;
   badges: string;
   attestationsRegistry: string;
   front: string;
   hydraS1AccountboundAttester: string;
-  synapsPythia1SimpleAttester: string;
-  commitmentMapperRegistry: string;
   availableRootsRegistry: string;
+  commitmentMapperRegistry: string;
+  hydraS1Verifier: string;
   options?: DeployOptions;
 }
 
-export interface DeployedSismoContractsRegistry {
-  sismoContractsRegistry: SismoContractsRegistry;
+export interface DeployedSismoAddressesProvider {
+  sismoAddressesProvider: AddressesProvider;
 }
 
-const CONTRACT_NAME = 'SismoContractsRegistry';
+const CONTRACT_NAME = 'AddressesProvider';
 
 async function deploymentAction(
   {
@@ -43,13 +43,13 @@ async function deploymentAction(
     attestationsRegistry,
     front,
     hydraS1AccountboundAttester,
-    synapsPythia1SimpleAttester,
-    commitmentMapperRegistry,
     availableRootsRegistry,
+    commitmentMapperRegistry,
+    hydraS1Verifier,
     options,
-  }: DeploySismoContractsRegistry,
+  }: DeploySismoAddressesProvider,
   hre: HardhatRuntimeEnvironment
-): Promise<DeployedSismoContractsRegistry> {
+): Promise<DeployedSismoAddressesProvider> {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
 
@@ -63,7 +63,7 @@ async function deploymentAction(
   // Deploy a proxy where the admin is the factoryDeployer
   // The resulted proxy address is deterministic and is always
   // 0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05
-  const sismoContractsRegistryProxyAddress = '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05';
+  const sismoAddressesProviderProxyAddress = '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05';
 
   if (hre.network.config.chainId !== 31337) {
     const tx = {
@@ -125,7 +125,16 @@ async function deploymentAction(
   }
 
   // always start by giving the ownership of the deployer
-  const deploymentArgs = [deployer.address];
+  const deploymentArgs = [
+    deployer.address,
+    badges,
+    attestationsRegistry,
+    front,
+    hydraS1AccountboundAttester,
+    availableRootsRegistry,
+    commitmentMapperRegistry,
+    hydraS1Verifier,
+  ];
 
   // Deploy the SismoContractsRegistry implementation in local
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
@@ -145,22 +154,22 @@ async function deploymentAction(
   // Save the deployment
   await hre.deployments.save(deploymentName, {
     ...deployed,
-    address: sismoContractsRegistryProxyAddress,
+    address: sismoAddressesProviderProxyAddress,
   });
 
   // Upgrade the proxy to use the deployed implementation
-  const sismoContractsRegistryProxy = await TransparentUpgradeableProxy__factory.connect(
-    sismoContractsRegistryProxyAddress,
+  const sismoAddressesProviderProxy = await TransparentUpgradeableProxy__factory.connect(
+    sismoAddressesProviderProxyAddress,
     deployer
   );
   if (options?.log) {
     console.log('Upgrade proxy to use the deployed implementation');
   }
-  const initData = new SismoContractsRegistry__factory(deployer).interface.encodeFunctionData(
+  const initData = new AddressesProvider__factory(deployer).interface.encodeFunctionData(
     'initialize',
     [deployer.address]
   );
-  const upgradeToTx = await sismoContractsRegistryProxy.upgradeToAndCall(
+  const upgradeToTx = await sismoAddressesProviderProxy.upgradeToAndCall(
     deployed.address,
     initData
   );
@@ -170,38 +179,39 @@ async function deploymentAction(
   if (options?.log) {
     console.log('Change proxy admin from the deployer to the expected one');
   }
-  const transfertAdminTx = await sismoContractsRegistryProxy.changeAdmin(options?.proxyAdmin!);
+  const transfertAdminTx = await sismoAddressesProviderProxy.changeAdmin(options?.proxyAdmin!);
   await transfertAdminTx.wait();
 
-  // set contracts addresses
-  const sismoContractsRegistry = await SismoContractsRegistry__factory.connect(
-    sismoContractsRegistryProxyAddress,
+  const sismoAddressesProvider = await AddressesProvider__factory.connect(
+    sismoAddressesProviderProxyAddress,
     deployer
   );
-  if (options?.log) {
-    console.log('Set the different sismo addresses');
-  }
-  const setAddressesTx = await sismoContractsRegistry.setbatchAddresses(
-    badges,
-    attestationsRegistry,
-    front,
-    hydraS1AccountboundAttester,
-    synapsPythia1SimpleAttester,
-    commitmentMapperRegistry,
-    availableRootsRegistry
-  );
-  await setAddressesTx.wait();
+
+  // set contracts addresses
+  // if (options?.log) {
+  //   console.log('Set the different sismo addresses');
+  // }
+  // const setAddressesTx = await sismoAddressesProvider.setBatch(
+  //   badges,
+  //   attestationsRegistry,
+  //   front,
+  //   hydraS1AccountboundAttester,
+  //   synapsPythia1SimpleAttester,
+  //   commitmentMapperRegistry,
+  //   availableRootsRegistry
+  // );
+  // await setAddressesTx.wait();
 
   if (options?.log) {
     console.log('Transfer SismoContractsRegistry ownership from the deployer to the expected one');
   }
-  const transferOwnershipTx = await sismoContractsRegistry.transferOwnership(owner);
+  const transferOwnershipTx = await sismoAddressesProvider.transferOwnership(owner);
   await transferOwnershipTx.wait();
 
-  return { sismoContractsRegistry };
+  return { sismoAddressesProvider };
 }
 
-task('deploy-sismo-contracts-registry')
+task('deploy-sismo-addresses-provider')
   .addParam('owner', 'Address of the owner of the contracts registry')
   .addParam('badges', 'Address of the badges contract')
   .addParam('attestationsRegistry', 'Address of the attestationsRegistry contract')
@@ -209,5 +219,5 @@ task('deploy-sismo-contracts-registry')
   .addParam('hydraS1AccountboundAttester', 'Address of the hydraS1AccountboundAttester contract')
   .addParam('availableRootsRegistry', 'Address of the availableRootsRegistry contract')
   .addParam('commitmentMapperRegistry', 'Address of the commitmentMapperRegistry contract')
-  .addParam('synapsPythia1SimpleAttester', 'Address of the synapsPythia1SimpleAttester contract')
+  .addParam('hydraS1Verifier', 'Address of the hydraS1Verifier contract')
   .setAction(wrapCommonDeployOptions(deploymentAction));

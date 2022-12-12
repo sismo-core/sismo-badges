@@ -1,13 +1,13 @@
 import { getDeployer } from './../utils/deployment';
-import { SismoContractsRegistry } from './../../../types/SismoContractsRegistry';
+import { AddressesProvider } from './../../../types/AddressesProvider';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployOptions } from '../utils';
 import { deploymentsConfig } from '../deployments-config';
-import { DeployedSismoContractsRegistry } from 'tasks/deploy-tasks/unit/core/deploy-sismo-contracts-registry.task';
+import { DeployedSismoAddressesProvider } from 'tasks/deploy-tasks/unit/core/deploy-sismo-addresses-provider.task';
 
 export interface Deployed6 {
-  sismoContractsRegistry: SismoContractsRegistry;
+  sismoAddressesProvider: AddressesProvider;
 }
 
 async function deploymentAction(
@@ -21,18 +21,18 @@ async function deploymentAction(
     console.log('6-deploy-sismo-contracts-registry: ', hre.network.name);
   }
 
-  const { sismoContractsRegistry } = (await hre.run('deploy-sismo-contracts-registry', {
+  const { sismoAddressesProvider } = (await hre.run('deploy-sismo-addresses-provider', {
     badges: config.badges.address,
     attestationsRegistry: config.attestationsRegistry.address,
     front: config.front.address,
     hydraS1AccountboundAttester: config.hydraS1AccountboundAttester.address,
     owner: config.sismoContractsRegistry.owner,
     options: { ...options, proxyAdmin: config.deployOptions.proxyAdmin },
-  })) as DeployedSismoContractsRegistry;
+  })) as DeployedSismoAddressesProvider;
 
   return {
-    sismoContractsRegistry,
+    sismoAddressesProvider,
   };
 }
 
-task('6-deploy-sismo-contracts-registry').setAction(deploymentAction);
+task('6-deploy-sismo-addresses-provider').setAction(deploymentAction);
