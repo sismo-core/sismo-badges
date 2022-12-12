@@ -128,7 +128,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0x362Ff03CaC33C4c8Dc7fF98396Dc19a68F29F57C',
+      address: '0x36B61F249f61170A49c9bf8Faaf38819eFB9938A',
     },
     hydraS1SimpleAttester: {
       enableDeployment: false,
@@ -141,7 +141,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       address: '0x10b27d9efa4A1B65412188b6f4F29e64Cf5e0146',
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
-      initialRoot: '0x163c3224fa82070fbee7692146f505144b0307d668d8e8f803171b6ee7a4cd00',
+      initialRoot: '0',
       owner: ALPHA_POLYGON_OWNER,
     },
     pythia1Verifier: {
