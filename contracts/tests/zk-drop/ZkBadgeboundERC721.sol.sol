@@ -2,7 +2,7 @@
 pragma solidity ^0.8.14;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import {UsingSismo, BadgesRequirementsLib, Request} from '../../core/SismoLib.sol';
+import {UsingSismo, Request} from '../../core/SismoLib.sol';
 
 /**
  * @title ZkBadgeboundERC721
@@ -29,7 +29,10 @@ contract ZkBadgeboundERC721 is ERC721, UsingSismo {
     address hydraS1AccountboundLocalAddress
   ) ERC721('Mergoor Pass', 'MPT') {}
 
-  // could forward to claimTo, but chose to keep so it showcase the use of modifier
+  /**
+   * @dev Mints a NFT and transfers it to the account that holds the ZK Badge
+   * @notice The account that calls this function must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_ID
+   */
   function claim() public onlyBadgeHolders(MERGOOOR_PASS_BADGE_ID) {
     uint256 nullifier = _getNulliferOfBadge(_msgSender());
 
@@ -39,6 +42,11 @@ contract ZkBadgeboundERC721 is ERC721, UsingSismo {
     _mint(_msgSender(), nullifier);
   }
 
+  /**
+   * @dev Mints a NFT and transfers it to the account that holds the ZK Badge
+   * @param to address of the account that will receive the NFT
+   * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_ID
+   */
   function claimTo(address to) public {
     _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
     uint256 nullifier = _getNulliferOfBadge(to);
@@ -50,11 +58,23 @@ contract ZkBadgeboundERC721 is ERC721, UsingSismo {
     _mint(to, nullifier);
   }
 
+  /**
+   * @dev Mints a ZK Badge and a NFT and transfers it to the account that holds the newly minted ZK Badge
+   * @param request user request containing the data needed to mint the ZK Badge
+   * @param sismoProof Proof of eligibilty to mint the ZK Badge
+   */
   function claimWithSismo(Request memory request, bytes memory sismoProof) public {
     (address destination, , ) = _mintSismoBadge(request, sismoProof);
     claimTo(destination);
   }
 
+  /**
+   * @dev Transfers a NFT to the account that holds the ZK Badge with the same nullifier
+   * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_ID
+   * @param from address of the account that currently owns the NFT
+   * @param to address of the account that will receive the NFT (must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_ID)
+   * @param tokenId id of the NFT to transfer
+   */
   function safeTransferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
     _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
@@ -73,6 +93,15 @@ contract ZkBadgeboundERC721 is ERC721, UsingSismo {
     _transfer(from, to, tokenId);
   }
 
+  /**
+   * @dev Transfers a NFT to the account that holds the ZK Badge with the same nullifier
+   * @notice The address `to` will receive a ZK Badge and a NFT with the id MERGOOOR_PASS_BADGE_ID that is linked to the same nullifier
+   * @param from address of the account that currently owns the NFT
+   * @param to address of the account that will receive the NFT (the address will also receive a ZK Badge with the id MERGOOOR_PASS_BADGE_ID)
+   * @param tokenId id of the NFT to transfer
+   * @param request user request containing the data needed to mint the ZK Badge
+   * @param sismoProof Proof of eligibilty to mint the ZK Badge
+   */
   function transferWithSismo(
     address from,
     address to,
@@ -91,7 +120,12 @@ contract ZkBadgeboundERC721 is ERC721, UsingSismo {
    * @dev Set nullifier as used after a token transfer
    * @param to Address to transfer the NFT to
    */
-  function _beforeTokenTransfer(address, address to, uint256, uint256) internal override(ERC721) {
+  function _beforeTokenTransfer(
+    address,
+    address to,
+    uint256,
+    uint256
+  ) internal view override(ERC721) {
     if (balanceOf(to) > 0) {
       revert NFTAlreadyOwned(to, balanceOf(to));
     }
