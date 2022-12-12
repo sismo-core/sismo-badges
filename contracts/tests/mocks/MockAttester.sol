@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.14;
 
-import {Attestation, Request} from '../core/libs/Structs.sol';
-import {Attester} from '../core/Attester.sol';
-import {IAttester} from '../core/interfaces/IAttester.sol';
+import {Attestation, Request} from '../../core/libs/Structs.sol';
+import {Attester} from '../../core/Attester.sol';
+import {IAttester} from '../../core/interfaces/IAttester.sol';
 
 contract MockAttester is IAttester, Attester {
   uint256 public immutable ATTESTATION_ID_MIN;

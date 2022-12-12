@@ -2,10 +2,21 @@
 pragma solidity ^0.8.14;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import {UsingSismo, BadgesRequirementsLib, Request} from '../core/SismoLib.sol';
+import {UsingSismo, BadgesRequirementsLib, Request} from '../../core/SismoLib.sol';
 
-contract MergooorPass is ERC721, UsingSismo {
-  using BadgesRequirementsLib for address;
+/**
+ * @title ZkBadgeboundERC721
+ * @dev ERC721 token that can be minted by holding a specific ZK Badge
+ * @notice This implementation offers to any account holding a specific ZK Badge the possibility to mint a NFT and transfer it to another account
+ * The ZK Badge used in this implementation is bounded to an account thanks to a nullifier (in a zero knowledge way)
+ *
+ * The nullifier is a cryptographic information that prevents any account from producing a proof for the same ZK Badge twice
+ * We use the nullifier in this contract to make sure that each NFT minted or transfered is linked with a 1-o-1 relationship to a specific ZK Badge and therefore to a specific account
+ * To ensure this feature, we use the nullifier as the tokenId of the NFT that is minted or transferred
+ * Each time a NFT is minted or transferred, we make sure that the ZK Badge owned by the account is the same as the one used to mint or transfer the NFT
+ */
+
+contract ZkBadgeboundERC721 is ERC721, UsingSismo {
   uint256 public constant MERGOOOR_PASS_BADGE_ID = 200001;
 
   error NFTAlreadyMinted();
@@ -29,7 +40,7 @@ contract MergooorPass is ERC721, UsingSismo {
   }
 
   function claimTo(address to) public {
-    to._requireBadge(MERGOOOR_PASS_BADGE_ID);
+    _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
     uint256 nullifier = _getNulliferOfBadge(to);
 
     // prevent minting with same badge twice
@@ -45,7 +56,7 @@ contract MergooorPass is ERC721, UsingSismo {
   }
 
   function safeTransferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
-    to._requireBadge(MERGOOOR_PASS_BADGE_ID);
+    _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier != tokenId) {
       revert BadgeNullifierNotEqualToTokenId(badgeNullifier, tokenId);
@@ -54,7 +65,7 @@ contract MergooorPass is ERC721, UsingSismo {
   }
 
   function transferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
-    to._requireBadge(MERGOOOR_PASS_BADGE_ID);
+    _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier != tokenId) {
       revert BadgeNullifierNotEqualToTokenId(badgeNullifier, tokenId);
