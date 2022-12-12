@@ -187,21 +187,6 @@ async function deploymentAction(
     deployer
   );
 
-  // set contracts addresses
-  // if (options?.log) {
-  //   console.log('Set the different sismo addresses');
-  // }
-  // const setAddressesTx = await sismoAddressesProvider.setBatch(
-  //   badges,
-  //   attestationsRegistry,
-  //   front,
-  //   hydraS1AccountboundAttester,
-  //   synapsPythia1SimpleAttester,
-  //   commitmentMapperRegistry,
-  //   availableRootsRegistry
-  // );
-  // await setAddressesTx.wait();
-
   if (options?.log) {
     console.log('Transfer SismoContractsRegistry ownership from the deployer to the expected one');
   }
