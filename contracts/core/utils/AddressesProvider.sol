@@ -13,6 +13,7 @@ import {Front} from '../Front.sol';
 import {HydraS1AccountboundAttester} from '../../attesters/hydra-s1/HydraS1AccountboundAttester.sol';
 import {AvailableRootsRegistry} from '../../periphery/utils/AvailableRootsRegistry.sol';
 import {CommitmentMapperRegistry} from '../../periphery/utils/CommitmentMapperRegistry.sol';
+import {HydraS1Verifier} from '@sismo-core/hydra-s1/contracts/HydraS1Verifier.sol';
 
 contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
   uint8 public constant IMPLEMENTATION_VERSION = 1;
@@ -23,7 +24,7 @@ contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
   HydraS1AccountboundAttester public immutable HYDRA_S1_ACCOUNTBOUND_ATTESTER;
   AvailableRootsRegistry public immutable AVAILABLE_ROOTS_REGISTRY;
   CommitmentMapperRegistry public immutable COMMITMENT_MAPPER_REGISTRY;
-  address public immutable HYDRA_S1_VERIFIER;
+  HydraS1Verifier public immutable HYDRA_S1_VERIFIER;
 
   mapping(bytes32 => address) private _contractAddresses;
   string[] private _contractNames;
@@ -48,7 +49,7 @@ contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
     );
     AVAILABLE_ROOTS_REGISTRY = AvailableRootsRegistry(availableRootsRegistryAddress);
     COMMITMENT_MAPPER_REGISTRY = CommitmentMapperRegistry(commitmentMapperRegistryAddress);
-    HYDRA_S1_VERIFIER = hydraS1VerifierAddress;
+    HYDRA_S1_VERIFIER = HydraS1Verifier(hydraS1VerifierAddress);
 
     initialize(ownerAddress);
   }
@@ -63,7 +64,7 @@ contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
       set(address(HYDRA_S1_ACCOUNTBOUND_ATTESTER), 'HydraS1AccountboundAttester');
       set(address(AVAILABLE_ROOTS_REGISTRY), 'AvailableRootsRegistry');
       set(address(COMMITMENT_MAPPER_REGISTRY), 'CommitmentMapperRegistry');
-      set(HYDRA_S1_VERIFIER, 'HydraS1Verifier');
+      set(address(HYDRA_S1_VERIFIER), 'HydraS1Verifier');
     }
   }
 
