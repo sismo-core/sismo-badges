@@ -13,9 +13,10 @@ import {
   Inputs,
   EddsaPublicKey,
 } from '@sismo-core/hydra-s1';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber, BigNumberish, Bytes, ethers } from 'ethers';
 import hre from 'hardhat';
 import { HydraS1AccountboundAttester } from 'types';
+import { ClaimStruct } from 'types/HydraS1Base';
 import { RequestStruct } from 'types/HydraS1SimpleAttester';
 
 /*************************************************/
@@ -215,7 +216,7 @@ export type GenerateAttesterGroup = {
 };
 
 export type ProvingDataStruct = {
-  accountsTrees: KVMerkleTree[];
+  accountsTreesWithData: { tree: KVMerkleTree; group: HydraS1SimpleGroup }[];
   registryTree: KVMerkleTree;
   groups: HydraS1SimpleGroup[];
   commitmentMapperPubKey: EddsaPublicKey;
@@ -250,43 +251,57 @@ export const generateProvingData = async (options?: GenerateAttesterGroup) => {
     isScore: options?.isScore ?? false,
   };
 
-  groups.push({
+  const group = {
     data: availableGroup,
     properties,
     id: generateGroupIdFromProperties(properties).toHexString(),
-  });
+  };
+
+  groups.push(group);
 
   // format data
-  const accountsTrees: KVMerkleTree[] = [];
+  const accountsTreesWithData: { tree: KVMerkleTree; group: HydraS1SimpleGroup }[] = [];
   const registryTreeData: MerkleTreeData = {};
 
   let poseidon = await buildPoseidon();
 
   for (let i = 0; i < groups.length; i++) {
     let _accountsTree = new KVMerkleTree(groups[i].data, poseidon, ACCOUNTS_TREE_HEIGHT);
-    accountsTrees.push(_accountsTree);
+    accountsTreesWithData.push({ tree: _accountsTree, group: groups[i] });
     registryTreeData[_accountsTree.getRoot().toHexString()] = groups[i].id;
   }
 
   const registryTree = new KVMerkleTree(registryTreeData, poseidon, REGISTRY_TREE_HEIGHT);
 
-  return { accountsTrees, registryTree, groups, commitmentMapperPubKey, sources, destinations };
+  return {
+    accountsTreesWithData,
+    registryTree,
+    groups,
+    commitmentMapperPubKey,
+    sources,
+    destinations,
+  };
 };
 
-export const getValuesFromAccountsTrees = (groups, accountsTrees) => {
+export const getValuesFromAccountsTrees = (
+  groups,
+  accountsTreesWithData: { tree: KVMerkleTree; group: HydraS1SimpleGroup }[]
+) => {
   const sourcesValues: BigNumber[][] = [[]];
   const destinationsValues: BigNumber[][] = [[]];
 
   let i = 0;
-  for (const group of groups) {
+  for (const treeData of accountsTreesWithData) {
     let j = 0;
     sourcesValues[i] = [];
     destinationsValues[i] = [];
-    for (const address of Object.keys(group.data)) {
+    for (const address of Object.keys(treeData.group.data)) {
       j < 10
-        ? sourcesValues[i].push(accountsTrees[i].getValue(BigNumber.from(address).toHexString()))
+        ? sourcesValues[i].push(
+            accountsTreesWithData[i].tree.getValue(BigNumber.from(address).toHexString())
+          )
         : destinationsValues[i].push(
-            accountsTrees[i].getValue(BigNumber.from(address).toHexString())
+            accountsTreesWithData[i].tree.getValue(BigNumber.from(address).toHexString())
           );
       j++;
     }
@@ -296,59 +311,96 @@ export const getValuesFromAccountsTrees = (groups, accountsTrees) => {
   return { sourcesValues, destinationsValues };
 };
 
-/****************************************************************
- * ************  REQUESTS AND PROOFS GENERATIONS  ***************
- * **************************************************************/
+/******************************************
+ * PROOF GENERATOR
+ ******************************************/
 
-export type GenerateRequestAndProofArgs = {
-  prover: HydraS1Prover;
-  attester: HydraS1AccountboundAttester;
-  group: HydraS1SimpleGroup;
-  source: HydraS1Account;
+export type HydraS1ProofRequest = {
+  sources: HydraS1Account[];
   destination: HydraS1Account;
-  sourceValue: BigNumber;
+  value: BigNumber;
+  attesterAddress: string;
+  group: HydraS1SimpleGroup;
+};
+
+export type HydraS1Proof = {
+  claim: ClaimStruct;
+  proofData: Bytes;
+};
+
+export class HydraS1ZKPS {
+  commitmentMapperPubKey: EddsaPublicKey;
   chainId: number;
-  accountsTree: KVMerkleTree;
-};
 
-export type GenerateRequestAndProofReturnType = {
-  request: RequestStruct;
-  proof: SnarkProof;
-  inputs: Inputs;
-  userParams: any;
-  externalNullifier: BigNumber;
-};
+  constructor(commitmentMapperPubKey: EddsaPublicKey, chainId: number) {
+    this.commitmentMapperPubKey = commitmentMapperPubKey;
+    this.chainId = chainId;
+  }
 
-export const generateRequestAndProof = async (args: GenerateRequestAndProofArgs) => {
-  const externalNullifier = await generateExternalNullifier(
-    args.attester.address,
-    args.group.properties.groupIndex
-  );
+  public async generateProof(
+    proofRequest: HydraS1ProofRequest,
+    availableGroups: {
+      registryTree: KVMerkleTree;
+      accountsTreesWithData: {
+        tree: KVMerkleTree;
+        group: HydraS1SimpleGroup;
+      }[];
+    }
+  ) {
+    const source = proofRequest.sources[0];
+    const destination = proofRequest.destination;
 
-  const userParams = {
-    source: args.source,
-    destination: args.destination,
-    claimedValue: args.sourceValue,
-    chainId: args.chainId,
-    accountsTree: args.accountsTree,
-    externalNullifier: externalNullifier,
-    isStrict: !args.group.properties.isScore,
-  };
+    const claimedValue = proofRequest.value;
+    const chainId = this.chainId;
+    const externalNullifier = await generateExternalNullifier(
+      proofRequest.attesterAddress,
+      proofRequest.group.properties.groupIndex
+    );
+    const isStrict = !proofRequest.group.properties.isScore;
 
-  const inputs = await args.prover.generateInputs(userParams);
+    let accountsTreeWithData: { tree: KVMerkleTree; group: HydraS1SimpleGroup } =
+      availableGroups.accountsTreesWithData.filter(
+        (data) => data.group.id === proofRequest.group.id
+      )[0];
 
-  const proof = await args.prover.generateSnarkProof(userParams);
+    if (accountsTreeWithData === undefined) throw new Error('Group not found');
 
-  const request = {
-    claims: [
-      {
-        groupId: args.group.id,
-        claimedValue: args.sourceValue,
-        extraData: encodeGroupProperties(args.group.properties),
+    const accountsTree = accountsTreeWithData.tree;
+
+    const registryTree = availableGroups.registryTree;
+
+    const prover = new HydraS1Prover(registryTree, this.commitmentMapperPubKey);
+
+    const userParams = {
+      source,
+      destination,
+      claimedValue,
+      chainId,
+      accountsTree,
+      externalNullifier,
+      isStrict,
+    };
+
+    const inputs = await prover.generateInputs(userParams);
+
+    const proof = await prover.generateSnarkProof(userParams);
+
+    const claim = {
+      groupId: accountsTreeWithData.group.id,
+      claimedValue: claimedValue,
+      extraData: encodeGroupProperties({
+        ...accountsTreeWithData.group.properties,
+      }),
+    };
+
+    return {
+      request: {
+        claims: [claim],
+        destination: BigNumber.from(destination.identifier).toHexString(),
       },
-    ],
-    destination: BigNumber.from(args.destination.identifier).toHexString(),
-  };
-
-  return { inputs, proof, request, userParams, externalNullifier };
-};
+      proofData: proof.toBytes(),
+      inputs,
+      userParams,
+    };
+  }
+}

@@ -78,7 +78,7 @@ export type DeploymentsConfigTypes = {
       collectionIdFirst: string;
       collectionIdLast: string;
     };
-    sismoContractsRegistry: {
+    sismoAddressesProvider: {
       address: string;
       owner: string;
     };

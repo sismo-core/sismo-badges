@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.14;
 
+import {AddressesProvider} from '../../utils/AddressesProvider.sol';
 import {Badges} from '../../Badges.sol';
 import {Attester} from '../../Attester.sol';
 import {HydraS1AccountboundAttester} from '../../../attesters/hydra-s1/HydraS1AccountboundAttester.sol';
@@ -29,15 +30,23 @@ enum BalanceRequirementType {
  */
 
 contract UsingSismo is Context {
-  // this will be replaced by the contract registry
-  HydraS1AccountboundAttester public immutable HYDRA_S1_ACCOUNTBOUND_ATTESTER =
-    HydraS1AccountboundAttester(0x10b27d9efa4A1B65412188b6f4F29e64Cf5e0146);
-  Badges public immutable BADGES = Badges(0xF12494e3545D49616D9dFb78E5907E9078618a34);
+  AddressesProvider public immutable ADDRESSES_PROVIDER =
+    AddressesProvider(0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05);
+
+  HydraS1AccountboundAttester public immutable HYDRA_S1_ACCOUNTBOUND_ATTESTER;
+  Badges public immutable BADGES;
 
   error UserDoesNotMeetAllRequirements(uint256 badgeTokenId, uint256 minBalance);
   error UserDoesNotMeetRequirements();
   error InvalidArgumentsLength();
   error WrongBalanceRequirementType();
+
+  constructor() {
+    HYDRA_S1_ACCOUNTBOUND_ATTESTER = HydraS1AccountboundAttester(
+      ADDRESSES_PROVIDER.HYDRA_S1_ACCOUNTBOUND_ATTESTER()
+    );
+    BADGES = Badges(ADDRESSES_PROVIDER.BADGES());
+  }
 
   /*******************************************************
     1. MINT BADGES from sismoProof received by "Prove With Sismo" off-chain flow

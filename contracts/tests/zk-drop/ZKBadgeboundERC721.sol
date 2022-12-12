@@ -24,10 +24,7 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
   error BadgeNullifierNotEqualToTokenId(uint256 badgeNullifier, uint256 tokenId);
   error BadgeDestinationAndNFTDestinationNotEqual(address badgeDestination, address nftDestination);
 
-  constructor(
-    address badgesLocalAddress,
-    address hydraS1AccountboundLocalAddress
-  ) ERC721('Mergoor Pass', 'MPT') {}
+  constructor() ERC721('Mergoor Pass', 'MPT') {}
 
   /**
    * @dev Mints a NFT and transfers it to the account that holds the ZK Badge

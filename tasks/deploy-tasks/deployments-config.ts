@@ -108,7 +108,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
-    sismoContractsRegistry: {
+    sismoAddressesProvider: {
       address: '',
       owner: SANDBOX_POLYGON_OWNER,
     },
@@ -173,7 +173,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
-    sismoContractsRegistry: {
+    sismoAddressesProvider: {
       address: '',
       owner: ALPHA_POLYGON_OWNER,
     },
@@ -239,7 +239,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
     },
-    sismoContractsRegistry: {
+    sismoAddressesProvider: {
       address: '',
       owner: ALPHA_MUMBAI_OWNER,
     },
@@ -305,7 +305,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
     },
-    sismoContractsRegistry: {
+    sismoAddressesProvider: {
       address: '',
       owner: ALPHA_GOERLI_OWNER,
     },
@@ -371,7 +371,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: '0x1e468ad0fcde4edec429cd41eb28a0e78d4f31fa2c25172ef677468b2b38a9dc',
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
     },
-    sismoContractsRegistry: {
+    sismoAddressesProvider: {
       address: '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05',
       owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
@@ -437,7 +437,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_TESTER[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_TESTER[1],
     },
-    sismoContractsRegistry: {
+    sismoAddressesProvider: {
       address: '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05',
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
     },
