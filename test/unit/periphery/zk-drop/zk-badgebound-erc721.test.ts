@@ -58,31 +58,19 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
   let zkBadgeboundERC721: ZKBadgeboundERC721;
 
   let deployer: SignerWithAddress;
+  let sourceSigner: SignerWithAddress;
+  let source2Signer: SignerWithAddress;
+  let source3Signer: SignerWithAddress;
+  let source4Signer: SignerWithAddress;
+  let source5Signer: SignerWithAddress;
   let destinationSigner: SignerWithAddress;
   let destination2Signer: SignerWithAddress;
+  let destination3Signer: SignerWithAddress;
+  let destination4Signer: SignerWithAddress;
+  let destination5Signer: SignerWithAddress;
   let randomSigner: SignerWithAddress;
 
-  let hydraS1Accounts: HydraS1Account[];
-
   let chainId: number;
-
-  let sourceValue: BigNumber;
-  let otherSourceValue: BigNumber;
-  let sourceValue2: BigNumber;
-  let accountsTree: KVMerkleTree;
-  let accountsTree2: KVMerkleTree;
-  let allAvailableGroups: GroupData[];
-  let externalNullifier: BigNumber;
-  let externalNullifier2: BigNumber;
-  let cooldownDuration: number;
-  let userParams;
-  let userParams2;
-  let inputs: Inputs;
-  let inputs2: Inputs;
-  let proof: SnarkProof;
-  let proof2: SnarkProof;
-  let request: RequestStruct;
-  let request2: RequestStruct;
 
   let sourcesSigners: SignerWithAddress[];
   let destinationsSigners: SignerWithAddress[];
@@ -109,6 +97,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
   let destination3: HydraS1Account;
   let destination4: HydraS1Account;
   let destination5: HydraS1Account;
+  let zeroAddress: string;
 
   let prover: HydraS1Prover;
   let commitmentMapper: CommitmentMapperTester;
@@ -116,6 +105,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
 
   let provingScheme: HydraS1ZKPS;
 
+  let cooldownDuration: number;
   let evmSnapshotId: string;
 
   const config = deploymentsConfig[hre.network.name];
@@ -158,6 +148,17 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     destinationsSigners = (await ethers.getSigners()).slice(10, 20);
 
     deployer = sourcesSigners[0];
+    sourceSigner = sourcesSigners[1];
+    source2Signer = sourcesSigners[2];
+    source3Signer = sourcesSigners[3];
+    source4Signer = sourcesSigners[4];
+    source5Signer = sourcesSigners[5];
+
+    destinationSigner = destinationsSigners[1];
+    destination2Signer = destinationsSigners[2];
+    destination3Signer = destinationsSigners[3];
+    destination4Signer = destinationsSigners[4];
+    destination5Signer = destinationsSigners[5];
 
     source1 = sources[1];
     source2 = sources[2];
@@ -170,6 +171,8 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     destination3 = destinations[3];
     destination4 = destinations[4];
     destination5 = destinations[5];
+
+    zeroAddress = '0x0000000000000000000000000000000000000000';
   });
 
   /*************************************************************************************/
@@ -193,6 +196,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         config.sismoAddressesProvider.address,
       ]);
 
+      // needed to not break `yarn test`
       if (code === '0x') {
         ({ sismoAddressesProvider } = await hre.run('deploy-sismo-addresses-provider', {
           owner: deployer.address,
@@ -206,15 +210,18 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         }));
       }
 
+      ({ zkBadgeboundERC721 } = await hre.run('deploy-zk-badgebound-erc721', {}));
+
       const root = registryTree.getRoot();
       await availableRootsRegistry.registerRootForAttester(
         hydraS1AccountboundAttester.address,
         root
       );
 
-      expect(await hydraS1AccountboundAttester.owner()).to.be.eql(deployer.address);
-
-      ({ zkBadgeboundERC721 } = await hre.run('deploy-zk-badgebound-erc721', {}));
+      await hydraS1AccountboundAttester.setCooldownDurationForGroupIndex(
+        groups[0].properties.groupIndex,
+        cooldownDuration
+      );
 
       badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
         groups[0].properties.groupIndex
@@ -223,24 +230,22 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       badgeId2 = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
         groups[1].properties.groupIndex
       );
-
-      // 0 - Checks that the verifier, available roots registry, commitment mapper registry and attestations registry are set
-      expect(await hydraS1AccountboundAttester.getVerifier()).to.equal(hydraS1Verifier.address);
-      expect(await hydraS1AccountboundAttester.getAvailableRootsRegistry()).to.equal(
-        availableRootsRegistry.address
-      );
-      expect(await hydraS1AccountboundAttester.getCommitmentMapperRegistry()).to.equal(
-        commitmentMapperRegistry.address
-      );
-      expect(await hydraS1AccountboundAttester.getAttestationRegistry()).to.equal(
-        attestationsRegistry.address
-      );
     });
 
-    it('Should generate a proof with Hydra S1 Prover and verify it onchain using the attester', async () => {
+    it('should check the contract configuration', async () => {
+      expect(await zkBadgeboundERC721.name()).to.equal('Mergoor Pass');
+      expect(await zkBadgeboundERC721.symbol()).to.equal('MPT');
+      expect(await zkBadgeboundERC721.MERGOOOR_PASS_BADGE_ID()).to.equal(badgeId);
+    });
+  });
+
+  describe('Scenario 1: mint badge, mint NFT, transfer badge and then transfer NFT. Prevent to mint again.', () => {
+    it('source 0x1 mints the ZK Badge on dest 0x2 for the first time (same user controls 0x1 and 0x2)', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+
       const proofRequest: HydraS1ProofRequest = {
         sources: [source1],
-        destination: destination1,
+        destination: destination2,
         value: BigNumber.from(1),
         group: groups[0],
         attesterAddress: hydraS1AccountboundAttester.address,
@@ -303,6 +308,328 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
           request.destination
         )
       ).to.be.true;
+    });
+
+    it('dest 0x2 should not be able to mint the ERC721 on 0x3 without proof', async () => {
+      await expect(
+        zkBadgeboundERC721.connect(destination2Signer).claimTo(destination3Signer.address)
+      ).to.be.revertedWith('UserDoesNotMeetRequirements()');
+    });
+
+    it('dest 0x2 should be able to mint the ERC721 on 0x2 (by calling `claim`)', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+
+      expect(await zkBadgeboundERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      await zkBadgeboundERC721.connect(destination2Signer).claim();
+
+      expect(await zkBadgeboundERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(1)
+      );
+
+      evmRevert(hre, evmSnapshotId);
+    });
+
+    it('dest 0x2 should be able to mint the ERC721 on 0x2 (by calling `claimTo`)', async () => {
+      const proofRequest: HydraS1ProofRequest = {
+        sources: [source1],
+        destination: destination2,
+        value: BigNumber.from(1),
+        group: groups[0],
+        attesterAddress: hydraS1AccountboundAttester.address,
+      };
+
+      const { inputs } = await provingScheme.generateProof(proofRequest, {
+        registryTree,
+        accountsTreesWithData,
+      });
+
+      expect(await zkBadgeboundERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      await zkBadgeboundERC721.connect(destination2Signer).claimTo(destination2Signer.address);
+
+      expect(await zkBadgeboundERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(1)
+      );
+    });
+
+    it('source 0x1 transfers the ZK Badge from dest 0x2 to dest 0x3 (same user controls source 0x1, dest 0x2 and dest 0x3)', async () => {
+      const proofRequest: HydraS1ProofRequest = {
+        sources: [source1],
+        destination: destination3,
+        value: BigNumber.from(1),
+        group: groups[0],
+        attesterAddress: hydraS1AccountboundAttester.address,
+      };
+
+      const { request, proofData, inputs } = await provingScheme.generateProof(proofRequest, {
+        registryTree,
+        accountsTreesWithData,
+      });
+
+      const generateAttestationsTransaction =
+        await hydraS1AccountboundAttester.generateAttestations(request, proofData);
+
+      const extraData = await attestationsRegistry.getAttestationExtraData(
+        (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(proofRequest.group.properties.groupIndex),
+        BigNumber.from(proofRequest.destination.identifier).toHexString()
+      );
+
+      // 0 - Checks that the transaction emitted the event
+      await expect(generateAttestationsTransaction)
+        .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
+        .withArgs([
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(proofRequest.group.properties.groupIndex),
+          destination3Signer.address,
+          hydraS1AccountboundAttester.address,
+          proofRequest.value,
+          proofRequest.group.properties.generationTimestamp,
+          extraData,
+        ]);
+
+      // 1 - Checks that the provided nullifier was successfully recorded in the attester
+      expect(
+        await hydraS1AccountboundAttester.getDestinationOfNullifier(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.equal(destination3Signer.address);
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierCooldownStart(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(1); // burnCount is incremented by 1
+
+      // 2 - Checks that the attester recorded the attestation in the registry
+      // the attestation has been from 0x2 to 0x3
+      expect(
+        await attestationsRegistry.hasAttestation(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(proofRequest.group.properties.groupIndex),
+          destination2Signer.address
+        )
+      ).to.be.false;
+
+      expect(
+        await attestationsRegistry.hasAttestation(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(proofRequest.group.properties.groupIndex),
+          destination3Signer.address
+        )
+      ).to.be.true;
+    });
+
+    it('0x3 should NOT be able to mint the ERC721 (one ERC721 per source, using `claim`)', async () => {
+      await expect(zkBadgeboundERC721.connect(destination3Signer).claim()).to.be.revertedWith(
+        'ERC721: token already minted'
+      );
+    });
+
+    it('0x3 should NOT be able to mint the ERC721 (one ERC721 per source, using `claimTo`)', async () => {
+      await expect(
+        zkBadgeboundERC721.connect(destination3Signer).claimTo(destination3Signer.address)
+      ).to.be.revertedWith('ERC721: token already minted');
+    });
+
+    it('0x2 should be able to transfer the ERC721 from 0x2 to 0x3 (using `safeTransferFrom`)', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+      const proofRequest: HydraS1ProofRequest = {
+        sources: [source1],
+        destination: destination3,
+        value: BigNumber.from(1),
+        group: groups[0],
+        attesterAddress: hydraS1AccountboundAttester.address,
+      };
+
+      const { inputs } = await provingScheme.generateProof(proofRequest, {
+        registryTree,
+        accountsTreesWithData,
+      });
+
+      expect(
+        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
+      ).to.be.eql(destination2Signer.address);
+
+      expect(await zkBadgeboundERC721.balanceOf(destination3Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      await zkBadgeboundERC721
+        .connect(destination2Signer)
+        ['safeTransferFrom(address,address,uint256)'](
+          destination2Signer.address,
+          destination3Signer.address,
+          BigNumber.from(inputs.publicInputs.nullifier)
+        );
+
+      expect(
+        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
+      ).to.be.eql(destination3Signer.address);
+
+      expect(await zkBadgeboundERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      expect(await zkBadgeboundERC721.balanceOf(destination3Signer.address)).to.be.eql(
+        BigNumber.from(1)
+      );
+
+      await evmRevert(hre, evmSnapshotId);
+    });
+
+    it('0x2 should be able to transfer the ERC721 from 0x2 to 0x3 (using `transferFrom`)', async () => {
+      evmSnapshotId = await evmSnapshot(hre);
+      const proofRequest: HydraS1ProofRequest = {
+        sources: [source1],
+        destination: destination3,
+        value: BigNumber.from(1),
+        group: groups[0],
+        attesterAddress: hydraS1AccountboundAttester.address,
+      };
+
+      const { inputs } = await provingScheme.generateProof(proofRequest, {
+        registryTree,
+        accountsTreesWithData,
+      });
+
+      expect(
+        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
+      ).to.be.eql(destination2Signer.address);
+
+      expect(await zkBadgeboundERC721.balanceOf(destination3Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      await zkBadgeboundERC721
+        .connect(destination2Signer)
+        .transferFrom(
+          destination2Signer.address,
+          destination3Signer.address,
+          BigNumber.from(inputs.publicInputs.nullifier)
+        );
+
+      expect(
+        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
+      ).to.be.eql(destination3Signer.address);
+
+      expect(await zkBadgeboundERC721.balanceOf(destination2Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      expect(await zkBadgeboundERC721.balanceOf(destination3Signer.address)).to.be.eql(
+        BigNumber.from(1)
+      );
+    });
+
+    it('0x3 should be able to transfer ERC721 from 0x3 to any destination with a valid proof of ownership of 0x1 and new destination (badge will be also transferred)', async () => {
+      increaseTime(hre, cooldownDuration);
+
+      const proofRequest: HydraS1ProofRequest = {
+        sources: [source1],
+        destination: destination4,
+        value: BigNumber.from(1),
+        group: groups[0],
+        attesterAddress: hydraS1AccountboundAttester.address,
+      };
+
+      const { request, proofData, inputs } = await provingScheme.generateProof(proofRequest, {
+        registryTree,
+        accountsTreesWithData,
+      });
+
+      expect(
+        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
+      ).to.be.eql(destination3Signer.address);
+
+      expect(await zkBadgeboundERC721.balanceOf(destination4Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      const transferTx = await zkBadgeboundERC721
+        .connect(destination3Signer)
+        .transferWithSismo(
+          destination3Signer.address,
+          destination4Signer.address,
+          BigNumber.from(inputs.publicInputs.nullifier),
+          request,
+          proofData
+        );
+
+      // it should transfer the nft to the new destination
+      expect(
+        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
+      ).to.be.eql(destination4Signer.address);
+
+      expect(await zkBadgeboundERC721.balanceOf(destination3Signer.address)).to.be.eql(
+        BigNumber.from(0)
+      );
+
+      // it should transfer the badge to the new destination
+      const extraData = await attestationsRegistry.getAttestationExtraData(
+        (
+          await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+        ).add(proofRequest.group.properties.groupIndex),
+        BigNumber.from(proofRequest.destination.identifier).toHexString()
+      );
+
+      // 0 - Checks that the transaction emitted the event
+      await expect(transferTx)
+        .to.emit(hydraS1AccountboundAttester, 'AttestationGenerated')
+        .withArgs([
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(proofRequest.group.properties.groupIndex),
+          request.destination,
+          hydraS1AccountboundAttester.address,
+          proofRequest.value,
+          proofRequest.group.properties.generationTimestamp,
+          extraData,
+        ]);
+
+      // 1 - Checks that the provided nullifier was successfully recorded in the attester
+      expect(
+        await hydraS1AccountboundAttester.getDestinationOfNullifier(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.equal(destination4Signer.address);
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierCooldownStart(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql((await ethers.provider.getBlock('latest')).timestamp);
+
+      expect(
+        await hydraS1AccountboundAttester.getNullifierBurnCount(
+          BigNumber.from(inputs.publicInputs.nullifier)
+        )
+      ).to.be.eql(2); // check that nullifier was incremented
+
+      // 2 - Checks that the attester recorded the attestation in the registry
+      expect(
+        await attestationsRegistry.hasAttestation(
+          (
+            await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()
+          ).add(proofRequest.group.properties.groupIndex),
+          destination3Signer.address
+        )
+      ).to.be.false;
     });
   });
 });

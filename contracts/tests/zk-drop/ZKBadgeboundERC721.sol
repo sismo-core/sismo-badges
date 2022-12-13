@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.14;
+import 'hardhat/console.sol';
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {UsingSismo, Request} from '../../core/SismoLib.sol';
@@ -17,9 +18,8 @@ import {UsingSismo, Request} from '../../core/SismoLib.sol';
  */
 
 contract ZKBadgeboundERC721 is ERC721, UsingSismo {
-  uint256 public constant MERGOOOR_PASS_BADGE_ID = 200001;
+  uint256 public constant MERGOOOR_PASS_BADGE_ID = 200002;
 
-  error NFTAlreadyMinted();
   error NFTAlreadyOwned(address owner, uint256 balance);
   error BadgeNullifierNotEqualToTokenId(uint256 badgeNullifier, uint256 tokenId);
   error BadgeDestinationAndNFTDestinationNotEqual(address badgeDestination, address nftDestination);
@@ -33,9 +33,6 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
   function claim() public onlyBadgeHolders(MERGOOOR_PASS_BADGE_ID) {
     uint256 nullifier = _getNulliferOfBadge(_msgSender());
 
-    if (ownerOf(nullifier) != address(0)) {
-      revert NFTAlreadyMinted();
-    }
     _mint(_msgSender(), nullifier);
   }
 
@@ -48,10 +45,6 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
     _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
     uint256 nullifier = _getNulliferOfBadge(to);
 
-    // prevent minting with same badge twice
-    if (ownerOf(nullifier) != address(0)) {
-      revert NFTAlreadyMinted();
-    }
     _mint(to, nullifier);
   }
 
