@@ -6,7 +6,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployOptions, getDeployer } from '../utils';
 import { Badges, Pythia1SimpleAttester, AttestationsRegistry } from 'types';
 import { DeployedPythia1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
-import { DeployedHydraS1AccountboundAttester } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
+import { DeployedHydraS1AccountboundAttester } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-accountbound-attester.task';
 import { DeployedHydraS1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-simple-attester.task';
 import { DeployedAttestationsRegistry } from 'tasks/deploy-tasks/unit/core/deploy-attestations-registry.task';
 import { deploymentsConfig } from '../deployments-config';
@@ -46,7 +46,7 @@ async function deploymentAction(
       owner: config.attestationsRegistry.owner,
       options: {
         ...options,
-        implementationVersion: 2,
+        isImplementationUpgrade: true,
         proxyAddress: config.attestationsRegistry.address,
       },
     }
@@ -56,7 +56,7 @@ async function deploymentAction(
   const { badges: newBadges } = (await hre.run('deploy-badges', {
     uri: config.badges.uri,
     owner: config.badges.owner,
-    options: { ...options, implementationVersion: 2, proxyAddress: config.badges.address },
+    options: { ...options, isImplementationUpgrade: true, proxyAddress: config.badges.address },
   })) as DeployedBadges;
 
   // Upgrade HydraS1SimpleAttester
@@ -71,7 +71,7 @@ async function deploymentAction(
       hydraS1VerifierAddress: config.hydraS1Verifier.address,
       options: {
         ...options,
-        implementationVersion: 3,
+        isImplementationUpgrade: true,
         proxyAddress: config.hydraS1SimpleAttester.address,
       },
     }
@@ -90,7 +90,7 @@ async function deploymentAction(
       owner: config.synapsPythia1SimpleAttester.owner,
       options: {
         ...options,
-        implementationVersion: 2,
+        isImplementationUpgrade: true,
         proxyAddress: config.synapsPythia1SimpleAttester.address,
       },
     }
@@ -111,7 +111,7 @@ async function deploymentAction(
       hydraS1VerifierAddress: config.hydraS1Verifier.address,
       options: {
         ...options,
-        implementationVersion: 3,
+        isImplementationUpgrade: true,
         proxyAddress: config.hydraS1AccountboundAttester.address,
       },
     }

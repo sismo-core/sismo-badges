@@ -36,7 +36,7 @@ async function deploymentAction(
 
   const initData = new AvailableRootsRegistry__factory().interface.encodeFunctionData(
     'initialize',
-    deploymentArgs
+    [owner || deployer.address]
   );
 
   const deployed = await customDeployContract(

@@ -8,11 +8,10 @@ import {
   DeployHydraS1SimpleAttesterArgs,
   DeployedHydraS1SimpleAttester,
 } from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-simple-attester.task';
-
 import {
   DeployHydraS1AccountboundAttesterArgs,
   DeployedHydraS1AccountboundAttester,
-} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/variants/deploy-hydra-s1-accountbound-attester.task';
+} from 'tasks/deploy-tasks/unit/attesters/hydra-s1/deploy-hydra-s1-accountbound-attester.task';
 import { EVENT_TRIGGERER_ROLE } from '../../../../utils';
 import {
   DeployAvailableRootsRegistry,
@@ -26,6 +25,7 @@ import {
   DeployedPythia1SimpleAttester,
   DeployPythia1SimpleAttesterArgs,
 } from 'tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
+import { DeployedFrontendLib } from 'tasks/deploy-tasks/unit/periphery/deploy-frontend-lib.task';
 
 async function deploymentAction(
   { options }: { options: DeployOptions },
@@ -86,11 +86,19 @@ async function deploymentAction(
     options,
   } as DeployPythia1SimpleAttesterArgs)) as DeployedPythia1SimpleAttester;
 
-  await hre.run('register-for-attester', {
-    availableRootsRegistryAddress: availableRootsRegistry.address,
-    attester: hydraS1SimpleAttester.address,
-    root: config.hydraS1SimpleAttester.initialRoot,
+  await hre.run('deploy-frontend-lib', {
+    hydraS1AccountboundAttester: hydraS1AccountboundAttester.address,
+    options,
   });
+
+  if (hydraS1SimpleAttester) {
+    await hre.run('register-for-attester', {
+      availableRootsRegistryAddress: availableRootsRegistry.address,
+      attester: hydraS1SimpleAttester.address,
+      root: config.hydraS1SimpleAttester.initialRoot,
+    });
+  }
+
   await hre.run('register-for-attester', {
     availableRootsRegistryAddress: availableRootsRegistry.address,
     attester: hydraS1AccountboundAttester.address,
@@ -106,13 +114,15 @@ async function deploymentAction(
     )
   ).wait();
 
-  await (
-    await attestationsRegistry.authorizeRange(
-      hydraS1SimpleAttester.address,
-      config.hydraS1SimpleAttester.collectionIdFirst,
-      config.hydraS1SimpleAttester.collectionIdLast
-    )
-  ).wait();
+  if (hydraS1SimpleAttester) {
+    await (
+      await attestationsRegistry.authorizeRange(
+        hydraS1SimpleAttester.address,
+        config.hydraS1SimpleAttester.collectionIdFirst,
+        config.hydraS1SimpleAttester.collectionIdLast
+      )
+    ).wait();
+  }
 
   await (
     await attestationsRegistry.authorizeRange(

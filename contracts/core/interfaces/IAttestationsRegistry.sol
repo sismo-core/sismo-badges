@@ -2,13 +2,14 @@
 pragma solidity ^0.8.14;
 
 import {Attestation, AttestationData} from '../libs/Structs.sol';
+import {IAttestationsRegistryConfigLogic} from './IAttestationsRegistryConfigLogic.sol';
 
 /**
  * @title IAttestationsRegistry
  * @author Sismo
  * @notice This is the interface of the AttestationRegistry
  */
-interface IAttestationsRegistry {
+interface IAttestationsRegistry is IAttestationsRegistryConfigLogic {
   error IssuerNotAuthorized(address issuer, uint256 collectionId);
   error OwnersAndCollectionIdsLengthMismatch(address[] owners, uint256[] collectionIds);
   event AttestationRecorded(Attestation attestation);
@@ -39,10 +40,10 @@ interface IAttestationsRegistry {
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationData(uint256 collectionId, address owner)
-    external
-    view
-    returns (AttestationData memory);
+  function getAttestationData(
+    uint256 collectionId,
+    address owner
+  ) external view returns (AttestationData memory);
 
   /**
    * @dev Getter of the value of a specific attestation
@@ -56,63 +57,58 @@ interface IAttestationsRegistry {
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationDataTuple(uint256 collectionId, address owner)
-    external
-    view
-    returns (
-      address,
-      uint256,
-      uint32,
-      bytes memory
-    );
+  function getAttestationDataTuple(
+    uint256 collectionId,
+    address owner
+  ) external view returns (address, uint256, uint32, bytes memory);
 
   /**
    * @dev Getter of the extraData of a specific attestation
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationExtraData(uint256 collectionId, address owner)
-    external
-    view
-    returns (bytes memory);
+  function getAttestationExtraData(
+    uint256 collectionId,
+    address owner
+  ) external view returns (bytes memory);
 
   /**
    * @dev Getter of the issuer of a specific attestation
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationIssuer(uint256 collectionId, address owner)
-    external
-    view
-    returns (address);
+  function getAttestationIssuer(
+    uint256 collectionId,
+    address owner
+  ) external view returns (address);
 
   /**
    * @dev Getter of the timestamp of a specific attestation
    * @param collectionId Collection identifier of the targeted attestation
    * @param owner Owner of the targeted attestation
    */
-  function getAttestationTimestamp(uint256 collectionId, address owner)
-    external
-    view
-    returns (uint32);
+  function getAttestationTimestamp(
+    uint256 collectionId,
+    address owner
+  ) external view returns (uint32);
 
   /**
    * @dev Getter of the data of specific attestations
    * @param collectionIds Collection identifiers of the targeted attestations
    * @param owners Owners of the targeted attestations
    */
-  function getAttestationDataBatch(uint256[] memory collectionIds, address[] memory owners)
-    external
-    view
-    returns (AttestationData[] memory);
+  function getAttestationDataBatch(
+    uint256[] memory collectionIds,
+    address[] memory owners
+  ) external view returns (AttestationData[] memory);
 
   /**
    * @dev Getter of the values of specific attestations
    * @param collectionIds Collection identifiers of the targeted attestations
    * @param owners Owners of the targeted attestations
    */
-  function getAttestationValueBatch(uint256[] memory collectionIds, address[] memory owners)
-    external
-    view
-    returns (uint256[] memory);
+  function getAttestationValueBatch(
+    uint256[] memory collectionIds,
+    address[] memory owners
+  ) external view returns (uint256[] memory);
 }

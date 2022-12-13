@@ -90,6 +90,22 @@ describe('Test Attestations Registry contract', () => {
     });
   });
 
+  describe('Configuration checks', () => {
+    it('Should have setup the owner correctly', async () => {
+      expect(await attestationsRegistry.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should get the owner correctly', async () => {
+      expect(await attestationsRegistry.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should revert when trying to call initialize again', async () => {
+      await expect(
+        attestationsRegistry.connect(deployer).initialize(deployer.address)
+      ).to.be.revertedWith('Initializable: contract is already initialized');
+    });
+  });
+
   /*************************************************************************************/
   /****************************** RECORD ATTESTATIONS **********************************/
   /*************************************************************************************/

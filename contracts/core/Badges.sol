@@ -17,6 +17,8 @@ import {IBadges} from './interfaces/IBadges.sol';
  * For more information: https://badges.docs.sismo.io
  */
 contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
+  uint8 public constant IMPLEMENTATION_VERSION = 3;
+
   IAttestationsRegistry internal _attestationsRegistry;
 
   bytes32 public constant EVENT_TRIGGERER_ROLE = keccak256('EVENT_TRIGGERER_ROLE');
@@ -37,10 +39,17 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param uri Uri for the metadata of badges
    * @param owner Owner of the contract, super admin, can setup roles and update the attestation registry
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
-  function initialize(string memory uri, address owner) public initializer {
-    _setURI(uri);
-    _grantRole(DEFAULT_ADMIN_ROLE, owner);
+  function initialize(
+    string memory uri,
+    address owner
+  ) public reinitializer(IMPLEMENTATION_VERSION) {
+    // if proxy did not setup uri yet or if called by constructor (for implem setup)
+    if (bytes(ERC1155.uri(0)).length == 0 || address(this).code.length == 0) {
+      _setURI(uri);
+      _grantRole(DEFAULT_ADMIN_ROLE, owner);
+    }
   }
 
   /**
@@ -50,13 +59,10 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    * @param account Address to check badge balance (= value of attestation)
    * @param id Badge Id to check (= attestationCollectionId)
    */
-  function balanceOf(address account, uint256 id)
-    public
-    view
-    virtual
-    override(ERC1155, IBadges)
-    returns (uint256)
-  {
+  function balanceOf(
+    address account,
+    uint256 id
+  ) public view virtual override(ERC1155, IBadges) returns (uint256) {
     return _attestationsRegistry.getAttestationValue(id, account);
   }
 
@@ -70,13 +76,10 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
   /**
    * @dev Reverts, this is a non transferable ERC115 contract
    */
-  function isApprovedForAll(address account, address operator)
-    public
-    view
-    virtual
-    override
-    returns (bool)
-  {
+  function isApprovedForAll(
+    address account,
+    address operator
+  ) public view virtual override returns (bool) {
     revert BadgesNonTransferrable();
   }
 
@@ -103,11 +106,9 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
    * @dev Set the attestations registry address. Can only be called by owner (default admin)
    * @param attestationsRegistry new attestations registry address
    */
-  function setAttestationsRegistry(address attestationsRegistry)
-    external
-    override
-    onlyRole(DEFAULT_ADMIN_ROLE)
-  {
+  function setAttestationsRegistry(
+    address attestationsRegistry
+  ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
     _attestationsRegistry = IAttestationsRegistry(attestationsRegistry);
   }
 
@@ -127,15 +128,57 @@ contract Badges is IBadges, Initializable, AccessControl, ERC1155 {
   }
 
   /**
+   * @dev Getter of the badge issuer
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeIssuer(address account, uint256 id) external view returns (address) {
+    return _attestationsRegistry.getAttestationIssuer(id, account);
+  }
+
+  /**
+   * @dev Getter of the badge timestamp
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeTimestamp(address account, uint256 id) external view returns (uint32) {
+    return _attestationsRegistry.getAttestationTimestamp(id, account);
+  }
+
+  /**
+   * @dev Getter of the badge extra data (it can store nullifier and burnCount)
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeExtraData(address account, uint256 id) external view returns (bytes memory) {
+    return _attestationsRegistry.getAttestationExtraData(id, account);
+  }
+
+  /**
+   * @dev Getter of the value of a specific badge attribute
+   * @param id Badge Id to check (= attestationCollectionId)
+   * @param index Index of the attribute
+   */
+  function getAttributeValueForBadge(uint256 id, uint8 index) external view returns (uint8) {
+    return _attestationsRegistry.getAttributeValueForAttestationsCollection(id, index);
+  }
+
+  /**
+   * @dev Getter of all badge attributes and their values for a specific badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getAttributesNamesAndValuesForBadge(
+    uint256 id
+  ) external view returns (bytes32[] memory, uint8[] memory) {
+    return _attestationsRegistry.getAttributesNamesAndValuesForAttestationsCollection(id);
+  }
+
+  /**
    * @dev ERC165
    */
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(AccessControl, ERC1155)
-    returns (bool)
-  {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(AccessControl, ERC1155) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
 

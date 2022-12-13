@@ -10,6 +10,7 @@ import './InitializableLogic.sol';
 import './AttestationsRegistryState.sol';
 import {IAttestationsRegistryConfigLogic} from './../../interfaces/IAttestationsRegistryConfigLogic.sol';
 import {Range, RangeUtils} from '../utils/RangeLib.sol';
+import {Bitmap256Bit} from '../utils/Bitmap256Bit.sol';
 
 /**
  * @title Attestations Registry Config Logic contract
@@ -24,6 +25,28 @@ contract AttestationsRegistryConfigLogic is
   InitializableLogic
 {
   using RangeUtils for Range[];
+  using Bitmap256Bit for uint256;
+  using Bitmap256Bit for uint8;
+
+  /******************************************
+   *
+   *    ATTESTATION REGISTRY WRITE ACCESS MANAGEMENT (ISSUERS)
+   *
+   *****************************************/
+
+  /**
+   * @dev Pauses the registry. Issuers can no longer record or delete attestations
+   */
+  function pause() external override onlyOwner {
+    _pause();
+  }
+
+  /**
+   * @dev Unpauses the registry
+   */
+  function unpause() external override onlyOwner {
+    _unpause();
+  }
 
   /**
    * @dev Authorize an issuer for a specific range
@@ -90,23 +113,197 @@ contract AttestationsRegistryConfigLogic is
     return _isAuthorized(issuer, collectionId);
   }
 
+  /******************************************
+   *
+   *    ATTRIBUTES CONFIG LOGIC
+   *
+   *****************************************/
+
   /**
-   * @dev Pauses the registry. Issuers can no longer record or delete attestations
+   * @dev Create a new attribute.
+   * @param index Index of the attribute. Can go from 0 to 63.
+   * @param name Name in bytes32 of the attribute
    */
-  function pause() external override onlyOwner {
-    _pause();
+  function createNewAttribute(uint8 index, bytes32 name) public onlyOwner {
+    index._checkIndexIsValid();
+    if (_isAttributeCreated(index)) {
+      revert AttributeAlreadyExists(index);
+    }
+    _createNewAttribute(index, name);
+  }
+
+  function createNewAttributes(uint8[] memory indices, bytes32[] memory names) external onlyOwner {
+    if (indices.length != names.length) {
+      revert ArgsLengthDoesNotMatch();
+    }
+
+    for (uint256 i = 0; i < indices.length; i++) {
+      createNewAttribute(indices[i], names[i]);
+    }
   }
 
   /**
-   * @dev Unpauses the registry
+   * @dev Update the name of an existing attribute
+   * @param index Index of the attribute. Can go from 0 to 63. The attribute must exist
+   * @param newName new name in bytes32 of the attribute
    */
-  function unpause() external override onlyOwner {
-    _unpause();
+  function updateAttributeName(uint8 index, bytes32 newName) public onlyOwner {
+    index._checkIndexIsValid();
+    if (!_isAttributeCreated(index)) {
+      revert AttributeDoesNotExist(index);
+    }
+    _updateAttributeName(index, newName);
   }
 
-  function _isAuthorized(address issuer, uint256 collectionId) internal view returns (bool) {
-    return _authorizedRanges[issuer]._includes(collectionId);
+  function updateAttributesName(
+    uint8[] memory indices,
+    bytes32[] memory newNames
+  ) external onlyOwner {
+    if (indices.length != newNames.length) {
+      revert ArgsLengthDoesNotMatch();
+    }
+
+    for (uint256 i = 0; i < indices.length; i++) {
+      updateAttributeName(indices[i], newNames[i]);
+    }
   }
+
+  /**
+   * @dev Delete an existing attribute
+   * @param index Index of the attribute. Can go from 0 to 63. The attribute must already exist
+   */
+  function deleteAttribute(uint8 index) public onlyOwner {
+    index._checkIndexIsValid();
+    if (!_isAttributeCreated(index)) {
+      revert AttributeDoesNotExist(index);
+    }
+    _deleteAttribute(index);
+  }
+
+  function deleteAttributes(uint8[] memory indices) external onlyOwner {
+    for (uint256 i = 0; i < indices.length; i++) {
+      deleteAttribute(indices[i]);
+    }
+  }
+
+  /**
+   * @dev Set a value for an attribute of an attestationsCollection. The attribute should already be created.
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param index Index of the attribute (must be between 0 and 63)
+   * @param value Value of the attribute we want to set for this attestationsCollection. Can take the value 0 to 15
+   */
+  function setAttributeValueForAttestationsCollection(
+    uint256 collectionId,
+    uint8 index,
+    uint8 value
+  ) public onlyOwner {
+    index._checkIndexIsValid();
+
+    if (!_isAttributeCreated(index)) {
+      revert AttributeDoesNotExist(index);
+    }
+
+    _setAttributeForAttestationsCollection(collectionId, index, value);
+  }
+
+  function setAttributesValuesForAttestationsCollections(
+    uint256[] memory collectionIds,
+    uint8[] memory indices,
+    uint8[] memory values
+  ) external onlyOwner {
+    if (collectionIds.length != indices.length || collectionIds.length != values.length) {
+      revert ArgsLengthDoesNotMatch();
+    }
+    for (uint256 i = 0; i < collectionIds.length; i++) {
+      setAttributeValueForAttestationsCollection(collectionIds[i], indices[i], values[i]);
+    }
+  }
+
+  /**
+   * @dev Returns the attribute's value (from 0 to 15) of an attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param index Index of the attribute. Can go from 0 to 63.
+   */
+  function getAttributeValueForAttestationsCollection(
+    uint256 collectionId,
+    uint8 index
+  ) public view returns (uint8) {
+    uint256 currentAttributesValues = _getAttributesValuesBitmapForAttestationsCollection(
+      collectionId
+    );
+    return currentAttributesValues._get(index);
+  }
+
+  function getAttributesValuesForAttestationsCollection(
+    uint256 collectionId,
+    uint8[] memory indices
+  ) external view returns (uint8[] memory) {
+    uint8[] memory attributesValues = new uint8[](indices.length);
+    for (uint256 i = 0; i < indices.length; i++) {
+      attributesValues[i] = getAttributeValueForAttestationsCollection(collectionId, indices[i]);
+    }
+    return attributesValues;
+  }
+
+  /**
+   * @dev Returns whether an attestationsCollection has a specific attribute referenced by its index
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   * @param index Index of the attribute. Can go from 0 to 63.
+   */
+  function attestationsCollectionHasAttribute(
+    uint256 collectionId,
+    uint8 index
+  ) public view returns (bool) {
+    uint256 currentAttributeValues = _getAttributesValuesBitmapForAttestationsCollection(
+      collectionId
+    );
+    return currentAttributeValues._get(index) > 0;
+  }
+
+  function attestationsCollectionHasAttributes(
+    uint256 collectionId,
+    uint8[] memory indices
+  ) external view returns (bool) {
+    for (uint256 i = 0; i < indices.length; i++) {
+      if (!attestationsCollectionHasAttribute(collectionId, indices[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * @dev Returns all the enabled attributes names and their values for a specific attestationsCollection
+   * @param collectionId Collection Id of the targeted attestationsCollection
+   */
+  function getAttributesNamesAndValuesForAttestationsCollection(
+    uint256 collectionId
+  ) public view returns (bytes32[] memory, uint8[] memory) {
+    uint256 currentAttributesValues = _getAttributesValuesBitmapForAttestationsCollection(
+      collectionId
+    );
+
+    (
+      uint8[] memory indices,
+      uint8[] memory values,
+      uint8 nbOfNonZeroValues
+    ) = currentAttributesValues._getAllNonZeroValues();
+
+    bytes32[] memory attributesNames = new bytes32[](nbOfNonZeroValues);
+    uint8[] memory attributesValues = new uint8[](nbOfNonZeroValues);
+    for (uint8 i = 0; i < nbOfNonZeroValues; i++) {
+      attributesNames[i] = _attributesNames[indices[i]];
+      attributesValues[i] = values[i];
+    }
+
+    return (attributesNames, attributesValues);
+  }
+
+  /*****************************
+   *
+   *      INTERNAL FUNCTIONS
+   *
+   *****************************/
 
   function _authorizeRange(
     address issuer,
@@ -144,5 +341,59 @@ contract AttestationsRegistryConfigLogic is
     ];
     _authorizedRanges[issuer].pop();
     emit IssuerUnauthorized(issuer, firstCollectionId, lastCollectionId);
+  }
+
+  function _isAuthorized(address issuer, uint256 collectionId) internal view returns (bool) {
+    return _authorizedRanges[issuer]._includes(collectionId);
+  }
+
+  function _setAttributeForAttestationsCollection(
+    uint256 collectionId,
+    uint8 index,
+    uint8 value
+  ) internal {
+    uint256 currentAttributes = _getAttributesValuesBitmapForAttestationsCollection(collectionId);
+
+    _attestationsCollectionAttributesValuesBitmap[collectionId] = currentAttributes._set(
+      index,
+      value
+    );
+
+    emit AttestationsCollectionAttributeSet(collectionId, index, value);
+  }
+
+  function _createNewAttribute(uint8 index, bytes32 name) internal {
+    _attributesNames[index] = name;
+
+    emit NewAttributeCreated(index, name);
+  }
+
+  function _updateAttributeName(uint8 index, bytes32 newName) internal {
+    bytes32 previousName = _attributesNames[index];
+
+    _attributesNames[index] = newName;
+
+    emit AttributeNameUpdated(index, newName, previousName);
+  }
+
+  function _deleteAttribute(uint8 index) internal {
+    bytes32 deletedName = _attributesNames[index];
+
+    delete _attributesNames[index];
+
+    emit AttributeDeleted(index, deletedName);
+  }
+
+  function _getAttributesValuesBitmapForAttestationsCollection(
+    uint256 collectionId
+  ) internal view returns (uint256) {
+    return _attestationsCollectionAttributesValuesBitmap[collectionId];
+  }
+
+  function _isAttributeCreated(uint8 index) internal view returns (bool) {
+    if (_attributesNames[index] == 0) {
+      return false;
+    }
+    return true;
   }
 }

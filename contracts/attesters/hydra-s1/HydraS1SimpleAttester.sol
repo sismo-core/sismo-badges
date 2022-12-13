@@ -4,6 +4,7 @@ pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1SimpleAttester} from './interfaces/IHydraS1SimpleAttester.sol';
+import {IHydraS1Base} from './base/IHydraS1Base.sol';
 
 // Core protocol Protocol imports
 import {Request, Attestation, Claim} from './../../core/libs/Structs.sol';
@@ -31,17 +32,17 @@ import {HydraS1Base, HydraS1Lib, HydraS1ProofData, HydraS1ProofInput, HydraS1Cla
  *   If a user can generate an attestation of max value 100, they can also generate any attestation with value < 100.
  *   This attester generate attestations of scores
 
- * - Ticketed
- *   Each source account gets one userTicket per claim (i.e only one attestation per source account per claim)
+ * - Nullified
+ *   Each source account gets one nullifier per claim (i.e only one attestation per source account per claim)
  *   For people used to semaphore/ tornado cash people:
- *   userTicket = hash(sourceSecret, ticketIdentifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
+ *   nullifier = hash(sourceSecret, externalNullifier) <=> nullifierHash = hash(IdNullifier, externalNullifier)
  
  * - Renewable
- *   A userTicket can actually be reused as long as the destination of the attestation remains the same
+ *   A nullifier can actually be reused as long as the destination of the attestation remains the same
  *   It enables users to renew their attestations
  **/
 
-contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester {
+contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base {
   using HydraS1Lib for HydraS1ProofData;
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
@@ -51,7 +52,17 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
   uint256 public immutable AUTHORIZED_COLLECTION_ID_FIRST;
   uint256 public immutable AUTHORIZED_COLLECTION_ID_LAST;
 
-  mapping(uint256 => address) internal _ticketsDestinations;
+  /*******************************************************
+    Storage layout:
+      20 slots for HydraS1
+        1 slot used
+        19 place holders
+  *******************************************************/
+
+  mapping(uint256 => address) internal _nullifiersDestinations;
+
+  // keeping some space for future
+  uint256[19] private _placeHoldersHydraS1Simple;
 
   /*******************************************************
     INITIALIZATION FUNCTIONS                           
@@ -90,11 +101,10 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _verifyRequest(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
+  function _verifyRequest(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
     HydraS1ProofData memory snarkProof = abi.decode(proofData, (HydraS1ProofData));
     HydraS1ProofInput memory snarkInput = snarkProof._input();
     HydraS1Claim memory claim = request._claim();
@@ -109,13 +119,10 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
    * @dev Returns attestations that will be recorded, constructed from the user request
    * @param request users request. Claim of having an account part of a group of accounts
    */
-  function buildAttestations(Request calldata request, bytes calldata)
-    public
-    view
-    virtual
-    override(IAttester, Attester)
-    returns (Attestation[] memory)
-  {
+  function buildAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) public view virtual override(IAttester, Attester) returns (Attestation[] memory) {
     HydraS1Claim memory claim = request._claim();
 
     Attestation[] memory attestations = new Attestation[](1);
@@ -128,13 +135,15 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
 
     address issuer = address(this);
 
+    uint256 nullifier = proofData._getNullifier();
+
     attestations[0] = Attestation(
       attestationCollectionId,
       claim.destination,
       issuer,
       claim.claimedValue,
       claim.groupProperties.generationTimestamp,
-      ''
+      abi.encode(nullifier)
     );
     return (attestations);
   }
@@ -145,24 +154,23 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
 
   /**
    * @dev Hook run before recording the attestation.
-   * Throws if ticket already used and not a renewal (e.g destination different that last)
+   * Throws if nullifier already used and not a renewal (e.g destination different that last)
    * @param request users request. Claim of having an account part of a group of accounts
    * @param proofData provided to back the request. snark input and snark proof
    */
-  function _beforeRecordAttestations(Request calldata request, bytes calldata proofData)
-    internal
-    virtual
-    override
-  {
-    // we get the ticket used from the snark input in the data provided
-    uint256 userTicket = proofData._getTicket();
-    address currentDestination = _getDestinationOfTicket(userTicket);
+  function _beforeRecordAttestations(
+    Request calldata request,
+    bytes calldata proofData
+  ) internal virtual override {
+    // we get the nullifier used from the snark input in the data provided
+    uint256 nullifier = proofData._getNullifier();
+    address currentDestination = _getDestinationOfNullifier(nullifier);
 
     if (currentDestination != address(0) && currentDestination != request.destination) {
-      revert TicketUsed(userTicket);
+      revert NullifierUsed(nullifier);
     }
 
-    _setDestinationForTicket(userTicket, request.destination);
+    _setDestinationForNullifier(nullifier, request.destination);
   }
 
   /*******************************************************
@@ -170,22 +178,32 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
   *******************************************************/
 
   /**
-   * @dev Returns the ticket identifier from a user claim
+   * @dev Returns the external nullifier from a user claim
    * @param claim user Hydra-S1 claim = have an account with a specific value in a specific group
-   * ticket = hash(sourceSecretHash, ticketIdentifier), which is verified inside the snark
+   * nullifier = hash(sourceSecretHash, externalNullifier), which is verified inside the snark
    * users bring sourceSecretHash as private input in snark which guarantees privacy
    
-   * Here we chose ticketIdentifier = hash(attesterAddress, claim.GroupId)
-   * Creates one ticket per group, per user and makes sure no collision with other attester's tickets
+   * Here we chose externalNullifier = hash(attesterAddress, claim.GroupId)
+   * Creates one nullifier per group, per user and makes sure no collision with other attester's nullifiers
   **/
-  function _getTicketIdentifierOfClaim(HydraS1Claim memory claim)
-    internal
-    view
-    override
-    returns (uint256)
-  {
-    uint256 ticketIdentifier = _encodeInSnarkField(address(this), claim.groupProperties.groupIndex);
-    return ticketIdentifier;
+  function _getExternalNullifierOfClaim(
+    HydraS1Claim memory claim
+  ) internal view override returns (uint256) {
+    uint256 externalNullifier = _encodeInSnarkField(
+      address(this),
+      claim.groupProperties.groupIndex
+    );
+    return externalNullifier;
+  }
+
+  /**
+   * @dev returns the nullifier for a given extraData
+   * @param extraData bytes where the nullifier is encoded
+   */
+  function getNullifierFromExtraData(
+    bytes memory extraData
+  ) external pure virtual override(IHydraS1Base, HydraS1Base) returns (uint256) {
+    return abi.decode(extraData, (uint256));
   }
 
   /*******************************************************
@@ -193,20 +211,20 @@ contract HydraS1SimpleAttester is IHydraS1SimpleAttester, HydraS1Base, Attester 
   *******************************************************/
 
   /**
-   * @dev Getter, returns the last attestation destination of a ticket
-   * @param userTicket ticket used
+   * @dev Getter, returns the last attestation destination of a nullifier
+   * @param nullifier nullifier used
    **/
-  function getDestinationOfTicket(uint256 userTicket) external view override returns (address) {
-    return _getDestinationOfTicket(userTicket);
+  function getDestinationOfNullifier(uint256 nullifier) external view override returns (address) {
+    return _getDestinationOfNullifier(nullifier);
   }
 
-  function _setDestinationForTicket(uint256 userTicket, address destination) internal virtual {
-    _ticketsDestinations[userTicket] = destination;
-    emit TicketDestinationUpdated(userTicket, destination);
+  function _setDestinationForNullifier(uint256 nullifier, address destination) internal virtual {
+    _nullifiersDestinations[nullifier] = destination;
+    emit NullifierDestinationUpdated(nullifier, destination);
   }
 
-  function _getDestinationOfTicket(uint256 userTicket) internal view returns (address) {
-    return _ticketsDestinations[userTicket];
+  function _getDestinationOfNullifier(uint256 nullifier) internal view returns (address) {
+    return _nullifiersDestinations[nullifier];
   }
 
   function _encodeInSnarkField(address addr, uint256 nb) internal pure returns (uint256) {

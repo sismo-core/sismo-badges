@@ -8,12 +8,13 @@ import { confirm } from '../../utils/confirm';
 
 export type UpgradeProxyArgs = {
   proxyAddress: string;
+  proxyData: string;
   newImplementationAddress: string;
   options?: CommonTaskOptions;
 };
 
 async function upgradeProxy(
-  { proxyAddress, newImplementationAddress, options }: UpgradeProxyArgs,
+  { proxyAddress, proxyData, newImplementationAddress, options }: UpgradeProxyArgs,
   hre: HardhatRuntimeEnvironment
 ): Promise<void> {
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
@@ -37,7 +38,10 @@ async function upgradeProxy(
   if (process.env.MANUAL_UPGRADE_PROXY === 'true') {
     // we can't connect as signer, we need manual operation
     const iface = new ethers.utils.Interface(TransparentUpgradeableProxy__factory.abi);
-    const data = iface.encodeFunctionData('upgradeTo', [newImplementationAddress]);
+    const data = iface.encodeFunctionData('upgradeToAndCall', [
+      newImplementationAddress,
+      proxyData,
+    ]);
     console.log({
       proxyAddress,
       newImplementationAddress,
@@ -51,7 +55,7 @@ async function upgradeProxy(
     const proxyAdminSigner = await hre.ethers.getSigner(proxyAdmin);
     const proxy = TransparentUpgradeableProxy__factory.connect(proxyAddress, proxyAdminSigner);
 
-    await (await proxy.upgradeTo(newImplementationAddress)).wait();
+    await (await proxy.upgradeToAndCall(newImplementationAddress, proxyData)).wait();
 
     if (options?.log || options?.manualConfirm) {
       console.log(`

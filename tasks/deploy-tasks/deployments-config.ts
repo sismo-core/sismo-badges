@@ -67,19 +67,21 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0xbcE0921E2502898384167414c2F116f7f7B240BC',
+      address: '0xD029177639cc29042D2E6D9De985cbE762092529',
     },
     hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
       address: '0x0AB188c7260666146B300aD3ad5b2AB99eb91D45',
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0x0b9340f0d31232adaec900fbaefc0f6fa3f00bda449dd677fa111b58bc754cc9',
-    },
-    hydraS1AccountboundAttester: {
-      address: '0x66331568ca321e333aB25a74BCF0c2623730bd4B',
-      collectionIdFirst: '20000001',
-      collectionIdLast: '30000000',
-      initialRoot: '0',
+      owner: SANDBOX_POLYGON_OWNER,
     },
     pythia1Verifier: {
       address: '0xb7b327Eb974706B548F8c18Ec0Eb35f0f0c655ef',
@@ -126,19 +128,21 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0x362Ff03CaC33C4c8Dc7fF98396Dc19a68F29F57C',
+      address: '0x36B61F249f61170A49c9bf8Faaf38819eFB9938A',
     },
     hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
       address: '0x10b27d9efa4A1B65412188b6f4F29e64Cf5e0146',
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
-      initialRoot: '0x163c3224fa82070fbee7692146f505144b0307d668d8e8f803171b6ee7a4cd00',
-    },
-    hydraS1AccountboundAttester: {
-      address: '0x095590C542571Df14c6220c3163112286a5f7518',
-      collectionIdFirst: '20000001',
-      collectionIdLast: '30000000',
       initialRoot: '0',
+      owner: ALPHA_POLYGON_OWNER,
     },
     pythia1Verifier: {
       address: '0x6f3201339b90Eea1CdB13670d5714ca06a49DfaD',
@@ -186,19 +190,21 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0x34e3CcCF4fF2E297be22465b85F03E5E6D27b41B',
+      address: '0xCBB1032416EB875D94Da8a447D73471E4C51998E',
     },
     hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
       address: '0x069e6B99f4DA543156f66274FC6673442803C587',
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0',
-    },
-    hydraS1AccountboundAttester: {
-      address: '0x76D8Ed0e34555dEF84c2bfff9be85446e8E9fa2A',
-      collectionIdFirst: '20000001',
-      collectionIdLast: '30000000',
-      initialRoot: '0',
+      owner: ALPHA_MUMBAI_OWNER,
     },
     pythia1Verifier: {
       address: '0x115dFa344C877fF74e970F06BE10FF5A59EAba02',
@@ -246,19 +252,21 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0x522018b86645F597626aa127EfC22D55a5c79F11',
+      address: '0xe1bFE993cF8dB9a3214Cc77fD68194Ac534078b4',
     },
     hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
       address: '0x89d80C9E65fd1aC8970B78A4F17E2e772030C1cB',
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0',
-    },
-    hydraS1AccountboundAttester: {
-      address: '0x12e69A9b08709324d64c5AEaF4169b03B6199c6C',
-      collectionIdFirst: '20000001',
-      collectionIdLast: '30000000',
-      initialRoot: '0',
+      owner: ALPHA_GOERLI_OWNER,
     },
     pythia1Verifier: {
       address: '0xEE077AD7a47e56F075f0C3bd41Cdc1629FdA3a9c',
@@ -306,19 +314,21 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0x4C54CB97F6A07e7fAd03F646F5AfEbc6a9E0421e',
+      address: '0xe52EB1f52349F98c09a5B11B0E3fA7f269268Add',
     },
     hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
       address: '0x9e5c3999d6e97b1a6FFC9dECBfF01Fc185d2268D',
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
-    },
-    hydraS1AccountboundAttester: {
-      address: '0xf93A0C43A3466488D416628bf149495285e9f274',
-      collectionIdFirst: '20000001',
-      collectionIdLast: '30000000',
-      initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     pythia1Verifier: {
       address: '0xeF6890243012206C1eE0666e00289AC8a97D1b2B',
@@ -369,6 +379,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       address: '',
     },
     hydraS1SimpleAttester: {
+      enableDeployment: true,
       address: '',
       collectionIdFirst: '100001',
       collectionIdLast: '200000',
@@ -379,6 +390,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '200001',
       collectionIdLast: '300000',
       initialRoot: '0x0deb3822cd7d8c6ece7456c8e7ff81d61c8991390072f2cee0f711102741e259',
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
     pythia1Verifier: {
       address: '',

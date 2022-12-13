@@ -8,6 +8,8 @@ import {
   Badges,
   TransparentUpgradeableProxy__factory,
 } from '../../../../types';
+import { formatBytes32String, parseBytes32String } from 'ethers/lib/utils';
+import { evmRevert, evmSnapshot } from '../../../../test/utils';
 
 describe('Test Attestations Registry Config Logic contract', () => {
   let deployer: SignerWithAddress;
@@ -18,6 +20,8 @@ describe('Test Attestations Registry Config Logic contract', () => {
   let attestationsRegistry: AttestationsRegistry;
   let secondAttestationsRegistry: AttestationsRegistry;
   let badges: Badges;
+
+  let snapshotId: string;
 
   before(async () => {
     const signers = await ethers.getSigners();
@@ -48,6 +52,8 @@ describe('Test Attestations Registry Config Logic contract', () => {
       // 0 - Checks that the owner is set to the deployer address
       expect(await attestationsRegistry.owner()).to.equal(deployer.address);
       expect(await secondAttestationsRegistry.owner()).to.equal(secondDeployer.address);
+
+      snapshotId = await evmSnapshot(hre);
     });
   });
 
@@ -528,6 +534,571 @@ describe('Test Attestations Registry Config Logic contract', () => {
       await expect(attestationsRegistry.renounceOwnership())
         .to.emit(attestationsRegistry, 'OwnershipTransferred')
         .withArgs(deployer.address, ethers.constants.AddressZero);
+    });
+  });
+
+  /***********************************************************************/
+  /******************************** ATTRIBUTES *********************************/
+  /***********************************************************************/
+
+  describe('Attributes', async () => {
+    let ATTRIBUTES = {
+      CURATED: 1,
+      SYBIL_RESISTANCE: 2,
+      TEST_INSERTION: 10,
+      NOT_CREATED: 50,
+    };
+
+    before(async () => {
+      await evmRevert(hre, snapshotId);
+    });
+
+    describe('Attribute creation', async () => {
+      it('Should revert when creating a new attribute as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .createNewAttribute(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION'))
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when creating new attributes as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .createNewAttributes(
+              [ATTRIBUTES.TEST_INSERTION, ATTRIBUTES.CURATED],
+              [formatBytes32String('TEST_INSERTION'), formatBytes32String('CURATED')]
+            )
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when creating new attributes with different arguments length', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).createNewAttributes(
+            [ATTRIBUTES.TEST_INSERTION], // missing one argument
+            [formatBytes32String('TEST_INSERTION'), formatBytes32String('CURATED')]
+          )
+        ).to.be.revertedWith('ArgsLengthDoesNotMatch()');
+      });
+
+      it('Should revert when creating a attribute with index > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .createNewAttribute(64, formatBytes32String('ATTRIBUTE_OVERFLOW'))
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
+      });
+
+      it('Should revert when creating new attributes with index of one of them > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .createNewAttributes(
+              [ATTRIBUTES.CURATED, 64],
+              [formatBytes32String('CURATED'), formatBytes32String('ATTRIBUTE_OVERFLOW')]
+            )
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
+      });
+
+      it('Should create a new attribute as an owner', async () => {
+        const attributeInserted = await attestationsRegistry
+          .connect(deployer)
+          .createNewAttribute(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
+
+        await expect(attributeInserted)
+          .to.emit(attestationsRegistry, 'NewAttributeCreated')
+          .withArgs(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION'));
+      });
+
+      it('Should revert when trying to create again a attribute for the same index', async () => {
+        await expect(
+          attestationsRegistry.createNewAttribute(
+            ATTRIBUTES.TEST_INSERTION,
+            formatBytes32String('OTHER ATTRIBUTE')
+          )
+        ).to.be.revertedWith('AttributeAlreadyExists(10)');
+      });
+
+      it('Should revert when creating new attributes with one of them already existing', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).createNewAttributes(
+            [ATTRIBUTES.CURATED, ATTRIBUTES.TEST_INSERTION], // TEST_INSERTION already created
+            [formatBytes32String('CURATED'), formatBytes32String('TEST_INSERTION')]
+          )
+        ).to.be.revertedWith('AttributeAlreadyExists(10)');
+      });
+
+      it('Should create new attributes as an owner', async () => {
+        const attributesInserted = await attestationsRegistry
+          .connect(deployer)
+          .createNewAttributes(
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [formatBytes32String('CURATED'), formatBytes32String('SYBIL_RESISTANCE')]
+          );
+
+        await expect(attributesInserted)
+          .to.emit(attestationsRegistry, 'NewAttributeCreated')
+          .withArgs(ATTRIBUTES.CURATED, formatBytes32String('CURATED'));
+
+        await expect(attributesInserted)
+          .to.emit(attestationsRegistry, 'NewAttributeCreated')
+          .withArgs(ATTRIBUTES.SYBIL_RESISTANCE, formatBytes32String('SYBIL_RESISTANCE'));
+      });
+    });
+
+    describe('Attribute update', async () => {
+      it('Should revert when updating attribute as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .updateAttributeName(ATTRIBUTES.TEST_INSERTION, formatBytes32String('CURATED2'))
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when updating attributes as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .updateAttributesName(
+              [ATTRIBUTES.TEST_INSERTION, ATTRIBUTES.CURATED],
+              [formatBytes32String('TEST_INSERTION2'), formatBytes32String('CURATED2')]
+            )
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when updating new attributes with different arguments length', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).updateAttributesName(
+            [ATTRIBUTES.TEST_INSERTION], // missing one argument
+            [formatBytes32String('TEST_INSERTION2'), formatBytes32String('CURATED2')]
+          )
+        ).to.be.revertedWith('ArgsLengthDoesNotMatch()');
+      });
+
+      it('Should revert when updating a attribute with index > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .updateAttributeName(64, formatBytes32String('ATTRIBUTE_OVERFLOW'))
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
+      });
+
+      it('Should revert when updating new attributes with index of one of them > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .updateAttributesName(
+              [ATTRIBUTES.CURATED, 64],
+              [formatBytes32String('CURATED2'), formatBytes32String('ATTRIBUTE_OVERFLOW')]
+            )
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
+      });
+
+      it('Should revert when trying to update a attribute name that does not exists', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .updateAttributeName(ATTRIBUTES.NOT_CREATED, formatBytes32String('NOT_INSERTED'))
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
+      });
+
+      it('Should revert when trying to update attributes name with one of them that does not exists', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .updateAttributesName(
+              [ATTRIBUTES.CURATED, ATTRIBUTES.NOT_CREATED],
+              [formatBytes32String('CURATED2'), formatBytes32String('NOT_INSERTED')]
+            )
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
+      });
+
+      it('Should update a attribute name', async () => {
+        const attributeUpdated = await attestationsRegistry
+          .connect(deployer)
+          .updateAttributeName(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION2'));
+
+        await expect(attributeUpdated)
+          .to.emit(attestationsRegistry, 'AttributeNameUpdated')
+          .withArgs(
+            ATTRIBUTES.TEST_INSERTION,
+            formatBytes32String('TEST_INSERTION2'),
+            formatBytes32String('TEST_INSERTION')
+          );
+      });
+
+      it('Should update attributes name', async () => {
+        const attributesUpdated = await attestationsRegistry
+          .connect(deployer)
+          .updateAttributesName(
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [formatBytes32String('CURATED2'), formatBytes32String('SYBIL_RESISTANCE2')]
+          );
+
+        await expect(attributesUpdated)
+          .to.emit(attestationsRegistry, 'AttributeNameUpdated')
+          .withArgs(
+            ATTRIBUTES.CURATED,
+            formatBytes32String('CURATED2'),
+            formatBytes32String('CURATED')
+          );
+
+        await expect(attributesUpdated)
+          .to.emit(attestationsRegistry, 'AttributeNameUpdated')
+          .withArgs(
+            ATTRIBUTES.SYBIL_RESISTANCE,
+            formatBytes32String('SYBIL_RESISTANCE2'),
+            formatBytes32String('SYBIL_RESISTANCE')
+          );
+      });
+    });
+
+    describe('Attribute deletion', async () => {
+      it('Should revert when deleting a attribute as a non-owner', async () => {
+        await expect(
+          attestationsRegistry.connect(notOwner).deleteAttribute(ATTRIBUTES.NOT_CREATED)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when deleting attributes as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .deleteAttributes([ATTRIBUTES.NOT_CREATED, ATTRIBUTES.TEST_INSERTION])
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when trying to delete a attribute with index > 63', async () => {
+        await expect(attestationsRegistry.connect(deployer).deleteAttribute(64)).to.be.revertedWith(
+          'IndexOutOfBounds(64)'
+        );
+      });
+
+      it('Should revert when trying to delete attributes with index of one of them > 63', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).deleteAttributes([ATTRIBUTES.CURATED, 64])
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
+      });
+
+      it('Should revert when trying to delete a attribute that does not exists', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).deleteAttribute(ATTRIBUTES.NOT_CREATED)
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
+      });
+
+      it('Should revert when trying to delete attributes with one of them that does not exists', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .deleteAttributes([ATTRIBUTES.CURATED, ATTRIBUTES.NOT_CREATED])
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
+      });
+
+      it('Should delete a attribute', async () => {
+        const attributeDeleted = await attestationsRegistry
+          .connect(deployer)
+          .deleteAttribute(ATTRIBUTES.TEST_INSERTION);
+        await expect(attributeDeleted)
+          .to.emit(attestationsRegistry, 'AttributeDeleted')
+          .withArgs(ATTRIBUTES.TEST_INSERTION, formatBytes32String('TEST_INSERTION2'));
+      });
+
+      it('Should delete attributes', async () => {
+        const attributesDeleted = await attestationsRegistry
+          .connect(deployer)
+          .deleteAttributes([ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE]);
+
+        await expect(attributesDeleted)
+          .to.emit(attestationsRegistry, 'AttributeDeleted')
+          .withArgs(ATTRIBUTES.CURATED, formatBytes32String('CURATED2'));
+
+        await expect(attributesDeleted)
+          .to.emit(attestationsRegistry, 'AttributeDeleted')
+          .withArgs(ATTRIBUTES.SYBIL_RESISTANCE, formatBytes32String('SYBIL_RESISTANCE2'));
+      });
+    });
+
+    describe('Create AttestationsCollection Attributes', async () => {
+      before(async () => {
+        // Register the attribute we will use during the tests
+        await attestationsRegistry
+          .connect(deployer)
+          .createNewAttributes(
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [formatBytes32String('CURATED'), formatBytes32String('SYBIL_RESISTANCE')]
+          );
+      });
+
+      it('Should revert when setting a attribute as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 1)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when setting attributes as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .setAttributesValuesForAttestationsCollections(
+              [1, 1],
+              [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+              [1, 2]
+            )
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should revert when setting attributes with invalid args length', async () => {
+        await expect(
+          attestationsRegistry.connect(deployer).setAttributesValuesForAttestationsCollections(
+            [1], //missing arg
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [1, 2]
+          )
+        ).to.be.revertedWith('ArgsLengthDoesNotMatch');
+      });
+
+      it('Should revert when setting a attribute with an index > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setAttributeValueForAttestationsCollection(1, 64, 1)
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
+      });
+
+      it('Should revert when setting attributes with one of them having an index > 63', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setAttributesValuesForAttestationsCollections([1, 1], [ATTRIBUTES.CURATED, 64], [1, 2])
+        ).to.be.revertedWith('IndexOutOfBounds(64)');
+      });
+
+      it('Should revert when setting a attribute to an AttestationsCollection and the attribute is not already created', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.NOT_CREATED, 1)
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
+      });
+
+      it('Should revert when setting attributes to an AttestationsCollection and one of the attributes is not already created', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setAttributesValuesForAttestationsCollections(
+              [1, 1],
+              [ATTRIBUTES.CURATED, ATTRIBUTES.NOT_CREATED],
+              [1, 2]
+            )
+        ).to.be.revertedWith('AttributeDoesNotExist(50)');
+      });
+
+      it('Should set a attribute to an AttestationsCollection with power 1', async () => {
+        const attributeSet = await attestationsRegistry
+          .connect(deployer)
+          .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 1);
+
+        await expect(attributeSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 1);
+
+        expect(await attestationsRegistry.attestationsCollectionHasAttribute(1, ATTRIBUTES.CURATED))
+          .to.be.true;
+        expect(
+          await attestationsRegistry.getAttributeValueForAttestationsCollection(
+            1,
+            ATTRIBUTES.CURATED
+          )
+        ).to.be.eq(1);
+      });
+
+      it('Should set a attribute to an AttestationsCollection and change the power', async () => {
+        const attributeSet = await attestationsRegistry
+          .connect(deployer)
+          .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 5);
+
+        await expect(attributeSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 5);
+
+        expect(await attestationsRegistry.attestationsCollectionHasAttribute(1, ATTRIBUTES.CURATED))
+          .to.be.true;
+        expect(
+          await attestationsRegistry.getAttributeValueForAttestationsCollection(
+            1,
+            ATTRIBUTES.CURATED
+          )
+        ).to.be.eq(5);
+      });
+
+      it('Should revert to set a attribute to an AttestationsCollection with power > 15', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 16)
+        ).to.be.revertedWith('ValueOutOfBounds(16)');
+      });
+
+      it('Should revert when removing a attribute as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 0)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should remove attribute to an AttestationsCollection', async () => {
+        const attributeRemoved = await attestationsRegistry
+          .connect(deployer)
+          .setAttributeValueForAttestationsCollection(1, ATTRIBUTES.CURATED, 0);
+
+        await expect(attributeRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 0);
+
+        expect(await attestationsRegistry.attestationsCollectionHasAttribute(1, ATTRIBUTES.CURATED))
+          .to.be.false;
+        expect(
+          await attestationsRegistry.getAttributeValueForAttestationsCollection(
+            1,
+            ATTRIBUTES.CURATED
+          )
+        ).to.be.eq(0);
+      });
+
+      it('Should set attributes to two AttestationsCollection with power 1 and 2', async () => {
+        const attributesSet = await attestationsRegistry
+          .connect(deployer)
+          .setAttributesValuesForAttestationsCollections(
+            [1, 1],
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [1, 2]
+          );
+
+        await expect(attributesSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 1);
+
+        await expect(attributesSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.SYBIL_RESISTANCE, 2);
+
+        expect(
+          await attestationsRegistry.attestationsCollectionHasAttributes(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
+          ])
+        ).to.be.true;
+
+        expect(
+          await attestationsRegistry.getAttributesValuesForAttestationsCollection(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
+          ])
+        ).to.be.eql([1, 2]);
+      });
+
+      it('Should set attributes to AttestationsCollection and change the power', async () => {
+        const attributesSet = await attestationsRegistry
+          .connect(deployer)
+          .setAttributesValuesForAttestationsCollections(
+            [1, 1],
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [6, 11]
+          );
+
+        await expect(attributesSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 6);
+
+        await expect(attributesSet)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.SYBIL_RESISTANCE, 11);
+
+        expect(
+          await attestationsRegistry.attestationsCollectionHasAttributes(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
+          ])
+        ).to.be.true;
+        expect(
+          await attestationsRegistry.getAttributesValuesForAttestationsCollection(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
+          ])
+        ).to.be.eql([6, 11]);
+      });
+
+      it('Should get attributes names and values for the attestationsCollection referenced', async () => {
+        const res = await attestationsRegistry
+          .connect(deployer)
+          .getAttributesNamesAndValuesForAttestationsCollection(1);
+
+        // we should have only 2 attributes enabled
+        expect(res[0].length).to.be.eql(2);
+        expect(parseBytes32String(res[0][0])).to.be.eql('CURATED');
+        expect(parseBytes32String(res[0][1])).to.be.eql('SYBIL_RESISTANCE');
+        expect(res[1]).to.be.eql([6, 11]);
+      });
+
+      it('Should revert to set attributes to an AttestationsCollection with one of them having a power > 15', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(deployer)
+            .setAttributesValuesForAttestationsCollections(
+              [1, 1],
+              [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+              [6, 16]
+            )
+        ).to.be.revertedWith('ValueOutOfBounds(16)');
+      });
+
+      it('Should revert when removing attributes as a non-owner', async () => {
+        await expect(
+          attestationsRegistry
+            .connect(notOwner)
+            .setAttributesValuesForAttestationsCollections(
+              [1, 1],
+              [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+              [0, 0]
+            )
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+      });
+
+      it('Should remove attributes to an AttestationsCollection', async () => {
+        const attributesRemoved = await attestationsRegistry
+          .connect(deployer)
+          .setAttributesValuesForAttestationsCollections(
+            [1, 1],
+            [ATTRIBUTES.CURATED, ATTRIBUTES.SYBIL_RESISTANCE],
+            [0, 0]
+          );
+
+        await expect(attributesRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.CURATED, 0);
+
+        await expect(attributesRemoved)
+          .to.emit(attestationsRegistry, 'AttestationsCollectionAttributeSet')
+          .withArgs(1, ATTRIBUTES.SYBIL_RESISTANCE, 0);
+
+        expect(
+          await attestationsRegistry.attestationsCollectionHasAttributes(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
+          ])
+        ).to.be.false;
+
+        expect(
+          await attestationsRegistry.getAttributesValuesForAttestationsCollection(1, [
+            ATTRIBUTES.CURATED,
+            ATTRIBUTES.SYBIL_RESISTANCE,
+          ])
+        ).to.be.eql([0, 0]);
+      });
     });
   });
 

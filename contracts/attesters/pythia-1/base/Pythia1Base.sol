@@ -77,11 +77,9 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
    * Take a look at Pythia-1 Simple Attester for an example
    * @param claim user claim: a particular claim that a user have that he can prove s right.
    */
-  function _getTicketIdentifierOfClaim(Pythia1Claim memory claim)
-    internal
-    view
-    virtual
-    returns (uint256);
+  function _getTicketIdentifierOfClaim(
+    Pythia1Claim memory claim
+  ) internal view virtual returns (uint256);
 
   /**
    * @dev MANDATORY: must be implemented to return the commitment signer that allows to
@@ -94,11 +92,10 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
    * @param claim user claim
    * @param input snark public input
    */
-  function _validateInput(Pythia1Claim memory claim, Pythia1ProofInput memory input)
-    internal
-    view
-    virtual
-  {
+  function _validateInput(
+    Pythia1Claim memory claim,
+    Pythia1ProofInput memory input
+  ) internal view virtual {
     if (input.groupId != claim.groupId) revert GroupIdMismatch(claim.groupId, input.groupId);
 
     if (input.isStrict == claim.groupProperties.isScore)
@@ -143,13 +140,9 @@ abstract contract Pythia1Base is IPythia1Base, Initializable {
       if (!success) revert InvalidGroth16Proof('');
     } catch Error(string memory reason) {
       revert InvalidGroth16Proof(reason);
-    } catch Panic(
-      uint256 /*errorCode*/
-    ) {
+    } catch Panic(uint256 /*errorCode*/) {
       revert InvalidGroth16Proof('');
-    } catch (
-      bytes memory /*lowLevelData*/
-    ) {
+    } catch (bytes memory /*lowLevelData*/) {
       revert InvalidGroth16Proof('');
     }
   }

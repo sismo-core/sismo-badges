@@ -32,8 +32,8 @@ struct HydraS1ProofData {
   // commitmentMapperPubKey.x
   // commitmentMapperPubKey.y
   // registryTreeRoot
-  // ticketIdentifier
-  // ticket
+  // externalNullifier
+  // nullifier
   // claimedValue
   // accountsTreeValue
   // isStrict
@@ -43,8 +43,8 @@ struct HydraS1ProofInput {
   address destination;
   uint256 chainId;
   uint256 registryRoot;
-  uint256 ticketIdentifier;
-  uint256 ticket;
+  uint256 externalNullifier;
+  uint256 nullifier;
   uint256 value;
   uint256 accountsTreeValue;
   bool isStrict;
@@ -64,7 +64,7 @@ library HydraS1Lib {
         _getChainId(self),
         _getRegistryRoot(self),
         _getExpectedExternalNullifier(self),
-        _getTicket(self),
+        _getNullifier(self),
         _getValue(self),
         _getAccountsTreeValue(self),
         _getIsStrict(self),
@@ -84,15 +84,12 @@ library HydraS1Lib {
     return (HydraS1Claim(claim.groupId, claim.claimedValue, self.destination, groupProperties));
   }
 
-  function _toCircomFormat(HydraS1ProofData memory self)
+  function _toCircomFormat(
+    HydraS1ProofData memory self
+  )
     internal
     pure
-    returns (
-      uint256[2] memory,
-      uint256[2][2] memory,
-      uint256[2] memory,
-      uint256[10] memory
-    )
+    returns (uint256[2] memory, uint256[2][2] memory, uint256[2] memory, uint256[10] memory)
   {
     return (self.proof.a, self.proof.b, self.proof.c, self.input);
   }
@@ -105,11 +102,9 @@ library HydraS1Lib {
     return self.input[1];
   }
 
-  function _getCommitmentMapperPubKey(HydraS1ProofData memory self)
-    internal
-    pure
-    returns (uint256[2] memory)
-  {
+  function _getCommitmentMapperPubKey(
+    HydraS1ProofData memory self
+  ) internal pure returns (uint256[2] memory) {
     return [self.input[2], self.input[3]];
   }
 
@@ -117,15 +112,13 @@ library HydraS1Lib {
     return self.input[4];
   }
 
-  function _getExpectedExternalNullifier(HydraS1ProofData memory self)
-    internal
-    pure
-    returns (uint256)
-  {
+  function _getExpectedExternalNullifier(
+    HydraS1ProofData memory self
+  ) internal pure returns (uint256) {
     return self.input[5];
   }
 
-  function _getTicket(HydraS1ProofData memory self) internal pure returns (uint256) {
+  function _getNullifier(HydraS1ProofData memory self) internal pure returns (uint256) {
     return self.input[6];
   }
 
@@ -141,10 +134,10 @@ library HydraS1Lib {
     return self.input[9] == 1;
   }
 
-  function _getTicket(bytes calldata self) internal pure returns (uint256) {
+  function _getNullifier(bytes calldata self) internal pure returns (uint256) {
     HydraS1ProofData memory snarkProofData = abi.decode(self, (HydraS1ProofData));
-    uint256 userTicket = uint256(_getTicket(snarkProofData));
-    return userTicket;
+    uint256 nullifier = uint256(_getNullifier(snarkProofData));
+    return nullifier;
   }
 
   function _generateGroupIdFromProperties(
@@ -158,11 +151,9 @@ library HydraS1Lib {
       );
   }
 
-  function _generateGroupIdFromEncodedProperties(bytes memory encodedProperties)
-    internal
-    pure
-    returns (uint256)
-  {
+  function _generateGroupIdFromEncodedProperties(
+    bytes memory encodedProperties
+  ) internal pure returns (uint256) {
     return uint256(keccak256(encodedProperties)) % HydraS1Lib.SNARK_FIELD;
   }
 

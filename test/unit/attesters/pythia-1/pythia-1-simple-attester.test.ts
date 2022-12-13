@@ -6,7 +6,7 @@ import { RequestStruct } from 'types/Attester';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber } from 'ethers';
 import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
-import { generateTicketIdentifier } from '../../../utils';
+import { generateExternalNullifier } from '../../../utils';
 import { getEventArgs } from '../../../utils/expectEvent';
 import {
   CommitmentSignerTester,
@@ -43,7 +43,7 @@ describe('Test pythia 1 standard attester contract, not strict', () => {
   // Valid request and proof
   let request: RequestStruct;
   let proof: SnarkProof;
-  let ticketIdentifier: BigNumber;
+  let externalNullifier: BigNumber;
 
   // Data source test
   let secret: BigNumber;
@@ -105,13 +105,30 @@ describe('Test pythia 1 standard attester contract, not strict', () => {
     });
   });
 
+  describe('Configuration checks', () => {
+    it('Should have setup the owner correctly', async () => {
+      expect(await pythia1SimpleAttester.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should get the owner correctly', async () => {
+      expect(await pythia1SimpleAttester.owner()).to.be.eql(deployer.address);
+    });
+
+    it('Should revert when trying to call initialize again', async () => {
+      const commitmentSignerPubKey = await commitmentSigner.getPublicKey();
+      await expect(
+        pythia1SimpleAttester.connect(deployer).initialize(commitmentSignerPubKey, deployer.address)
+      ).to.be.revertedWith('Initializable: contract is already initialized');
+    });
+  });
+
   /*************************************************************************************/
   /***************************** GENERATE VALID ATTESTATION ****************************/
   /*************************************************************************************/
 
   describe('Generate valid attestation', () => {
     it('Should generate a proof with a pythia 1 prover and verify it onchain using the attester', async () => {
-      ticketIdentifier = await generateTicketIdentifier(
+      externalNullifier = await generateExternalNullifier(
         pythia1SimpleAttester.address,
         group1.properties.internalCollectionId
       );
@@ -136,7 +153,7 @@ describe('Test pythia 1 standard attester contract, not strict', () => {
         claimedValue: source1Value,
         chainId: chainId,
         groupId: group1.id,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !group1.properties.isScore,
       })) as SnarkProof;
 

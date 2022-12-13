@@ -19,6 +19,7 @@ interface IPythia1SimpleAttester is IPythia1Base, IAttester {
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param commitmentSignerPubKey EdDSA public key of the commitment signer
    * @param owner Owner of the contract, can update public key and address
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
   function initialize(uint256[2] memory commitmentSignerPubKey, address owner) external;
 

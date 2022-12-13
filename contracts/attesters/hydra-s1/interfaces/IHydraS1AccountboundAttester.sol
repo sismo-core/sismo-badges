@@ -3,68 +3,87 @@
 pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
-import {Attestation} from '../../../core/libs/Structs.sol';
-import {IAttester} from '../../../core/interfaces/IAttester.sol';
-import {CommitmentMapperRegistry} from '../../../periphery/utils/CommitmentMapperRegistry.sol';
-import {AvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRegistry.sol';
-import {HydraS1Lib, HydraS1ProofData, HydraS1ProofInput} from './../libs/HydraS1Lib.sol';
-import {IHydraS1Base} from './../base/IHydraS1Base.sol';
+import {IHydraS1SimpleAttester} from '././IHydraS1SimpleAttester.sol';
 
 /**
  * @title Hydra-S1 Accountbound Interface
  * @author Sismo
- * @notice Interface with the errors, events and methods specific to the HydraS1AcountboundAttester.
+ * @notice Interface of the HydraS1AccountboundAttester contract which inherits from the errors, events and methods specific to the HydraS1SimpleAttester interface.
  **/
-interface IHydraS1AccountboundAttester is IHydraS1Base, IAttester {
-  struct TicketData {
-    address destination;
-    uint32 cooldownStart;
-    uint16 burnCount;
-  }
+interface IHydraS1AccountboundAttester is IHydraS1SimpleAttester {
+  /**
+   * @dev Event emitted when the duration of the cooldown duration for a group index (internal collection id) has been set
+   * @param groupIndex internal collection id
+   * @param cooldownDuration the duration of the cooldown period
+   **/
+  event CooldownDurationSetForGroupIndex(uint256 indexed groupIndex, uint32 cooldownDuration);
 
   /**
-   * @dev Error when the userTicket is on cooldown. The user have to wait the cooldownDuration
+   * @dev Event emitted when the nullifier has been set on cooldown. This happens when the
+   * attestation destination of a nullifier has been changed
+   * @param nullifier user nullifier
+   * @param burnCount the number of times the attestation destination of a nullifier has been changed
+   **/
+  event NullifierSetOnCooldown(uint256 indexed nullifier, uint16 burnCount);
+
+  /**
+   * @dev Error when the nullifier is on cooldown. The user have to wait the cooldownDuration
    * before being able to change again the destination address.
    **/
-  error TicketOnCooldown(TicketData ticketData, uint32 cooldownDuration);
+  error NullifierOnCooldown(
+    uint256 nullifier,
+    address destination,
+    uint16 burnCount,
+    uint32 cooldownStart
+  );
 
   /**
-   * @dev Error when the collectionId of an attestation overflow the AUTHORIZED_COLLECTION_ID_LAST
+   * @dev Error when the cooldown duration for a given groupIndex is equal to zero.
+   * The HydraS1AccountboundAttester behaves like the HydraS1SimpleAttester.
    **/
-  error CollectionIdOutOfBound(uint256 collectionId);
+  error CooldownDurationNotSetForGroupIndex(uint256 groupIndex);
 
   /**
-   * @dev Event emitted when the userTicket (or nullifierHash) is associated to a destination address.
-   **/
-  event TicketDestinationUpdated(uint256 ticket, address newOwner);
+   * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
+   * @param owner Owner of the contract, can update public key and address
+   */
+  function initialize(address owner) external;
 
   /**
-   * @dev Event emitted when the userTicket has been set on cooldown. This happens when the
-   * attestation destination of a ticket has been changed
-   **/
-  event TicketSetOnCooldown(uint256 ticket, uint16 burnCount);
+   * @dev returns the nullifier for a given extraData
+   * @param extraData bytes where the nullifier is encoded
+   */
+  function getNullifierFromExtraData(bytes memory extraData) external pure returns (uint256);
 
   /**
-   * @dev Getter, returns the data linked to a ticket
-   * @param userTicket ticket used
-   **/
-  function getTicketData(uint256 userTicket) external view returns (TicketData memory);
+   * @dev Returns the burn count for a given extraData
+   * @param extraData bytes where the burnCount is encoded
+   */
+  function getBurnCountFromExtraData(bytes memory extraData) external pure returns (uint16);
 
   /**
-   * @dev Getter, returns the last attestation destination of a ticket
-   * @param userTicket ticket used
+   * @dev Getter, returns the cooldown start of a nullifier
+   * @param nullifier nullifier used
    **/
-  function getDestinationOfTicket(uint256 userTicket) external view returns (address);
+  function getNullifierCooldownStart(uint256 nullifier) external view returns (uint32);
 
   /**
-   * @dev Getter
-   * returns of the first collection in which the attester is supposed to record
+   * @dev Getter, returns the burnCount of a nullifier
+   * @param nullifier nullifier used
    **/
-  function AUTHORIZED_COLLECTION_ID_FIRST() external view returns (uint256);
+  function getNullifierBurnCount(uint256 nullifier) external view returns (uint16);
 
   /**
-   * @dev Getter
-   * returns of the last collection in which the attester is supposed to record
+   * @dev Setter, sets the cooldown duration of a groupIndex
+   * @param groupIndex internal collection id
+   * @param cooldownDuration cooldown duration we want to set for the groupIndex
    **/
-  function AUTHORIZED_COLLECTION_ID_LAST() external view returns (uint256);
+  function setCooldownDurationForGroupIndex(uint256 groupIndex, uint32 cooldownDuration) external;
+
+  /*/**
+   * @dev Getter, get the cooldown duration of a groupIndex
+   * @notice returns 0 when the accountbound feature is deactivated for this group
+   * @param groupIndex internal collection id
+   **/
+  function getCooldownDurationForGroupIndex(uint256 groupIndex) external view returns (uint32);
 }

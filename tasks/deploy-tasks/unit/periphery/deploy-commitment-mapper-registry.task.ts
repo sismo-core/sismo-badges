@@ -49,7 +49,11 @@ async function deploymentAction(
 
   const initData = new CommitmentMapperRegistry__factory().interface.encodeFunctionData(
     'initialize',
-    deploymentArgs
+    [
+      owner || deployer.address,
+      [commitmentMapperPubKeyX, commitmentMapperPubKeyY],
+      commitmentMapperAddress || hre.ethers.constants.AddressZero,
+    ]
   );
 
   const deployed = await customDeployContract(

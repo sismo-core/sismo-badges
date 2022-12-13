@@ -27,6 +27,9 @@ export async function impersonateAddress(
   address: string,
   overrideBalance?: boolean
 ): Promise<SignerWithAddress> {
+  if (address === '0x0000000000000000000000000000000000000000') {
+    throw new Error("You can't impersonate 0x0 address!");
+  }
   await (hre as HardhatRuntimeEnvironment).network.provider.request({
     method: 'hardhat_impersonateAccount',
     params: [address],

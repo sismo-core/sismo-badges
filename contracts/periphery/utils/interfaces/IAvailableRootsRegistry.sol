@@ -19,6 +19,7 @@ interface IAvailableRootsRegistry {
   /**
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param owner Owner of the contract, can update public key and address
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
   function initialize(address owner) external;
 

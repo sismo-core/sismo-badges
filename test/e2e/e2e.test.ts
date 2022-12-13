@@ -22,7 +22,7 @@ import { HydraS1Account, HydraS1Prover, KVMerkleTree } from '@sismo-core/hydra-s
 import { BigNumber } from 'ethers';
 import { AttestationStructOutput } from 'types/HydraS1SimpleAttester';
 import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
-import { Deployed0 } from '../../tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound.task';
+import { Deployed0 } from '../../tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1.task';
 import { getImplementation } from '../../utils';
 import {
   encodeGroupProperties,
@@ -31,12 +31,9 @@ import {
   generateAttesterGroups,
   generateHydraS1Accounts,
   generateGroups,
-  generateTicketIdentifier,
+  generateExternalNullifier,
   getEventArgs,
   HydraS1SimpleGroup,
-  encodeHydraS1AccountboundGroupProperties,
-  generateHydraS1AccountboundAttesterGroups,
-  HydraS1AccountboundGroup,
 } from '../utils';
 import { Deployed1 } from 'tasks/deploy-tasks/full/1-deploy-pythia-1-simple.task';
 import {
@@ -54,7 +51,7 @@ describe('Test E2E Protocol', () => {
   // contracts
   let attestationsRegistry: AttestationsRegistry;
   let hydraS1AccountboundAttester: HydraS1AccountboundAttester;
-  let hydraS1SimpleAttester: HydraS1SimpleAttester;
+  let hydraS1SimpleAttester: HydraS1SimpleAttester | undefined;
   let pythia1SimpleAttester: Pythia1SimpleAttester;
   let availableRootsRegistry: AvailableRootsRegistry;
   let commitmentMapperRegistry: CommitmentMapperRegistry;
@@ -91,15 +88,15 @@ describe('Test E2E Protocol', () => {
   let accountsTree1: KVMerkleTree;
   let accountsTree2: KVMerkleTree;
   let group1: HydraS1SimpleGroup;
-  let group2: HydraS1AccountboundGroup;
+  let group2: HydraS1SimpleGroup;
 
   // Valid request and proof
   let request1: RequestStruct;
   let request2: RequestStruct;
   let proofRequest1: string;
   let proofRequest2: string;
-  let ticketIdentifier1: BigNumber;
-  let ticketIdentifier2: BigNumber;
+  let externalNullifier1: BigNumber;
+  let externalNullifier2: BigNumber;
   let attestationsRequested1: AttestationStructOutput[];
   let attestationsRequested2: AttestationStructOutput[];
   let poseidon;
@@ -129,10 +126,7 @@ describe('Test E2E Protocol', () => {
     // 3 - Generate data source
     const allList = generateGroups(hydraS1Accounts);
     const { dataFormat, groups } = await generateAttesterGroups(allList);
-    const { dataFormat: dataFormat2, groups: groups2 } =
-      await generateHydraS1AccountboundAttesterGroups(allList, {
-        cooldownDuration: 10,
-      });
+    const { dataFormat: dataFormat2, groups: groups2 } = await generateAttesterGroups(allList);
 
     registryTree1 = dataFormat.registryTree;
     registryTree2 = dataFormat2.registryTree;
@@ -165,24 +159,20 @@ describe('Test E2E Protocol', () => {
         hydraS1SimpleAttester,
         hydraS1AccountboundAttester,
         availableRootsRegistry,
-      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound', {
+        pythia1SimpleAttester,
+      } = (await hre.run('0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1', {
         options: {
           proxyAdmin: proxyAdminSigner.address,
         },
       })) as Deployed0);
 
-      ({ pythia1SimpleAttester } = (await hre.run('1-deploy-pythia-1-simple', {
-        options: {
-          proxyAdmin: proxyAdminSigner.address,
-        },
-      })) as Deployed1);
-
       await (
         await availableRootsRegistry.registerRootForAttester(
-          hydraS1SimpleAttester.address,
+          hydraS1SimpleAttester!.address,
           registryTree1.getRoot()
         )
       ).wait();
+
       await (
         await availableRootsRegistry.registerRootForAttester(
           hydraS1AccountboundAttester.address,
@@ -193,12 +183,12 @@ describe('Test E2E Protocol', () => {
     });
     it('Should prepare test requests', async () => {
       // Deploy Sismo Protocol Core contracts
-      ticketIdentifier1 = await generateTicketIdentifier(
-        hydraS1SimpleAttester.address,
+      externalNullifier1 = await generateExternalNullifier(
+        hydraS1SimpleAttester!.address,
         group1.properties.groupIndex
       );
 
-      ticketIdentifier2 = await generateTicketIdentifier(
+      externalNullifier2 = await generateExternalNullifier(
         hydraS1AccountboundAttester.address,
         group2.properties.groupIndex
       );
@@ -221,7 +211,7 @@ describe('Test E2E Protocol', () => {
           claimedValue: source1Value,
           chainId: chainId,
           accountsTree: accountsTree1,
-          ticketIdentifier: ticketIdentifier1,
+          externalNullifier: externalNullifier1,
           isStrict: !group1.properties.isScore,
         })
       ).toBytes();
@@ -231,7 +221,7 @@ describe('Test E2E Protocol', () => {
           {
             groupId: group2.id,
             claimedValue: source2Value,
-            extraData: encodeHydraS1AccountboundGroupProperties(group2.properties),
+            extraData: encodeGroupProperties(group2.properties),
           },
         ],
         destination: BigNumber.from(destination1.identifier).toHexString(),
@@ -244,13 +234,13 @@ describe('Test E2E Protocol', () => {
           claimedValue: source2Value,
           chainId: chainId,
           accountsTree: accountsTree2,
-          ticketIdentifier: ticketIdentifier2,
+          externalNullifier: externalNullifier2,
           isStrict: !group2.properties.isScore,
         })
       ).toBytes();
 
       [attestationsRequested1, attestationsRequested2] = await front.batchBuildAttestations(
-        [hydraS1SimpleAttester.address, hydraS1AccountboundAttester.address],
+        [hydraS1SimpleAttester!.address, hydraS1AccountboundAttester.address],
         [request1, request2],
         [proofRequest1, proofRequest2]
       );
@@ -266,7 +256,7 @@ describe('Test E2E Protocol', () => {
   describe('Test attestations generations', () => {
     it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via batch', async () => {
       const tx = await front.batchGenerateAttestations(
-        [hydraS1SimpleAttester.address, hydraS1AccountboundAttester.address],
+        [hydraS1SimpleAttester!.address, hydraS1AccountboundAttester.address],
         [request1, request2],
         [proofRequest1, proofRequest2]
       );
@@ -339,7 +329,7 @@ describe('Test E2E Protocol', () => {
     });
     it('Should generate attestations from hydra s1 simple and hydra s1 accountbound via front and two separate txs', async () => {
       const tx = await front.generateAttestations(
-        hydraS1SimpleAttester.address,
+        hydraS1SimpleAttester!.address,
         request1,
         proofRequest1
       );
@@ -399,7 +389,7 @@ describe('Test E2E Protocol', () => {
         pythia1group1.id
       );
 
-      const ticketIdentifier = await generateTicketIdentifier(
+      const externalNullifier = await generateExternalNullifier(
         pythia1SimpleAttester.address,
         pythia1group1.properties.internalCollectionId
       );
@@ -424,7 +414,7 @@ describe('Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 
@@ -451,6 +441,7 @@ describe('Test E2E Protocol', () => {
       const { hydraS1SimpleAttester: newHydraS1SimpleAttester } = await hre.run(
         'deploy-hydra-s1-simple-attester',
         {
+          enableDeployment: config.hydraS1SimpleAttester.enableDeployment,
           collectionIdFirst: config.hydraS1SimpleAttester.collectionIdFirst,
           collectionIdLast: config.hydraS1SimpleAttester.collectionIdLast,
           commitmentMapperRegistryAddress: commitmentMapperRegistry.address,
@@ -461,7 +452,7 @@ describe('Test E2E Protocol', () => {
       );
 
       const hydraS1SimpleAttesterProxy = TransparentUpgradeableProxy__factory.connect(
-        hydraS1SimpleAttester.address,
+        hydraS1SimpleAttester!.address,
         proxyAdminSigner
       );
 

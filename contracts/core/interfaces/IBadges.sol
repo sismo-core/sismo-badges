@@ -15,6 +15,7 @@ interface IBadges {
    * @dev Initializes the contract, to be called by the proxy delegating calls to this implementation
    * @param uri Uri for the metadata of badges
    * @param owner Owner of the contract, super admin, can setup roles and update the attestation registry
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
   function initialize(string memory uri, address owner) external;
 
@@ -60,4 +61,40 @@ interface IBadges {
    * @dev Getter of the attestations registry
    */
   function getAttestationsRegistry() external view returns (address);
+
+  /**
+   * @dev Getter of the badge issuer
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeIssuer(address account, uint256 id) external view returns (address);
+
+  /**
+   * @dev Getter of the badge timestamp
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeTimestamp(address account, uint256 id) external view returns (uint32);
+
+  /**
+   * @dev Getter of the badge extra data (it can store nullifier and burnCount)
+   * @param account Address that holds the badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getBadgeExtraData(address account, uint256 id) external view returns (bytes memory);
+
+  /**
+   * @dev Getter of the value of a specific badge attribute
+   * @param id Badge Id to check (= attestationCollectionId)
+   * @param index Index of the attribute
+   */
+  function getAttributeValueForBadge(uint256 id, uint8 index) external view returns (uint8);
+
+  /**
+   * @dev Getter of all badge attributes and their values for a specific badge
+   * @param id Badge Id to check (= attestationCollectionId)
+   */
+  function getAttributesNamesAndValuesForBadge(
+    uint256 id
+  ) external view returns (bytes32[] memory, uint8[] memory);
 }

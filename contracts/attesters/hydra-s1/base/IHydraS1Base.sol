@@ -3,6 +3,7 @@
 pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
+import {IAttester} from '../../../core/interfaces/IAttester.sol';
 import {HydraS1Verifier, HydraS1Lib, HydraS1ProofData} from '../libs/HydraS1Lib.sol';
 import {ICommitmentMapperRegistry} from '../../../periphery/utils/CommitmentMapperRegistry.sol';
 import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRegistry.sol';
@@ -18,7 +19,7 @@ import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRe
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
  **/
-interface IHydraS1Base {
+interface IHydraS1Base is IAttester {
   error ClaimsLengthDifferentThanOne(uint256 claimLength);
   error RegistryRootMismatch(uint256 inputRoot);
   error DestinationMismatch(address expectedDestination, address inputDestination);
@@ -28,7 +29,7 @@ interface IHydraS1Base {
     uint256 inputX,
     uint256 inputY
   );
-  error TicketIdentifierMismatch(uint256 expectedTicketIdentifier, uint256 ticketIdentifier);
+  error ExternalNullifierMismatch(uint256 expectedExternalNullifier, uint256 externalNullifier);
   error IsStrictMismatch(bool expectedStrictness, bool strictNess);
   error ChainIdMismatch(uint256 expectedChainId, uint256 chainId);
   error ValueMismatch(uint256 expectedValue, uint256 inputValue);
@@ -37,6 +38,8 @@ interface IHydraS1Base {
     uint256 inputAccountsTreeValue
   );
   error InvalidGroth16Proof(string reason);
+
+  function getNullifierFromExtraData(bytes memory extraData) external view returns (uint256);
 
   /**
    * @dev Getter of Hydra-S1 Verifier contract

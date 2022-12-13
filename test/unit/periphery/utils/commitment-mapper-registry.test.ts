@@ -48,22 +48,36 @@ describe('Test CommitmentMapperRegistry contract', () => {
           owner: secondDeployer.address,
         }
       )) as DeployedCommitmentMapper);
-      // 0 - Checks that the owner is set to the deployer address
+    });
+  });
+
+  describe('Configuration checks', () => {
+    it("should check that the contract's owner is the deployer", async () => {
       expect(await commitmentMapperRegistry.owner()).to.equal(deployer.address);
       expect(await secondCommitmentMapperRegistry.owner()).to.equal(secondDeployer.address);
+    });
 
+    it('should chck that the commitment mapper address is registered on the address zero', async () => {
       // 1 - Checks that the commitment mapper address is registered on the address zero (default value)
       expect(await commitmentMapperRegistry.getAddress()).to.be.equal(ethers.constants.AddressZero);
       expect(await secondCommitmentMapperRegistry.getAddress()).to.be.equal(
         randomCommitmentMapper.address
       );
+    });
 
-      // 2 - Checks that the eddsa public key is initialized on [0x0, 0x0]
-
+    it('should check that the eddsa public key is initialized on [0x0, 0x0]', async () => {
       expect(await commitmentMapperRegistry.getEdDSAPubKey()).to.be.eql([
         BigNumber.from(0),
         BigNumber.from(0),
       ]);
+    });
+
+    it('Should revert when trying to call initialize again', async () => {
+      await expect(
+        commitmentMapperRegistry
+          .connect(deployer)
+          .initialize(deployer.address, commitmentMapperPubKey, randomCommitmentMapper.address)
+      ).to.be.revertedWith('Initializable: contract is already initialized');
     });
   });
 

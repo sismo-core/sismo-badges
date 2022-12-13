@@ -18,7 +18,7 @@ import {
   generateGroups,
   generateHydraS1AccountboundAttesterGroups,
   generateHydraS1Accounts,
-  generateTicketIdentifier,
+  generateExternalNullifier,
   getEventArgs,
   HydraS1AccountboundGroup,
   HydraS1SimpleGroup,
@@ -53,7 +53,7 @@ import { CommitmentMapperTester } from '@sismo-core/commitment-mapper-tester-js'
 import { Pythia1Prover } from '@sismo-core/pythia-1';
 import { BigNumber } from 'ethers';
 
-import { Deployed0 } from './0-deploy-core-and-hydra-s1-simple-and-accountbound.task';
+import { Deployed0 } from './0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1.task';
 import { Deployed1 } from './1-deploy-pythia-1-simple.task';
 import {
   CommitmentSignerTester,
@@ -132,9 +132,9 @@ describe('FORK-Test E2E Protocol', () => {
   let proofRequest2: string;
   let proofRequest3: string;
   let proofRequest4: string;
-  let ticketIdentifier1: BigNumber;
-  let ticketIdentifier2: BigNumber;
-  let ticketIdentifierAccountBound: BigNumber;
+  let externalNullifier1: BigNumber;
+  let externalNullifier2: BigNumber;
+  let externalNullifierAccountBound: BigNumber;
   let attestationsRequested1: AttestationStructOutput[];
   let attestationsRequested2: AttestationStructOutput[];
   let attestationsRequested3: AttestationStructOutput[];
@@ -283,12 +283,12 @@ describe('FORK-Test E2E Protocol', () => {
 
     it('Should prepare test requests', async () => {
       // Deploy Sismo Protocol Core contracts
-      ticketIdentifier1 = await generateTicketIdentifier(
+      externalNullifier1 = await generateExternalNullifier(
         hydraS1SimpleAttester.address,
         group1.properties.groupIndex
       );
 
-      ticketIdentifier2 = await generateTicketIdentifier(
+      externalNullifier2 = await generateExternalNullifier(
         hydraS1AccountboundAttester.address,
         group2.properties.groupIndex
       );
@@ -311,7 +311,7 @@ describe('FORK-Test E2E Protocol', () => {
           claimedValue: source1Value,
           chainId: chainId,
           accountsTree: accountsTree1,
-          ticketIdentifier: ticketIdentifier1,
+          externalNullifier: externalNullifier1,
           isStrict: !group1.properties.isScore,
         })
       ).toBytes();
@@ -334,7 +334,7 @@ describe('FORK-Test E2E Protocol', () => {
           claimedValue: source2Value,
           chainId: chainId,
           accountsTree: accountsTree2,
-          ticketIdentifier: ticketIdentifier2,
+          externalNullifier: externalNullifier2,
           isStrict: !group2.properties.isScore,
         })
       ).toBytes();
@@ -494,7 +494,7 @@ describe('FORK-Test E2E Protocol', () => {
         pythia1group1.id
       );
 
-      const ticketIdentifier = await generateTicketIdentifier(
+      const externalNullifier = await generateExternalNullifier(
         pythia1SimpleAttester.address,
         pythia1group1.properties.internalCollectionId
       );
@@ -519,7 +519,7 @@ describe('FORK-Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 
@@ -607,7 +607,7 @@ describe('FORK-Test E2E Protocol', () => {
 
   describe('Test attestations generations (after proxy update)', () => {
     it('Should prepare test requests (after proxy upgrade)', async () => {
-      ticketIdentifierAccountBound = await generateTicketIdentifier(
+      externalNullifierAccountBound = await generateExternalNullifier(
         hydraS1AccountboundAttester.address,
         groupAccountBound.properties.groupIndex
       );
@@ -630,7 +630,7 @@ describe('FORK-Test E2E Protocol', () => {
           claimedValue: source3Value,
           chainId: chainId,
           accountsTree: accountsTree1,
-          ticketIdentifier: ticketIdentifier1,
+          externalNullifier: externalNullifier1,
           isStrict: !group1.properties.isScore,
         })
       ).toBytes();
@@ -653,7 +653,7 @@ describe('FORK-Test E2E Protocol', () => {
           claimedValue: source4Value,
           chainId: chainId,
           accountsTree: accountsTreeAccountBound,
-          ticketIdentifier: ticketIdentifierAccountBound,
+          externalNullifier: externalNullifierAccountBound,
           isStrict: !groupAccountBound.properties.isScore,
         })
       ).toBytes();
@@ -806,7 +806,7 @@ describe('FORK-Test E2E Protocol', () => {
         pythia1group1.id
       );
 
-      const ticketIdentifier = await generateTicketIdentifier(
+      const externalNullifier = await generateExternalNullifier(
         pythia1SimpleAttester.address,
         pythia1group1.properties.internalCollectionId
       );
@@ -831,7 +831,7 @@ describe('FORK-Test E2E Protocol', () => {
         claimedValue: commitmentValue,
         chainId: chainId,
         groupId: pythia1group1.id,
-        ticketIdentifier: ticketIdentifier,
+        ticketIdentifier: externalNullifier,
         isStrict: !pythia1group1.properties.isScore,
       })) as SnarkProof;
 

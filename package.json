@@ -32,15 +32,15 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged --pattern 'contracts/**/*.sol' --pattern 'test/**/*.ts'  --pattern 'tasks/**/*.ts'"
+      "pre-commit": "pretty-quick --staged --pattern 'test/**/*.ts'  --pattern 'tasks/**/*.ts' --pattern 'contracts/**/*.sol'"
     }
   },
   "dependencies": {
     "@metamask/eth-sig-util": "^4.0.0",
-    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@openzeppelin/contracts": "^4.5.0",
     "@sismo-core/commitment-mapper-tester-js": "^1.0.11",
-    "@sismo-core/hydra-s1": "^1.0.2",
+    "@sismo-core/hydra-s1": "^1.0.6",
     "@sismo-core/pythia-1": "^1.0.6",
     "@trufflesuite/eth-sig-util": "^1.4.2",
     "@typechain/ethers-v5": "^9.0.0",
@@ -56,6 +56,7 @@
     "hardhat-gas-reporter": "^1.0.7",
     "hardhat-storage-layout": "^0.1.6",
     "husky": "4.2.5",
+    "hydra-s1-previous": "npm:@sismo-core/hydra-s1@v1.0.5",
     "js-sha3": "^0.8.0",
     "mocha": "^10.0.0",
     "pretty-quick": "^3.1.3",

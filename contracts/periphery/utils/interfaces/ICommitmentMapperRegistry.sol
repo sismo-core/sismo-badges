@@ -11,6 +11,7 @@ interface ICommitmentMapperRegistry {
    * @param owner Owner of the contract, can update public key and address
    * @param commitmentMapperEdDSAPubKey EdDSA public key of the commitment mapper
    * @param commitmentMapperAddress Address of the commitment mapper
+   * @notice The reinitializer modifier is needed to configure modules that are added through upgrades and that require initialization.
    */
   function initialize(
     address owner,

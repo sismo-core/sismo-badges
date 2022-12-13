@@ -19,6 +19,8 @@ import {
 import { BigNumber, BigNumberish } from 'ethers';
 
 export interface DeployHydraS1SimpleAttesterArgs {
+  // mandatory parameter that indicates if we want to deploy the hydra S1 simple attester
+  enableDeployment: boolean;
   // address of the proving scheme verifier contract
   hydraS1VerifierAddress?: string;
   // address of the registryMerkleRoot contract
@@ -35,7 +37,7 @@ export interface DeployHydraS1SimpleAttesterArgs {
 }
 
 export interface DeployedHydraS1SimpleAttester {
-  hydraS1SimpleAttester: HydraS1SimpleAttester;
+  hydraS1SimpleAttester?: HydraS1SimpleAttester;
   hydraS1Verifier: HydraS1Verifier;
 }
 
@@ -43,6 +45,7 @@ const CONTRACT_NAME = 'HydraS1SimpleAttester';
 
 async function deploymentAction(
   {
+    enableDeployment,
     hydraS1VerifierAddress,
     availableRootsRegistryAddress,
     commitmentMapperRegistryAddress,
@@ -66,6 +69,12 @@ async function deploymentAction(
   } else {
     hydraS1Verifier = HydraS1Verifier__factory.connect(hydraS1VerifierAddress, deployer);
   }
+
+  // if enableDeployment is false, we just return the verifier
+  if (!enableDeployment) {
+    return { hydraS1Verifier };
+  }
+
   const deploymentArgs = [
     attestationsRegistryAddress,
     hydraS1VerifierAddress,

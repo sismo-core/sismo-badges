@@ -4,6 +4,7 @@ pragma solidity ^0.8.14;
 pragma experimental ABIEncoderV2;
 
 import {IHydraS1Base} from './IHydraS1Base.sol';
+import {Attester} from '../../../core/Attester.sol';
 import {Initializable} from '@openzeppelin/contracts/proxy/utils/Initializable.sol';
 
 // Protocol imports
@@ -24,8 +25,9 @@ import {IAvailableRootsRegistry} from '../../../periphery/utils/AvailableRootsRe
  * We invite readers to refer to the following:
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
- **/
-abstract contract HydraS1Base is IHydraS1Base, Initializable {
+ *
+ */
+abstract contract HydraS1Base is IHydraS1Base, Attester, Initializable {
   using HydraS1Lib for HydraS1ProofData;
 
   // ZK-SNARK Verifier
@@ -36,8 +38,9 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
   IAvailableRootsRegistry immutable AVAILABLE_ROOTS_REGISTRY;
 
   /*******************************************************
-    INITIALIZATION FUNCTIONS                           
+    INITIALIZATION FUNCTIONS
   *******************************************************/
+
   /**
    * @dev Constructor. Initializes the contract
    * @param hydraS1VerifierAddress ZK Snark Verifier contract
@@ -80,68 +83,81 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
   *******************************************************/
 
   /**
-   * @dev MANDATORY: must be implemented to return the ticket identifier from a user request
+   * @dev MANDATORY: must be implemented to return the nullifier from an attestation extraData
+   * @dev Getter of a nullifier encoded in extraData
+   * @notice Must be implemented by the inheriting contracts
+   * @param extraData extraData where nullifier can be encoded
+   */
+  function getNullifierFromExtraData(
+    bytes memory extraData
+  ) external view virtual returns (uint256);
+
+  /**
+   * @dev MANDATORY: must be implemented to return the external nullifier from a user request
    * so it can be checked against snark input
-   * ticket = hash(sourceSecretHash, ticketIdentifier), which is verified inside the snark
+   * nullifier = hash(sourceSecretHash, externalNullifier), which is verified inside the snark
    * users bring sourceSecretHash as private input which guarantees privacy
-
+   *
    * This function MUST be implemented by Hydra-S1 attesters.
-   * This is the core function that implements the logic of tickets
-
-   * Do they get one ticket per claim?
-   * Do they get 2 tickets per claim?
-   * Do they get 1 ticket per claim, every month?
+   * This is the core function that implements the logic of external nullifiers
+   *
+   * Do they get one external nullifier per claim?
+   * Do they get 2 external nullifiers per claim?
+   * Do they get 1 external nullifier per claim, every month?
    * Take a look at Hydra-S1 Simple Attester for an example
    * @param claim user claim: part of a group of accounts, with a claimedValue for their account
    */
-  function _getTicketIdentifierOfClaim(HydraS1Claim memory claim)
-    internal
-    view
-    virtual
-    returns (uint256);
+  function _getExternalNullifierOfClaim(
+    HydraS1Claim memory claim
+  ) internal view virtual returns (uint256);
 
   /**
    * @dev Checks whether the user claim and the snark public input are a match
    * @param claim user claim
    * @param input snark public input
    */
-  function _validateInput(HydraS1Claim memory claim, HydraS1ProofInput memory input)
-    internal
-    view
-    virtual
-  {
-    if (input.accountsTreeValue != claim.groupId)
+  function _validateInput(
+    HydraS1Claim memory claim,
+    HydraS1ProofInput memory input
+  ) internal view virtual {
+    if (input.accountsTreeValue != claim.groupId) {
       revert AccountsTreeValueMismatch(claim.groupId, input.accountsTreeValue);
+    }
 
-    if (input.isStrict == claim.groupProperties.isScore)
+    if (input.isStrict == claim.groupProperties.isScore) {
       revert IsStrictMismatch(claim.groupProperties.isScore, input.isStrict);
+    }
 
-    if (input.destination != claim.destination)
+    if (input.destination != claim.destination) {
       revert DestinationMismatch(claim.destination, input.destination);
+    }
 
     if (input.chainId != block.chainid) revert ChainIdMismatch(block.chainid, input.chainId);
 
     if (input.value != claim.claimedValue) revert ValueMismatch(claim.claimedValue, input.value);
 
-    if (!AVAILABLE_ROOTS_REGISTRY.isRootAvailableForMe(input.registryRoot))
+    if (!AVAILABLE_ROOTS_REGISTRY.isRootAvailableForMe(input.registryRoot)) {
       revert RegistryRootMismatch(input.registryRoot);
+    }
 
     uint256[2] memory commitmentMapperPubKey = COMMITMENT_MAPPER_REGISTRY.getEdDSAPubKey();
     if (
       input.commitmentMapperPubKey[0] != commitmentMapperPubKey[0] ||
       input.commitmentMapperPubKey[1] != commitmentMapperPubKey[1]
-    )
+    ) {
       revert CommitmentMapperPubKeyMismatch(
         commitmentMapperPubKey[0],
         commitmentMapperPubKey[1],
         input.commitmentMapperPubKey[0],
         input.commitmentMapperPubKey[1]
       );
+    }
 
-    uint256 ticketIdentifier = _getTicketIdentifierOfClaim(claim);
+    uint256 externalNullifier = _getExternalNullifierOfClaim(claim);
 
-    if (input.ticketIdentifier != ticketIdentifier)
-      revert TicketIdentifierMismatch(ticketIdentifier, input.ticketIdentifier);
+    if (input.externalNullifier != externalNullifier) {
+      revert ExternalNullifierMismatch(externalNullifier, input.externalNullifier);
+    }
   }
 
   /**
@@ -155,13 +171,9 @@ abstract contract HydraS1Base is IHydraS1Base, Initializable {
       if (!success) revert InvalidGroth16Proof('');
     } catch Error(string memory reason) {
       revert InvalidGroth16Proof(reason);
-    } catch Panic(
-      uint256 /*errorCode*/
-    ) {
+    } catch Panic(uint256 /*errorCode*/) {
       revert InvalidGroth16Proof('');
-    } catch (
-      bytes memory /*lowLevelData*/
-    ) {
+    } catch (bytes memory /*lowLevelData*/) {
       revert InvalidGroth16Proof('');
     }
   }
