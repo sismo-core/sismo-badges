@@ -220,8 +220,7 @@ export type ProvingDataStruct = {
   registryTree: KVMerkleTree;
   groups: HydraS1SimpleGroup[];
   commitmentMapperPubKey: EddsaPublicKey;
-  sources: HydraS1Account[];
-  destinations: HydraS1Account[];
+  accounts: HydraS1Account[];
 };
 
 export const generateProvingData = async (options?: GenerateAttesterGroup) => {
@@ -230,12 +229,9 @@ export const generateProvingData = async (options?: GenerateAttesterGroup) => {
   const commitmentMapper = await CommitmentMapperTester.generate();
   const commitmentMapperPubKey = await commitmentMapper.getPubKey();
 
-  const hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
+  const accounts = await generateHydraS1Accounts(signers, commitmentMapper);
 
-  const sources = hydraS1Accounts.slice(0, 10);
-  const destinations = hydraS1Accounts.slice(10, 20);
-
-  const availableGroup = generateGroup(hydraS1Accounts, options?.groupValue ?? 0);
+  const availableGroup = generateGroup(accounts, options?.groupValue ?? 0);
 
   // append group
   const groups = options?.groups ?? [];
@@ -278,8 +274,7 @@ export const generateProvingData = async (options?: GenerateAttesterGroup) => {
     registryTree,
     groups,
     commitmentMapperPubKey,
-    sources,
-    destinations,
+    accounts,
   };
 };
 

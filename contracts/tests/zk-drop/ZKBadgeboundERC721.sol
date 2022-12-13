@@ -107,7 +107,7 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
   }
 
   /**
-   * @dev Set nullifier as used after a token transfer
+   * @dev Prevent the transfer of a NFT if the destination address already owns a NFT
    * @param to Address to transfer the NFT to
    */
   function _beforeTokenTransfer(
