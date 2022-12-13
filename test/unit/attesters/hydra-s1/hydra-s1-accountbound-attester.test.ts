@@ -628,20 +628,10 @@ describe('Test HydraS1 Accountbound Attester contract', () => {
       );
 
       expect(
-        await hydraS1AccountboundAttester.getNullifierFromExtraData(
-          ethers.utils.defaultAbiCoder.encode(
-            ['uint256', 'uint16'],
-            [inputs.publicInputs.nullifier, 0]
-          )
-        )
+        await hydraS1AccountboundAttester.getNullifierFromExtraData(attestationExtraData)
       ).to.be.eql(BigNumber.from(inputs.publicInputs.nullifier));
       expect(
-        await hydraS1AccountboundAttester.getBurnCountFromExtraData(
-          ethers.utils.defaultAbiCoder.encode(
-            ['uint256', 'uint16'],
-            [inputs.publicInputs.nullifier, 0]
-          )
-        )
+        await hydraS1AccountboundAttester.getBurnCountFromExtraData(attestationExtraData)
       ).to.be.eql(0);
     });
 
