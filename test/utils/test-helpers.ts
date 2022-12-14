@@ -1,10 +1,11 @@
 import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import { AttestationsRegistry, HydraS1AccountboundAttester } from 'types';
 import { expect } from 'chai';
-import { HydraS1ProofRequest } from 'test/utils/hydra-s1';
+import { decodeGroupProperties } from './hydra-s1';
+import { RequestStruct } from 'types/HydraS1Base';
 
 export const testAttestationIsWellRegistered = async ({
-  proofRequest,
+  request,
   nullifier,
   badgeId,
   accountAddress,
@@ -14,7 +15,7 @@ export const testAttestationIsWellRegistered = async ({
   attestationsRegistry,
   attester,
 }: {
-  proofRequest: HydraS1ProofRequest;
+  request: RequestStruct;
   nullifier: BigNumberish;
   badgeId: BigNumberish;
   accountAddress: string;
@@ -33,8 +34,8 @@ export const testAttestationIsWellRegistered = async ({
       badgeId,
       accountAddress,
       attester.address,
-      proofRequest.value,
-      proofRequest.group.properties.generationTimestamp,
+      request.claims[0].claimedValue,
+      decodeGroupProperties(request.claims[0].extraData).generationTimestamp,
       extraData,
     ]);
 
