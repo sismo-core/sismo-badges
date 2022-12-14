@@ -17,6 +17,7 @@ import {
   TransparentUpgradeableProxy__factory,
 } from '../../../../types';
 import { utils } from 'ethers';
+import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
 
 export interface DeploySismoAddressesProvider {
   owner: string;
@@ -50,6 +51,8 @@ async function deploymentAction(
   }: DeploySismoAddressesProvider,
   hre: HardhatRuntimeEnvironment
 ): Promise<DeployedSismoAddressesProvider> {
+  const config = deploymentsConfig[hre.network.name];
+
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
 
@@ -88,6 +91,43 @@ async function deploymentAction(
     });
   } else {
     // ONLY ON LOCAL NETWORK
+
+    // check if the proxy already exists
+    const code = await hre.network.provider.send('eth_getCode', [
+      config.sismoAddressesProvider.address,
+    ]);
+
+    if (code !== '0x') {
+      const AddressesProvider = await hre.ethers.getContractFactory('AddressesProvider');
+      const sismoAddressesProvider = AddressesProvider.attach(
+        config.sismoAddressesProvider.address
+      ) as AddressesProvider;
+
+      // if proxy already exists and the deployment is on a local network
+      // we need to set new addresses for the contracts used in the tests
+      await sismoAddressesProvider.setBatch(
+        [
+          badges,
+          attestationsRegistry,
+          front,
+          hydraS1AccountboundAttester,
+          availableRootsRegistry,
+          commitmentMapperRegistry,
+          hydraS1Verifier,
+        ],
+        [
+          'Badges',
+          'AttestationsRegistry',
+          'Front',
+          'HydraS1AccountboundAttester',
+          'AvailableRootsRegistry',
+          'CommitmentMapperRegistry',
+          'HydraS1Verifier',
+        ]
+      );
+
+      return { sismoAddressesProvider };
+    }
 
     // Send 1Eth to the factory deployer (factoryDeployer)
     // This is necessary for being able to deploy the create2 factory

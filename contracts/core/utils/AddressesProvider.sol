@@ -115,15 +115,43 @@ contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
    * @param contractNameHash Hash of the name of the contract (bytes32).
    * @return Address of the contract.
    */
-  function get(bytes32 contractNameHash) external view returns (address) {
+  function get(bytes32 contractNameHash) public view returns (address) {
     return _contractAddresses[contractNameHash];
+  }
+
+  /**
+   * @dev Returns the addresses of all contracts inputed.
+   * @param contractNames Names of the contracts as strings.
+   */
+  function getBatch(string[] calldata contractNames) external view returns (address[] memory) {
+    address[] memory contractAddresses = new address[](contractNames.length);
+
+    for (uint256 i = 0; i < contractNames.length; i++) {
+      contractAddresses[i] = get(contractNames[i]);
+    }
+
+    return contractAddresses;
+  }
+
+  /**
+   * @dev Returns the addresses of all contracts inputed.
+   * @param contractNamesHash Names of the contracts as bytes32.
+   */
+  function getBatch(bytes32[] calldata contractNamesHash) external view returns (address[] memory) {
+    address[] memory contractAddresses = new address[](contractNamesHash.length);
+
+    for (uint256 i = 0; i < contractNamesHash.length; i++) {
+      contractAddresses[i] = get(contractNamesHash[i]);
+    }
+
+    return contractAddresses;
   }
 
   /**
    * @dev Returns the addresses of all contracts in `_contractNames`
    * @return Names, Hashed Names and Addresses of all contracts.
    */
-  function getBatch() external view returns (string[] memory, bytes32[] memory, address[] memory) {
+  function getAll() external view returns (string[] memory, bytes32[] memory, address[] memory) {
     string[] memory contractNames = _contractNames;
     bytes32[] memory contractNamesHash = new bytes32[](contractNames.length);
     address[] memory contractAddresses = new address[](contractNames.length);

@@ -1,15 +1,7 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { CommitmentMapperTester, EddsaPublicKey } from '@sismo-core/commitment-mapper-tester-js';
-import {
-  HydraS1Account,
-  HydraS1Prover,
-  Inputs,
-  KVMerkleTree,
-  SnarkProof,
-  SNARK_FIELD,
-} from '@sismo-core/hydra-s1';
+import { HydraS1Account, KVMerkleTree } from '@sismo-core/hydra-s1';
 import { expect } from 'chai';
-import { BigNumber, utils } from 'ethers';
+import { BigNumber } from 'ethers';
 import hre, { ethers } from 'hardhat';
 import {
   AddressesProvider,
@@ -22,30 +14,17 @@ import {
   HydraS1Verifier,
   ZKBadgeboundERC721,
 } from '../../../../types';
-import { RequestStruct } from 'types/HydraS1SimpleAttester';
 import {
   evmRevert,
   evmSnapshot,
-  generateHydraS1Accounts,
-  generateGroups,
-  generateExternalNullifier,
-  increaseTime,
-  toBytes,
-  GroupData,
-  generateAttesterGroups,
   HydraS1SimpleGroup,
-  encodeGroupProperties,
-  generateGroupIdFromProperties,
-  packRequestAndProofToBytes,
   generateProvingData,
   ProvingDataStruct,
-  getValuesFromAccountsTrees,
   HydraS1ProofRequest,
   HydraS1ZKPS,
   getBlockTimestamp,
+  increaseTime,
 } from '../../../utils';
-import { formatBytes32String } from 'ethers/lib/utils';
-import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
 import { testAttestationIsWellRegistered } from '../../../../test/utils/test-utils';
 
 describe('Test ZK Badgebound ERC721 Contract', async () => {
@@ -89,8 +68,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
 
   let badgeId: BigNumber;
   let badgeId2: BigNumber;
-
-  const config = deploymentsConfig[hre.network.name];
 
   before(async () => {
     chainId = parseInt(await hre.getChainId());
@@ -151,23 +128,16 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         options: { deploymentNamePrefix: 'zk-badgebound-erc721' },
       }));
 
-      const code = await hre.network.provider.send('eth_getCode', [
-        config.sismoAddressesProvider.address,
-      ]);
-
-      // needed to not break `yarn test`
-      if (code === '0x') {
-        ({ sismoAddressesProvider } = await hre.run('deploy-sismo-addresses-provider', {
-          owner: deployer.address,
-          badges: badges.address,
-          attestationsRegistry: attestationsRegistry.address,
-          front: front.address,
-          hydraS1AccountboundAttester: hydraS1AccountboundAttester.address,
-          commitmentMapperRegistry: commitmentMapperRegistry.address,
-          availableRootsRegistry: availableRootsRegistry.address,
-          hydraS1Verifier: hydraS1Verifier.address,
-        }));
-      }
+      ({ sismoAddressesProvider } = await hre.run('deploy-sismo-addresses-provider', {
+        owner: deployer.address,
+        badges: badges.address,
+        attestationsRegistry: attestationsRegistry.address,
+        front: front.address,
+        hydraS1AccountboundAttester: hydraS1AccountboundAttester.address,
+        commitmentMapperRegistry: commitmentMapperRegistry.address,
+        availableRootsRegistry: availableRootsRegistry.address,
+        hydraS1Verifier: hydraS1Verifier.address,
+      }));
 
       ({ zkBadgeboundERC721 } = await hre.run('deploy-zk-badgebound-erc721', {
         options: { deploymentNamePrefix: 'zk-badgebound-erc721' },

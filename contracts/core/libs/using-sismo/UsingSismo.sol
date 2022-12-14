@@ -42,10 +42,14 @@ contract UsingSismo is Context {
   error WrongBalanceRequirementType();
 
   constructor() {
-    HYDRA_S1_ACCOUNTBOUND_ATTESTER = HydraS1AccountboundAttester(
-      ADDRESSES_PROVIDER.HYDRA_S1_ACCOUNTBOUND_ATTESTER()
-    );
-    BADGES = Badges(ADDRESSES_PROVIDER.BADGES());
+    string[] memory contractNames = new string[](2);
+    contractNames[0] = 'HydraS1AccountboundAttester';
+    contractNames[1] = 'Badges';
+
+    address[] memory contractAddresses = ADDRESSES_PROVIDER.getBatch(contractNames);
+
+    HYDRA_S1_ACCOUNTBOUND_ATTESTER = HydraS1AccountboundAttester(contractAddresses[0]);
+    BADGES = Badges(contractAddresses[1]);
   }
 
   /*******************************************************

@@ -31,8 +31,20 @@ interface IAddressesProvider {
   function get(bytes32 contractNameHash) external view returns (address);
 
   /**
+   * @dev Returns the addresses of all contracts inputed.
+   * @param contractNames Names of the contracts as strings.
+   */
+  function getBatch(string[] calldata contractNames) external view returns (address[] memory);
+
+  /**
+   * @dev Returns the addresses of all contracts inputed.
+   * @param contractNamesHash Names of the contracts as strings.
+   */
+  function getBatch(bytes32[] calldata contractNamesHash) external view returns (address[] memory);
+
+  /**
    * @dev Returns the addresses of all contracts in `_contractNames`
    * @return Names, Hashed Names and Addresses of all contracts.
    */
-  function getBatch() external view returns (string[] memory, bytes32[] memory, address[] memory);
+  function getAll() external view returns (string[] memory, bytes32[] memory, address[] memory);
 }

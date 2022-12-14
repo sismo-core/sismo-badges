@@ -135,8 +135,8 @@ describe('Test Sismo Addresses Provider', () => {
       expect(hydraS1VerifierAddress).to.be.eql(hydraS1Verifier.address);
     });
 
-    it('Should get the sismo contracts addresses via getBatch', async () => {
-      const allContractInfos = await sismoAddressesProvider.getBatch();
+    it('Should get the sismo contracts addresses via getAll', async () => {
+      const allContractInfos = await sismoAddressesProvider.getAll();
       const [allNames, allNamesHash, allAddresses] = allContractInfos;
 
       expect(allNames).to.be.eql([
@@ -168,6 +168,22 @@ describe('Test Sismo Addresses Provider', () => {
         commitmentMapperRegistry.address,
         hydraS1Verifier.address,
       ]);
+    });
+
+    it('Should get specific sismo contracts addresses via getBatch (string)', async () => {
+      const contractAddresses = await sismoAddressesProvider['getBatch(string[])']([
+        'Badges',
+        'AttestationsRegistry',
+      ]);
+      expect(contractAddresses).to.be.eql([badges.address, attestationsRegistry.address]);
+    });
+
+    it('Should get specific sismo contracts addresses via getBatch (bytes32)', async () => {
+      const contractAddresses = await sismoAddressesProvider['getBatch(bytes32[])']([
+        ethers.utils.keccak256(toUtf8Bytes('Badges')),
+        ethers.utils.keccak256(toUtf8Bytes('AttestationsRegistry')),
+      ]);
+      expect(contractAddresses).to.be.eql([badges.address, attestationsRegistry.address]);
     });
   });
 
