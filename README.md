@@ -92,7 +92,7 @@ To develop a new attester, you must inherit the `core/Attester.sol` abstract con
 -  `_verifyRequest(request, proofData)`: You must implement the user request verification against the proof provided by the user
 -  `buildAttestations(request, proofData)`: You must build the attestations that will be recorded from a verified user request
 
-There are other optional hook functions that can be implemented:
+Other optional hook functions that can be implemented:
 
 - `_beforeRecordAttestations(request, proofData)`
 - `_afterRecordAttestations(request, proofData)`
