@@ -75,5 +75,5 @@ export const NETWORKS_RPC_URL: ParamsPerNetwork<string> = {
     'https://polygon-mainnet.g.alchemy.com/v2',
     process.env.POLYGON_RPC_URL
   ),
-  [XDaiNetwork.xdai]: 'https://rpc.xdaichain.com/',
+  [XDaiNetwork.xdai]: 'https://rpc.gnosischain.com',
 };
