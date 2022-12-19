@@ -3,7 +3,7 @@ import { HardhatUserConfig } from 'hardhat/config';
 import {
   EthereumNetwork,
   PolygonNetwork,
-  XDaiNetwork,
+  GnosisNetwork,
   NETWORKS_RPC_URL,
 } from './helper-hardhat-config';
 import '@nomiclabs/hardhat-etherscan';
@@ -55,7 +55,7 @@ const forkUrl = {
   mumbaiTestnet: NETWORKS_RPC_URL[PolygonNetwork.mumbai],
   goerliStaging: NETWORKS_RPC_URL[EthereumNetwork.goerli],
   mumbaiStaging: NETWORKS_RPC_URL[PolygonNetwork.mumbai],
-  xdai: NETWORKS_RPC_URL[XDaiNetwork.xdai],
+  gnosis: NETWORKS_RPC_URL[GnosisNetwork.gnosis],
 };
 
 const forking = FORK
@@ -116,7 +116,7 @@ const config: HardhatUserConfig = {
     mumbaiStaging: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
     goerliTestnet: getCommonNetworkConfig(EthereumNetwork.goerli, 5),
     mumbaiTestnet: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
-    xdai: getCommonNetworkConfig(XDaiNetwork.xdai, 100),
+    gnosis: getCommonNetworkConfig(GnosisNetwork.gnosis, 100),
     local: {
       url: `http://${LOCAL_HOSTNAME}:${LOCAL_PORT}`,
       accounts: accounts.map((account) => account.privateKey),

@@ -31,6 +31,10 @@ const THREE_DAYS = '295200';
 const ALPHA_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const ALPHA_POLYGON_ROOTS_OWNER_RELAYER = '0xf0a0b692e1c764281c211948d03edeef5fb57111';
 const ALPHA_POLYGON_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
+// XDai
+const ALPHA_GNOSIS_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
+const ALPHA_GNOSIS_ROOTS_OWNER_RELAYER = '0xef809a50de35c762fbacf1ae1f6b861ce42911d1';
+const ALPHA_GNOSIS_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
 // Polygon Playground
 const SANDBOX_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const SANDBOX_POLYGON_ROOTS_OWNER_RELAYER = '0x7e2305312099748bbd6a31bff27a8218edd4cbd2';
@@ -173,6 +177,68 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     commitmentMapper: {
       address: '0x21612Eac9b9Ba69F1810074998E5884Ca14f5614',
       owner: ALPHA_POLYGON_OWNER,
+      EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
+      EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+  },
+  // Deployer alpha-prod-gnosis-mnemonic-deployer-dec-19-2022
+  gnosis: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: ALPHA_GNOSIS_PROXY_ADMIN,
+    },
+    badges: {
+      address: '0xa67f1C6c96CB5dD6eF24B07A77893693C210d846',
+      owner: ALPHA_GNOSIS_OWNER,
+      // Badges Metadata URI for the Badges contract
+      uri: 'https://hub.sismo.io/badges/gnosis/{id}.json',
+    },
+    front: {
+      address: '0xC21393D2c8E214ccDC37af4220a675fb3B59491A',
+      collectionIdFirst: '0',
+      collectionIdLast: '10000000',
+    },
+    hydraS1Verifier: {
+      address: '0xf219a3a016DD785332A2305bf52544eE189fe233',
+    },
+    hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
+      address: '0x0a764805Ad76A740D46C81C9A8978790C227084C',
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0',
+      owner: ALPHA_GNOSIS_OWNER,
+    },
+    pythia1Verifier: {
+      address: '0x95f1751c134F3a8BF1ce13827C3c6724049bE692',
+    },
+    synapsPythia1SimpleAttester: {
+      address: '0x919DBe676138ec75Ba03b65F6106EcDEdcE011bD',
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: ALPHA_GNOSIS_OWNER,
+    },
+    attestationsRegistry: {
+      address: '0xd0c551dA71B2c3DA65f0bA0500FA4251d26179A8',
+      owner: ALPHA_GNOSIS_OWNER,
+    },
+    availableRootsRegistry: {
+      address: '0x453bF14103CC941A96721de9A32d5E3d3095e049',
+      owner: ALPHA_GNOSIS_ROOTS_OWNER_RELAYER,
+    },
+    commitmentMapper: {
+      address: '0xe205Fb31B656791850AC65f0623937Bf6170a5Da',
+      owner: ALPHA_GNOSIS_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
