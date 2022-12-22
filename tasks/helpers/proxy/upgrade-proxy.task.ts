@@ -48,7 +48,6 @@ async function upgradeProxy(
       data: data,
     });
     console.log('Send the transaction using etherscan !');
-    await confirm();
   } else {
     // We can connect as proxy admin because signer is unlock
     const proxyAdmin = config.deployOptions.proxyAdmin as string;

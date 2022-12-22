@@ -27,6 +27,7 @@ const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD = [
 
 // Account 0 of the create2Factory mnemonic
 export const SISMO_ADDRESSES_PROVIDER_PROXY_DEPLOYER = '0x77694e7C30B74dd271EACA4207Ada0fC10632f5f';
+// Should always be the same for all chains (deployed with create2)
 export const SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS =
   '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05';
 
@@ -524,7 +525,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
     },
     sismoAddressesProvider: {
-      address: '',
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
       owner: ALPHA_GOERLI_STAGING_OWNER,
     },
   },
