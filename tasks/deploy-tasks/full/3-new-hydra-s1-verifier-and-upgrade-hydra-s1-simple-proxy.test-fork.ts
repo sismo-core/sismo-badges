@@ -155,7 +155,7 @@ describe('FORK-Test New Hydra S1 Verifier and Upgrade HydraS1Simple proxy', () =
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
 
   const oldAttestersAddressesConfig = {
-    sandboxPolygon: {
+    polygonPlayground: {
       hydraS1SimpleAttester: {
         address: '0x0AB188c7260666146B300aD3ad5b2AB99eb91D45',
       },

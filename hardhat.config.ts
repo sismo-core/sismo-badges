@@ -3,7 +3,7 @@ import { HardhatUserConfig } from 'hardhat/config';
 import {
   EthereumNetwork,
   PolygonNetwork,
-  XDaiNetwork,
+  GnosisNetwork,
   NETWORKS_RPC_URL,
 } from './helper-hardhat-config';
 import '@nomiclabs/hardhat-etherscan';
@@ -47,13 +47,15 @@ const FORK_NETWORK = process.env.FORK_NETWORK || '';
 
 const forkUrl = {
   kovan: NETWORKS_RPC_URL[EthereumNetwork.kovan],
-  goerli: NETWORKS_RPC_URL[EthereumNetwork.goerli],
   main: NETWORKS_RPC_URL[EthereumNetwork.main],
   polygon: NETWORKS_RPC_URL[PolygonNetwork.main],
-  sandboxPolygon: NETWORKS_RPC_URL[PolygonNetwork.main],
+  polygonPlayground: NETWORKS_RPC_URL[PolygonNetwork.main],
   rinkeby: NETWORKS_RPC_URL[EthereumNetwork.rinkeby],
-  mumbai: NETWORKS_RPC_URL[PolygonNetwork.mumbai],
-  xdai: NETWORKS_RPC_URL[XDaiNetwork.xdai],
+  goerliTestnet: NETWORKS_RPC_URL[EthereumNetwork.goerli],
+  mumbaiTestnet: NETWORKS_RPC_URL[PolygonNetwork.mumbai],
+  goerliStaging: NETWORKS_RPC_URL[EthereumNetwork.goerli],
+  mumbaiStaging: NETWORKS_RPC_URL[PolygonNetwork.mumbai],
+  gnosis: NETWORKS_RPC_URL[GnosisNetwork.gnosis],
 };
 
 const forking = FORK
@@ -117,13 +119,14 @@ const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   networks: {
     kovan: getCommonNetworkConfig(EthereumNetwork.kovan, 42),
-    goerli: getCommonNetworkConfig(EthereumNetwork.goerli, 5),
     main: getCommonNetworkConfig(EthereumNetwork.main, 1),
     polygon: getCommonNetworkConfig(PolygonNetwork.main, 137),
-    sandboxPolygon: getCommonNetworkConfig(PolygonNetwork.main, 137),
-    rinkeby: getCommonNetworkConfig(EthereumNetwork.rinkeby, 4),
-    mumbai: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
-    xdai: getCommonNetworkConfig(XDaiNetwork.xdai, 100),
+    polygonPlayground: getCommonNetworkConfig(PolygonNetwork.main, 137),
+    goerliStaging: getCommonNetworkConfig(EthereumNetwork.goerli, 5),
+    mumbaiStaging: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
+    goerliTestnet: getCommonNetworkConfig(EthereumNetwork.goerli, 5),
+    mumbaiTestnet: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
+    gnosis: getCommonNetworkConfig(GnosisNetwork.gnosis, 100),
     local: {
       url: `http://${LOCAL_HOSTNAME}:${LOCAL_PORT}`,
       accounts: accounts.map((account) => account.privateKey),

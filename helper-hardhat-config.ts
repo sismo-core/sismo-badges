@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config({});
 
-export type Network = EthereumNetwork | PolygonNetwork | XDaiNetwork;
+export type Network = EthereumNetwork | PolygonNetwork | GnosisNetwork;
 
 export enum EthereumNetwork {
   kovan = 'kovan',
@@ -18,8 +18,8 @@ export enum PolygonNetwork {
   mumbai = 'mumbai',
 }
 
-export enum XDaiNetwork {
-  xdai = 'xdai',
+export enum GnosisNetwork {
+  gnosis = 'gnosis',
 }
 
 export type ParamsPerNetwork<T> =
@@ -42,7 +42,7 @@ export interface PolygonParamsPerNetwork<T> {
 }
 
 export interface XDaiParamsPerNetwork<T> {
-  [XDaiNetwork.xdai]: T;
+  [GnosisNetwork.gnosis]: T;
 }
 
 export interface ObjectString {
@@ -75,5 +75,5 @@ export const NETWORKS_RPC_URL: ParamsPerNetwork<string> = {
     'https://polygon-mainnet.g.alchemy.com/v2',
     process.env.POLYGON_RPC_URL
   ),
-  [XDaiNetwork.xdai]: 'https://rpc.xdaichain.com/',
+  [GnosisNetwork.gnosis]: 'https://rpc.gnosischain.com',
 };

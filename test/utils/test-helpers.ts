@@ -13,6 +13,8 @@ import { DeployOptions } from 'tasks/deploy-tasks/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { KVMerkleTree } from 'hydra-s1-previous';
 import { getBlockTimestamp } from '../../test/utils/evm';
+import { SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS } from '../../tasks/deploy-tasks/deployments-config';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 export const registerRootForAttester = async (
   availableRootsRegistry: AvailableRootsRegistry,
@@ -74,9 +76,7 @@ export class TestingHelper {
     badgeId: BigNumberish,
     accountIsExpectedToHold = true
   ) => {
-    if (!this.sismoAddressesProvider) {
-      throw new Error('Sismo addresses provider not deployed');
-    }
+    this.sismoAddressesProvider = await getAddressesProviderContract(hre);
 
     const badgesAddress = await this.sismoAddressesProvider['get(string)']('Badges');
     const badgesContract = await hre.ethers.getContractAt('Badges', badgesAddress);
@@ -103,9 +103,7 @@ export class TestingHelper {
     expectedBurnCount?: number;
     attester?: HydraS1AccountboundAttester;
   }) => {
-    if (!this.sismoAddressesProvider) {
-      throw new Error('Sismo addresses provider not deployed');
-    }
+    this.sismoAddressesProvider = await getAddressesProviderContract(hre);
 
     const attestationsRegistry = (await hre.ethers.getContractAt(
       'AttestationsRegistry',
@@ -157,3 +155,16 @@ export class TestingHelper {
     expect(await attestationsRegistry.hasAttestation(badgeId, accountAddress)).to.be.true;
   };
 }
+
+export const getAddressesProviderContract = async (hre: HardhatRuntimeEnvironment) => {
+  const code = await hre.network.provider.send('eth_getCode', [
+    SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+  ]);
+
+  if (code === '0x') {
+    throw new Error('Sismo addresses provider not deployed');
+  }
+
+  const AddressesProvider = await hre.ethers.getContractFactory('AddressesProvider');
+  return AddressesProvider.attach(SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS) as AddressesProvider;
+};
