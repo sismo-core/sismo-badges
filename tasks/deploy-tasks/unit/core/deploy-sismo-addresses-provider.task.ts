@@ -176,7 +176,7 @@ async function deploymentAction(
     deployer.address,
   ];
 
-  // Deploy the SismoContractsRegistry implementation in local
+  // Deploy the AddressesProvider implementation in local
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
   const deployed = await customDeployContract(
     hre,
@@ -228,7 +228,7 @@ async function deploymentAction(
   );
 
   if (options?.log) {
-    console.log('Transfer SismoContractsRegistry ownership from the deployer to the expected one');
+    console.log('Transfer AddressesProvider ownership from the deployer to the expected one');
   }
   const transferOwnershipTx = await sismoAddressesProvider.transferOwnership(owner);
   await transferOwnershipTx.wait();

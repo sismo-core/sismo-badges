@@ -64,7 +64,7 @@ contract HydraS1AccountboundAttester is
   using HydraS1Lib for bytes;
   using HydraS1Lib for Request;
 
-  uint8 public constant IMPLEMENTATION_VERSION = 4;
+  uint8 public constant IMPLEMENTATION_VERSION = 5;
 
   /*******************************************************
     Storage layout:
