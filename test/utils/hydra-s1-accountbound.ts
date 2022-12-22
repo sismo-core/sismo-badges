@@ -126,3 +126,10 @@ export const encodeAccountBoundAttestationExtraData = ({
     [ethers.utils.defaultAbiCoder.encode(['uint256'], [nullifier]), burnCount]
   );
 };
+
+export const getNullifierFromExtraData = (extraData: string) => {
+  return ethers.utils.defaultAbiCoder.decode(
+    ['uint256'],
+    ethers.utils.defaultAbiCoder.decode(['bytes', 'uint16'], extraData)[0]
+  );
+};

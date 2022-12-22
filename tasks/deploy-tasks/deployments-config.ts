@@ -25,6 +25,11 @@ const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD = [
   '0x018683c5d2f1f71d7e8b65ab0990635c019de9183359db7e80543c485426e490',
 ];
 
+// Account 0 of the create2Factory mnemonic
+export const SISMO_ADDRESSES_PROVIDER_PROXY_DEPLOYER = '0x77694e7C30B74dd271EACA4207Ada0fC10632f5f';
+export const SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS =
+  '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05';
+
 const THREE_DAYS = '295200';
 
 // Polygon
@@ -585,7 +590,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
     },
     sismoAddressesProvider: {
-      address: '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05',
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
       owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
     },
   },
@@ -651,7 +656,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyY: COMMITMENT_MAPPER_TESTER[1],
     },
     sismoAddressesProvider: {
-      address: '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05',
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
     },
   },

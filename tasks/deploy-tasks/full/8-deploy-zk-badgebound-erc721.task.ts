@@ -5,14 +5,14 @@ import { deploymentsConfig } from '../deployments-config';
 import { ZKBadgeboundERC721 } from 'types';
 import { DeployedZkBadgeboundERC721 } from 'tasks/deploy-tasks/tests/deploy-zk-badgebound-erc721.task';
 
-export interface Deployed6 {
+export interface Deployed8 {
   zkBadgeboundERC721: ZKBadgeboundERC721;
 }
 
 async function deploymentAction(
   { options }: { options: DeployOptions },
   hre: HardhatRuntimeEnvironment
-): Promise<Deployed6> {
+): Promise<Deployed8> {
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
   options = { ...config.deployOptions, ...options };
 

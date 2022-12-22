@@ -6,7 +6,7 @@ import { DeployedHydraS1AccountboundAttester } from 'tasks/deploy-tasks/unit/att
 import { DeployedPythia1SimpleAttester } from 'tasks/deploy-tasks/unit/attesters/pythia-1/deploy-pythia-1-simple-attester.task';
 import { HydraS1AccountboundAttester, Pythia1SimpleAttester } from 'types';
 
-export interface Deployed6 {
+export interface Deployed7 {
   hydraS1AccountboundAttester: HydraS1AccountboundAttester;
   pythia1SimpleAttester: Pythia1SimpleAttester;
 }
@@ -14,7 +14,7 @@ export interface Deployed6 {
 async function deploymentAction(
   { options }: { options: DeployOptions },
   hre: HardhatRuntimeEnvironment
-): Promise<Deployed6> {
+): Promise<Deployed7> {
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
   options = { ...config.deployOptions, ...options };
 
