@@ -250,6 +250,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_GNOSIS_OWNER,
+    },
   },
   // deployer: alpha-testnets-goerli-mnemonic-deployer-dec-15-2022
   goerliTestnet: {
@@ -312,6 +316,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_GOERLI_TESTNET_OWNER,
+    },
   },
   // deployer: alpha-testnets-mumbai-mnemonic-deployer-dec-15-2022
   mumbaiTestnet: {
@@ -373,6 +381,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_MUMBAI_TESTNET_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_MUMBAI_TESTNET_OWNER,
     },
   },
 
@@ -442,7 +454,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     sismoAddressesProvider: {
       address: '',
-      owner: ALPHA_MUMBAI_OWNER,
+      owner: ALPHA_MUMBAI_STAGING_OWNER,
     },
   },
   // deployer "alpha-testnets-goerli-mnemonic-deployer-october-4-2022"
@@ -508,7 +520,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     },
     sismoAddressesProvider: {
       address: '',
-      owner: ALPHA_GOERLI_OWNER,
+      owner: ALPHA_GOERLI_STAGING_OWNER,
     },
   },
   local: {
