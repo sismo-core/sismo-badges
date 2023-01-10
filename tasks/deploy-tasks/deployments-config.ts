@@ -25,30 +25,47 @@ const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD = [
   '0x018683c5d2f1f71d7e8b65ab0990635c019de9183359db7e80543c485426e490',
 ];
 
+// Account 0 of the create2Factory mnemonic
+export const SISMO_ADDRESSES_PROVIDER_PROXY_DEPLOYER = '0x77694e7C30B74dd271EACA4207Ada0fC10632f5f';
+// Should always be the same for all chains (deployed with create2)
+export const SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS =
+  '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05';
+
 const THREE_DAYS = '295200';
-// Rinkeby
-const ALPHA_RINKEBY_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
-const ALPHA_RINKEBY_ROOTS_OWNER_RELAYER = '0x5de4009c77d51782014bb16238ec32971ae9f8d0';
-const ALPHA_RINKEBY_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
-// Goerli
-const ALPHA_GOERLI_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
-const ALPHA_GOERLI_ROOTS_OWNER_RELAYER = '0x7f2e6e158643bcaf85f30c57ae8625f623d82659';
-const ALPHA_GOERLI_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
-// Mumbai
-const ALPHA_MUMBAI_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
-const ALPHA_MUMBAI_ROOTS_OWNER_RELAYER = '0x63f08f8f13126b9eadc76dd683902c61c5115138';
-const ALPHA_MUMBAI_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
+
 // Polygon
 const ALPHA_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const ALPHA_POLYGON_ROOTS_OWNER_RELAYER = '0xf0a0b692e1c764281c211948d03edeef5fb57111';
 const ALPHA_POLYGON_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
-// Polygon Sandbox
+// XDai
+const ALPHA_GNOSIS_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
+const ALPHA_GNOSIS_ROOTS_OWNER_RELAYER = '0xef809a50de35c762fbacf1ae1f6b861ce42911d1';
+const ALPHA_GNOSIS_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
+// Polygon Playground
 const SANDBOX_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const SANDBOX_POLYGON_ROOTS_OWNER_RELAYER = '0x7e2305312099748bbd6a31bff27a8218edd4cbd2';
 const SANDBOX_POLYGON_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
 
+// Goerli Testnet
+const ALPHA_GOERLI_TESTNET_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
+const ALPHA_GOERLI_TESTNET_ROOTS_OWNER_RELAYER = '0xa687922c4bf2eb22297fdf89156b49ed3727618b';
+const ALPHA_GOERLI_TESTNET_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
+// Mumbai Testnet
+const ALPHA_MUMBAI_TESTNET_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
+const ALPHA_MUMBAI_TESTNET_ROOTS_OWNER_RELAYER = '0xca0583a6682607282963d3e2545cd2e75697c2bb';
+const ALPHA_MUMBAI_TESTNET_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
+
+// Goerli Staging
+const ALPHA_GOERLI_STAGING_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
+const ALPHA_GOERLI_STAGING_ROOTS_OWNER_RELAYER = '0x7f2e6e158643bcaf85f30c57ae8625f623d82659';
+const ALPHA_GOERLI_STAGING_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
+// Mumbai Staging
+const ALPHA_MUMBAI_STAGING_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
+const ALPHA_MUMBAI_STAGING_ROOTS_OWNER_RELAYER = '0x63f08f8f13126b9eadc76dd683902c61c5115138';
+const ALPHA_MUMBAI_STAGING_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
+
 export const deploymentsConfig: DeploymentsConfigTypes = {
-  sandboxPolygon: {
+  polygonPlayground: {
     deployOptions: {
       manualConfirm: true,
       log: true,
@@ -67,7 +84,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0xbcE0921E2502898384167414c2F116f7f7B240BC',
+      address: '0xD029177639cc29042D2E6D9De985cbE762092529',
     },
     hydraS1SimpleAttester: {
       enableDeployment: false,
@@ -108,6 +125,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
+    sismoAddressesProvider: {
+      address: '',
+      owner: SANDBOX_POLYGON_OWNER,
+    },
   },
   polygon: {
     deployOptions: {
@@ -128,7 +149,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '0x362Ff03CaC33C4c8Dc7fF98396Dc19a68F29F57C',
+      address: '0x36B61F249f61170A49c9bf8Faaf38819eFB9938A',
     },
     hydraS1SimpleAttester: {
       enableDeployment: false,
@@ -141,7 +162,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       address: '0x10b27d9efa4A1B65412188b6f4F29e64Cf5e0146',
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
-      initialRoot: '0x163c3224fa82070fbee7692146f505144b0307d668d8e8f803171b6ee7a4cd00',
+      initialRoot: '0',
       owner: ALPHA_POLYGON_OWNER,
     },
     pythia1Verifier: {
@@ -169,18 +190,224 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_POLYGON_OWNER,
+    },
   },
-  // deployer "alpha-testnets-mumbai-mnemonic-deployer-october-13-2022"
-  mumbai: {
+  // Deployer alpha-prod-gnosis-mnemonic-deployer-dec-19-2022
+  gnosis: {
     deployOptions: {
       manualConfirm: true,
       log: true,
       behindProxy: true,
-      proxyAdmin: ALPHA_MUMBAI_PROXY_ADMIN,
+      proxyAdmin: ALPHA_GNOSIS_PROXY_ADMIN,
+    },
+    badges: {
+      address: '0xa67f1C6c96CB5dD6eF24B07A77893693C210d846',
+      owner: ALPHA_GNOSIS_OWNER,
+      // Badges Metadata URI for the Badges contract
+      uri: 'https://hub.sismo.io/badges/gnosis/{id}.json',
+    },
+    front: {
+      address: '0xC21393D2c8E214ccDC37af4220a675fb3B59491A',
+      collectionIdFirst: '0',
+      collectionIdLast: '10000000',
+    },
+    hydraS1Verifier: {
+      address: '0xf219a3a016DD785332A2305bf52544eE189fe233',
+    },
+    hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
+      address: '0x0a764805Ad76A740D46C81C9A8978790C227084C',
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0',
+      owner: ALPHA_GNOSIS_OWNER,
+    },
+    pythia1Verifier: {
+      address: '0x95f1751c134F3a8BF1ce13827C3c6724049bE692',
+    },
+    synapsPythia1SimpleAttester: {
+      address: '0x919DBe676138ec75Ba03b65F6106EcDEdcE011bD',
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: ALPHA_GNOSIS_OWNER,
+    },
+    attestationsRegistry: {
+      address: '0xd0c551dA71B2c3DA65f0bA0500FA4251d26179A8',
+      owner: ALPHA_GNOSIS_OWNER,
+    },
+    availableRootsRegistry: {
+      address: '0x453bF14103CC941A96721de9A32d5E3d3095e049',
+      owner: ALPHA_GNOSIS_ROOTS_OWNER_RELAYER,
+    },
+    commitmentMapper: {
+      address: '0xe205Fb31B656791850AC65f0623937Bf6170a5Da',
+      owner: ALPHA_GNOSIS_OWNER,
+      EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
+      EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_GNOSIS_OWNER,
+    },
+  },
+  // deployer: alpha-testnets-goerli-mnemonic-deployer-dec-15-2022
+  goerliTestnet: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: ALPHA_GOERLI_TESTNET_PROXY_ADMIN,
+    },
+    badges: {
+      address: '0xA251eb9Be4e7E2bb382268eCdd0a5fca0A962E6c',
+      owner: ALPHA_GOERLI_TESTNET_OWNER,
+      // Badges Metadata URI for the Badges contract
+      uri: 'https://hub.testnets.sismo.io/badges/goerli/{id}.json',
+    },
+    front: {
+      address: '0x40713429614c47e94bC078069Df9C084fb44edfC',
+      collectionIdFirst: '0',
+      collectionIdLast: '10000000',
+    },
+    hydraS1Verifier: {
+      address: '0x6F470D565Effa8a2594B0BDB9E63Cd21D58FAC0f',
+    },
+    hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
+      address: '0x319d2a1f99DCE97bC1539643Df7cD7A0a978Eb7B',
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0',
+      owner: ALPHA_GOERLI_TESTNET_OWNER,
+    },
+    pythia1Verifier: {
+      address: '0xd6f79719F8e286987417F9910c0ED42AbF95B0EA',
+    },
+    synapsPythia1SimpleAttester: {
+      address: '0x65130b44f33E2E97Ea7031412eAFf7d5FC7bf9ad',
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: ALPHA_GOERLI_TESTNET_OWNER,
+    },
+    attestationsRegistry: {
+      address: '0x7c0F3ba8e29ad7e28CA805933d6d43b35983B2b3',
+      owner: ALPHA_GOERLI_TESTNET_OWNER,
+    },
+    availableRootsRegistry: {
+      address: '0x3be8DF71fc13312411F0d20d26C08E822fE9cF1f',
+      owner: ALPHA_GOERLI_TESTNET_ROOTS_OWNER_RELAYER,
+    },
+    commitmentMapper: {
+      address: '0x60021A3B6a2bC5b27FeAc52C091f5f672B6b7B53',
+      owner: ALPHA_GOERLI_TESTNET_OWNER,
+      EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
+      EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_GOERLI_TESTNET_OWNER,
+    },
+  },
+  // deployer: alpha-testnets-mumbai-mnemonic-deployer-dec-15-2022
+  mumbaiTestnet: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: ALPHA_MUMBAI_TESTNET_PROXY_ADMIN,
+    },
+    badges: {
+      address: '0xc3Ee5Aad6Fb987cF69a2EE7B3B2c92E21E42F34B',
+      owner: ALPHA_MUMBAI_TESTNET_OWNER,
+      // Badges Metadata URI for the Badges contract
+      uri: 'https://hub.testnets.sismo.io/badges/mumbai/{id}.json',
+    },
+    front: {
+      address: '0xcAf720C39bcdF47476aDc0618e6d7B57B7533213',
+      collectionIdFirst: '0',
+      collectionIdLast: '10000000',
+    },
+    hydraS1Verifier: {
+      address: '0x09f35a46C6863F5C8Cd887F690974DCaaDe0A2a5',
+    },
+    hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
+      address: '0xEe6c299A09d352caf53C81621f6D757c7C0B4d7c',
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0',
+      owner: ALPHA_MUMBAI_TESTNET_OWNER,
+    },
+    pythia1Verifier: {
+      address: '0xDA7124b003AeF27A1C44aEe4d6eB6E2Bb0eF9a08',
+    },
+    synapsPythia1SimpleAttester: {
+      address: '0xBbb56145d961742b1f3E3fc2b91077639C8C302a',
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: ALPHA_MUMBAI_TESTNET_OWNER,
+    },
+    attestationsRegistry: {
+      address: '0xc24F86a8D9f82401b693d4FFaa1DCf3109d88524',
+      owner: ALPHA_MUMBAI_TESTNET_OWNER,
+    },
+    availableRootsRegistry: {
+      address: '0xe51e46177505c31CE33791066E17E11d9D180305',
+      owner: ALPHA_MUMBAI_TESTNET_ROOTS_OWNER_RELAYER,
+    },
+    commitmentMapper: {
+      address: '0xE6C1f01C71A184A44A21B10A7FBEb3b1604B4f2a',
+      owner: ALPHA_MUMBAI_TESTNET_OWNER,
+      EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
+      EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_MUMBAI_TESTNET_OWNER,
+    },
+  },
+
+  /////////////////////////////////////////////////////////////////////////
+  //                             STAGING                                 //
+  /////////////////////////////////////////////////////////////////////////
+  // deployer "alpha-testnets-mumbai-mnemonic-deployer-october-13-2022"
+  mumbaiStaging: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: ALPHA_MUMBAI_STAGING_PROXY_ADMIN,
     },
     badges: {
       address: '0x5722fEa81027533721BA161964622271560da1aC',
-      owner: ALPHA_MUMBAI_OWNER,
+      owner: ALPHA_MUMBAI_STAGING_OWNER,
       // Badges Metadata URI for the Badges contract
       uri: 'https://hub.staging.zikies.io/badges/mumbai/{id}.json',
     },
@@ -204,7 +431,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0',
-      owner: ALPHA_MUMBAI_OWNER,
+      owner: ALPHA_MUMBAI_STAGING_OWNER,
     },
     pythia1Verifier: {
       address: '0x115dFa344C877fF74e970F06BE10FF5A59EAba02',
@@ -215,34 +442,38 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
       commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[1],
-      owner: ALPHA_MUMBAI_OWNER,
+      owner: ALPHA_MUMBAI_STAGING_OWNER,
     },
     attestationsRegistry: {
       address: '0xf576E42E5b2682B8f606B1840c3A982610C29a3f',
-      owner: ALPHA_MUMBAI_OWNER,
+      owner: ALPHA_MUMBAI_STAGING_OWNER,
     },
     availableRootsRegistry: {
       address: '0x2c17e335d131dfd21238475Dd545B9B29Fb5A27D',
-      owner: ALPHA_MUMBAI_ROOTS_OWNER_RELAYER,
+      owner: ALPHA_MUMBAI_STAGING_ROOTS_OWNER_RELAYER,
     },
     commitmentMapper: {
       address: '0x82B54988e4E3a2850501F91AC06CEA82bdb014D3',
-      owner: ALPHA_MUMBAI_OWNER,
+      owner: ALPHA_MUMBAI_STAGING_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
     },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_MUMBAI_STAGING_OWNER,
+    },
   },
   // deployer "alpha-testnets-goerli-mnemonic-deployer-october-4-2022"
-  goerli: {
+  goerliStaging: {
     deployOptions: {
       manualConfirm: true,
       log: true,
       behindProxy: true,
-      proxyAdmin: ALPHA_GOERLI_PROXY_ADMIN,
+      proxyAdmin: ALPHA_GOERLI_STAGING_PROXY_ADMIN,
     },
     badges: {
       address: '0xE06B14D5835925e1642d7216F4563a1273509F10',
-      owner: ALPHA_GOERLI_OWNER,
+      owner: ALPHA_GOERLI_STAGING_OWNER,
       // Badges Metadata URI for the Badges contract
       uri: 'https://hub.staging.zikies.io/badges/goerli/{id}.json',
     },
@@ -266,7 +497,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0',
-      owner: ALPHA_GOERLI_OWNER,
+      owner: ALPHA_GOERLI_STAGING_OWNER,
     },
     pythia1Verifier: {
       address: '0xEE077AD7a47e56F075f0C3bd41Cdc1629FdA3a9c',
@@ -277,21 +508,25 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[0],
       commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_STAGING[1],
-      owner: ALPHA_GOERLI_OWNER,
+      owner: ALPHA_GOERLI_STAGING_OWNER,
     },
     attestationsRegistry: {
       address: '0xf85BA0afA375495eE625910Db61b6b1406756234',
-      owner: ALPHA_GOERLI_OWNER,
+      owner: ALPHA_GOERLI_STAGING_OWNER,
     },
     availableRootsRegistry: {
       address: '0xdDa4c8d2933dAA21Aac75B88fF59725725ba813F',
-      owner: ALPHA_GOERLI_ROOTS_OWNER_RELAYER,
+      owner: ALPHA_GOERLI_STAGING_ROOTS_OWNER_RELAYER,
     },
     commitmentMapper: {
       address: '0x0844662f25817B735BC9B6d9D11995F1A6c4dCB1',
-      owner: ALPHA_GOERLI_OWNER,
+      owner: ALPHA_GOERLI_STAGING_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
+    },
+    sismoAddressesProvider: {
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+      owner: ALPHA_GOERLI_STAGING_OWNER,
     },
   },
   local: {
@@ -355,6 +590,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: '0x1e468ad0fcde4edec429cd41eb28a0e78d4f31fa2c25172ef677468b2b38a9dc',
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
     },
+    sismoAddressesProvider: {
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
+    },
   },
   hardhat: {
     deployOptions: {
@@ -416,6 +655,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
       EdDSAPubKeyX: COMMITMENT_MAPPER_TESTER[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_TESTER[1],
+    },
+    sismoAddressesProvider: {
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+      owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
     },
   },
 };

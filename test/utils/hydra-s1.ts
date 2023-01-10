@@ -11,10 +11,12 @@ import {
   SnarkProof,
   SNARK_FIELD,
   Inputs,
+  EddsaPublicKey,
 } from '@sismo-core/hydra-s1';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber, BigNumberish, Bytes, BytesLike, ethers } from 'ethers';
 import hre from 'hardhat';
 import { HydraS1AccountboundAttester } from 'types';
+import { ClaimStruct } from 'types/HydraS1Base';
 import { RequestStruct } from 'types/HydraS1SimpleAttester';
 
 /*************************************************/
@@ -48,10 +50,12 @@ export const generateHydraS1Accounts = async (
 
 export type GroupData = { [address: string]: number };
 
-export const generateGroup = (S1Accounts: HydraS1Account[]): GroupData => {
+export const generateGroup = (S1Accounts: HydraS1Account[], value: number): GroupData => {
   const List = {};
   S1Accounts.forEach((account, index) => {
-    Object.assign(List, { [BigNumber.from(account.identifier).toHexString()]: index + 1 });
+    Object.assign(List, {
+      [BigNumber.from(account.identifier).toHexString()]: value ?? 0,
+    });
   });
   return List;
 };
@@ -162,6 +166,17 @@ export const encodeGroupProperties = (groupProperties: HydraS1SimpleGroupPropert
   );
 };
 
+export const decodeGroupProperties = (
+  encodedProperties: BytesLike
+): HydraS1SimpleGroupProperties => {
+  const [groupIndex, generationTimestamp, isScore] = ethers.utils.defaultAbiCoder.decode(
+    ['uint128', 'uint32', 'bool'],
+    encodedProperties
+  );
+
+  return { groupIndex, generationTimestamp, isScore };
+};
+
 /*************************************************/
 /************    PROVING SCHEME     *************/
 /*************************************************/
@@ -204,10 +219,19 @@ export const decodeRequestAndProofFromBytes = (data: string) => {
  * ***********************************************/
 
 export type GenerateAttesterGroup = {
+  groupValues: number[];
   generationTimestamp?: number;
   isScore?: boolean;
   groupIndex?: number;
   groups?: HydraS1SimpleGroup[];
+};
+
+export type ProvingDataStruct = {
+  accountsTreesWithData: { tree: KVMerkleTree; group: HydraS1SimpleGroup }[];
+  registryTree: KVMerkleTree;
+  groups: HydraS1SimpleGroup[];
+  commitmentMapperPubKey: EddsaPublicKey;
+  accounts: HydraS1Account[];
 };
 
 export const generateProvingData = async (options?: GenerateAttesterGroup) => {
@@ -216,116 +240,171 @@ export const generateProvingData = async (options?: GenerateAttesterGroup) => {
   const commitmentMapper = await CommitmentMapperTester.generate();
   const commitmentMapperPubKey = await commitmentMapper.getPubKey();
 
-  const hydraS1Accounts = await generateHydraS1Accounts(signers, commitmentMapper);
+  const accounts: HydraS1Account[] = await generateHydraS1Accounts(signers, commitmentMapper);
 
-  const [
-    source1,
-    source2,
-    source3,
-    source4,
-    source5,
-    destination1,
-    destination2,
-    destination3,
-    destination4,
-    destination5,
-  ] = hydraS1Accounts;
-
-  const availableGroup = generateGroup(hydraS1Accounts);
-
-  // append group
+  // create group
   const groups = options?.groups ?? [];
-  let generationTimestamp = Math.round(Date.now() / 1000);
+  let generationTimestamp = options?.generationTimestamp ?? Math.round(Date.now() / 1000);
 
-  if (options && options.generationTimestamp) {
-    generationTimestamp = options.generationTimestamp;
+  for (const groupValue of options?.groupValues ?? [1]) {
+    const availableGroup = generateGroup(accounts, groupValue);
+
+    const properties = {
+      groupIndex: groups.length + 1,
+      generationTimestamp,
+      isScore: options?.isScore ?? false,
+    };
+
+    groups.push({
+      data: availableGroup,
+      properties,
+      id: generateGroupIdFromProperties(properties).toHexString(),
+    });
   }
 
-  const properties: HydraS1SimpleGroupProperties = {
-    groupIndex: groups.length + 1,
-    generationTimestamp,
-    isScore: options?.isScore ?? false,
-  };
-
-  groups.push({
-    data: availableGroup,
-    properties,
-    id: generateGroupIdFromProperties(properties).toHexString(),
-  });
-
   // format data
-  const accountsTrees: KVMerkleTree[] = [];
+  const accountsTreesWithData: { tree: KVMerkleTree; group: HydraS1SimpleGroup }[] = [];
   const registryTreeData: MerkleTreeData = {};
 
   let poseidon = await buildPoseidon();
 
   for (let i = 0; i < groups.length; i++) {
     let _accountsTree = new KVMerkleTree(groups[i].data, poseidon, ACCOUNTS_TREE_HEIGHT);
-    accountsTrees.push(_accountsTree);
+    accountsTreesWithData.push({ tree: _accountsTree, group: groups[i] });
     registryTreeData[_accountsTree.getRoot().toHexString()] = groups[i].id;
   }
 
   const registryTree = new KVMerkleTree(registryTreeData, poseidon, REGISTRY_TREE_HEIGHT);
 
-  const sources = [source1, source2, source3, source4, source5];
-  const destinations = [destination1, destination2, destination3, destination4, destination5];
-
-  return { accountsTrees, registryTree, groups, commitmentMapperPubKey, sources, destinations };
+  return {
+    accountsTreesWithData,
+    registryTree,
+    groups,
+    commitmentMapperPubKey,
+    accounts,
+  };
 };
 
-/****************************************************************
- * ************  REQUESTS AND PROOFS GENERATIONS  ***************
- * **************************************************************/
+/******************************************
+ ************ PROOF GENERATOR **************
+ ******************************************/
 
-export type GenerateRequestAndProofArgs = {
-  prover: HydraS1Prover;
-  attester: HydraS1AccountboundAttester;
-  group: HydraS1SimpleGroup;
-  source: HydraS1Account;
+export type HydraS1ProofRequest = {
+  sources: HydraS1Account[];
   destination: HydraS1Account;
-  sourceValue: BigNumber;
+  value?: BigNumber;
+  attesterAddress?: string;
+  group?: HydraS1SimpleGroup;
+};
+
+export type HydraS1Proof = {
+  claim: ClaimStruct;
+  proofData: Bytes;
+};
+
+export type AccountsTreeWithData = { tree: KVMerkleTree; group: HydraS1SimpleGroup };
+
+export type HydraS1ZKPSConstructorArgs = {
+  accountsTreesWithData: AccountsTreeWithData[];
+  registryTree: KVMerkleTree;
+  groups: HydraS1SimpleGroup[];
+  defaultAttesterAddress: string;
+  commitmentMapperPubKey: EddsaPublicKey;
   chainId: number;
-  accountsTree: KVMerkleTree;
 };
 
-export type GenerateRequestAndProofReturnType = {
-  request: RequestStruct;
-  proof: SnarkProof;
-  inputs: Inputs;
-  userParams: any;
-  externalNullifier: BigNumber;
-};
+export class HydraS1ZKPS {
+  accountsTreesWithData: AccountsTreeWithData[];
+  registryTree: KVMerkleTree;
+  groups: HydraS1SimpleGroup[];
+  defaultAttesterAddress: string;
+  commitmentMapperPubKey: EddsaPublicKey;
+  chainId: number;
 
-export const generateRequestAndProof = async (args: GenerateRequestAndProofArgs) => {
-  const externalNullifier = await generateExternalNullifier(
-    args.attester.address,
-    args.group.properties.groupIndex
-  );
+  constructor({
+    accountsTreesWithData,
+    registryTree,
+    groups,
+    defaultAttesterAddress,
+    commitmentMapperPubKey,
+    chainId,
+  }: HydraS1ZKPSConstructorArgs) {
+    this.accountsTreesWithData = accountsTreesWithData;
+    this.registryTree = registryTree;
+    this.groups = groups;
+    this.defaultAttesterAddress = defaultAttesterAddress;
+    this.commitmentMapperPubKey = commitmentMapperPubKey;
+    this.chainId = chainId;
+  }
 
-  const userParams = {
-    source: args.source,
-    destination: args.destination,
-    claimedValue: args.sourceValue,
-    chainId: args.chainId,
-    accountsTree: args.accountsTree,
-    externalNullifier: externalNullifier,
-    isStrict: !args.group.properties.isScore,
-  };
+  public async generateProof(
+    proofRequest: HydraS1ProofRequest,
+    availableGroups?: {
+      registryTree: KVMerkleTree;
+      accountsTreesWithData: {
+        tree: KVMerkleTree;
+        group: HydraS1SimpleGroup;
+      }[];
+    }
+  ) {
+    availableGroups = availableGroups ?? {
+      registryTree: this.registryTree,
+      accountsTreesWithData: this.accountsTreesWithData,
+    };
+    const group = proofRequest.group ?? this.groups[0];
+    const attesterAddress = proofRequest.attesterAddress ?? this.defaultAttesterAddress;
 
-  const inputs = await args.prover.generateInputs(userParams);
+    const source = proofRequest.sources[0];
+    const destination = proofRequest.destination;
+    const claimedValue = proofRequest.value ?? BigNumber.from(1);
+    const chainId = this.chainId;
+    const externalNullifier = await generateExternalNullifier(
+      attesterAddress,
+      group.properties.groupIndex
+    );
+    const isStrict = !group.properties.isScore;
 
-  const proof = await args.prover.generateSnarkProof(userParams);
+    let accountsTreeWithData: { tree: KVMerkleTree; group: HydraS1SimpleGroup } =
+      availableGroups.accountsTreesWithData.filter((data) => data.group.id === group.id)[0];
 
-  const request = {
-    claims: [
-      {
-        groupId: args.group.id,
-        claimedValue: args.sourceValue,
-        extraData: encodeGroupProperties(args.group.properties),
+    if (accountsTreeWithData === undefined) throw new Error('Group not found');
+
+    const accountsTree = accountsTreeWithData.tree;
+
+    const registryTree = availableGroups.registryTree;
+
+    const prover = new HydraS1Prover(registryTree, this.commitmentMapperPubKey);
+
+    const userParams = {
+      source,
+      destination,
+      claimedValue,
+      chainId,
+      accountsTree,
+      externalNullifier,
+      isStrict,
+    };
+
+    const inputs = await prover.generateInputs(userParams);
+
+    const proof = await prover.generateSnarkProof(userParams);
+
+    const claim = {
+      groupId: accountsTreeWithData.group.id,
+      claimedValue: claimedValue,
+      extraData: encodeGroupProperties({
+        ...accountsTreeWithData.group.properties,
+      }),
+    };
+
+    return {
+      request: {
+        claims: [claim],
+        destination: BigNumber.from(destination.identifier).toHexString(),
       },
-    ],
-    destination: BigNumber.from(args.destination.identifier).toHexString(),
-  };
-
-  return { inputs, proof, request, userParams, externalNullifier };
-};
+      proofData: proof.toBytes(),
+      inputs,
+      userParams,
+    };
+  }
+}
