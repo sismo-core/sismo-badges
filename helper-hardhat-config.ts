@@ -7,7 +7,7 @@ export enum EthereumNetwork {
   kovan = 'kovan',
   goerli = 'goerli',
   rinkeby = 'rinkeby',
-  main = 'main',
+  mainnet = 'mainnet',
   hardhat = 'hardhat',
   tenderlyMain = 'tenderlyMain',
   harhatevm = 'harhatevm',
@@ -30,7 +30,7 @@ export type ParamsPerNetwork<T> =
 export interface EthereumParamsPerNetwork<Network> {
   [EthereumNetwork.harhatevm]: Network;
   [EthereumNetwork.rinkeby]: Network;
-  [EthereumNetwork.main]: Network;
+  [EthereumNetwork.mainnet]: Network;
   [EthereumNetwork.hardhat]: Network;
   [EthereumNetwork.tenderlyMain]: Network;
   [EthereumNetwork.goerli]: Network;
@@ -58,7 +58,7 @@ export const NETWORKS_RPC_URL: ParamsPerNetwork<string> = {
     'https://eth-rinkeby.alchemyapi.io/v2',
     process.env.RINKEBY_RPC_URL
   ),
-  [EthereumNetwork.main]: alchemyUrlOrEnvVar(
+  [EthereumNetwork.mainnet]: alchemyUrlOrEnvVar(
     'https://eth-mainnet.alchemyapi.io/v2',
     process.env.MAINNET_RPC_URL
   ),

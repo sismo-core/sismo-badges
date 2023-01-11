@@ -47,7 +47,7 @@ const FORK_NETWORK = process.env.FORK_NETWORK || '';
 
 const forkUrl = {
   kovan: NETWORKS_RPC_URL[EthereumNetwork.kovan],
-  main: NETWORKS_RPC_URL[EthereumNetwork.main],
+  mainnet: NETWORKS_RPC_URL[EthereumNetwork.mainnet],
   polygon: NETWORKS_RPC_URL[PolygonNetwork.main],
   polygonPlayground: NETWORKS_RPC_URL[PolygonNetwork.main],
   rinkeby: NETWORKS_RPC_URL[EthereumNetwork.rinkeby],
@@ -119,7 +119,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   networks: {
     kovan: getCommonNetworkConfig(EthereumNetwork.kovan, 42),
-    main: getCommonNetworkConfig(EthereumNetwork.main, 1),
+    mainnet: getCommonNetworkConfig(EthereumNetwork.mainnet, 1),
     polygon: getCommonNetworkConfig(PolygonNetwork.main, 137),
     polygonPlayground: getCommonNetworkConfig(PolygonNetwork.main, 137),
     goerliStaging: getCommonNetworkConfig(EthereumNetwork.goerli, 5),
