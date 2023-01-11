@@ -18,6 +18,7 @@ import {
 } from '../../../../types';
 import { utils } from 'ethers';
 import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
+import { confirm } from '../../../../tasks/utils';
 
 export interface DeploySismoAddressesProvider {
   owner: string;
@@ -68,7 +69,7 @@ async function deploymentAction(
   // 0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05
   const sismoAddressesProviderProxyAddress = '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05';
 
-  if (hre.network.config.chainId !== 31337) {
+  if (hre.network.config.chainId !== 31337 || process.env.FORK === 'true') {
     const tx = {
       to: create2FactoryDeployer,
       value: utils.parseEther('0.01'),
@@ -203,12 +204,16 @@ async function deploymentAction(
     deployer
   );
   if (options?.log) {
-    console.log('Upgrade proxy to use the deployed implementation');
+    console.log(`Upgrade proxy to use the deployed implementation at ${deployed.address}`);
+    if (options?.manualConfirm) {
+      await confirm();
+    }
   }
   const initData = new AddressesProvider__factory(deployer).interface.encodeFunctionData(
     'initialize',
     [deployer.address]
   );
+
   const upgradeToTx = await sismoAddressesProviderProxy.upgradeToAndCall(
     deployed.address,
     initData
@@ -217,7 +222,14 @@ async function deploymentAction(
 
   // change proxy admin
   if (options?.log) {
-    console.log('Change proxy admin from the deployer to the expected one');
+    console.log(
+      `Change proxy admin (${
+        deployer.address
+      }) from the deployer to the expected one (${options?.proxyAdmin!}))`
+    );
+    if (options?.manualConfirm) {
+      await confirm();
+    }
   }
   const transfertAdminTx = await sismoAddressesProviderProxy.changeAdmin(options?.proxyAdmin!);
   await transfertAdminTx.wait();
@@ -228,7 +240,14 @@ async function deploymentAction(
   );
 
   if (options?.log) {
-    console.log('Transfer AddressesProvider ownership from the deployer to the expected one');
+    console.log(
+      `Transfer AddressesProvider ownership (${
+        deployer.address
+      }) from the deployer to the expected one (${options?.proxyAdmin!})`
+    );
+    if (options?.manualConfirm) {
+      await confirm();
+    }
   }
   const transferOwnershipTx = await sismoAddressesProvider.transferOwnership(owner);
   await transferOwnershipTx.wait();
