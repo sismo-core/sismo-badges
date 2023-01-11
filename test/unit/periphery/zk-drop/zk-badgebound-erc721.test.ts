@@ -156,7 +156,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       await mintBadge({
         sources: [account1],
         destination: account2,
-        badgeId,
         provingScheme,
       });
     });
@@ -183,7 +182,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         BigNumber.from(1)
       );
 
-      evmRevert(hre, evmSnapshotId);
+      await evmRevert(hre, evmSnapshotId);
     });
 
     it('dest 0x2 should be able to mint the ERC721 on 0x2 (by calling `claimTo`)', async () => {
@@ -205,7 +204,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       await mintBadge({
         sources: [account1],
         destination: account3,
-        badgeId,
         provingScheme,
         expectedBurnCount: 1,
       });
@@ -229,14 +227,12 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     it('0x2 should be able to transfer the ERC721 from 0x2 to 0x3 (using `safeTransferFrom`)', async () => {
       evmSnapshotId = await evmSnapshot(hre);
 
-      const { inputs } = await provingScheme.generateProof({
+      const { nullifier: nullifierFrom0x1 } = await provingScheme.generateProof({
         sources: [account1],
         destination: account3,
       });
 
-      expect(
-        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
-      ).to.be.eql(account2Signer.address);
+      expect(await zkBadgeboundERC721.ownerOf(nullifierFrom0x1)).to.be.eql(account2Signer.address);
 
       expect(await zkBadgeboundERC721.balanceOf(account3Signer.address)).to.be.eql(
         BigNumber.from(0)
@@ -247,12 +243,10 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         ['safeTransferFrom(address,address,uint256)'](
           account2Signer.address,
           account3Signer.address,
-          BigNumber.from(inputs.publicInputs.nullifier)
+          nullifierFrom0x1
         );
 
-      expect(
-        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
-      ).to.be.eql(account3Signer.address);
+      expect(await zkBadgeboundERC721.ownerOf(nullifierFrom0x1)).to.be.eql(account3Signer.address);
 
       expect(await zkBadgeboundERC721.balanceOf(account2Signer.address)).to.be.eql(
         BigNumber.from(0)
@@ -268,14 +262,12 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     it('0x2 should be able to transfer the ERC721 from 0x2 to 0x3 (using `transferFrom`)', async () => {
       evmSnapshotId = await evmSnapshot(hre);
 
-      const { inputs } = await provingScheme.generateProof({
+      const { nullifier: nullifierFrom0x1 } = await provingScheme.generateProof({
         sources: [account1],
         destination: account3,
       });
 
-      expect(
-        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
-      ).to.be.eql(account2Signer.address);
+      expect(await zkBadgeboundERC721.ownerOf(nullifierFrom0x1)).to.be.eql(account2Signer.address);
 
       expect(await zkBadgeboundERC721.balanceOf(account3Signer.address)).to.be.eql(
         BigNumber.from(0)
@@ -283,15 +275,9 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
 
       await zkBadgeboundERC721
         .connect(account2Signer)
-        .transferFrom(
-          account2Signer.address,
-          account3Signer.address,
-          BigNumber.from(inputs.publicInputs.nullifier)
-        );
+        .transferFrom(account2Signer.address, account3Signer.address, nullifierFrom0x1);
 
-      expect(
-        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
-      ).to.be.eql(account3Signer.address);
+      expect(await zkBadgeboundERC721.ownerOf(nullifierFrom0x1)).to.be.eql(account3Signer.address);
 
       expect(await zkBadgeboundERC721.balanceOf(account2Signer.address)).to.be.eql(
         BigNumber.from(0)
@@ -305,14 +291,16 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     it('0x3 should be able to transfer ERC721 from 0x3 to any destination with a valid proof of ownership of 0x1 and new destination (badge will be also transferred)', async () => {
       increaseTime(hre, cooldownDuration);
 
-      const { request, proofData, inputs } = await provingScheme.generateProof({
+      const {
+        request,
+        proofData,
+        nullifier: nullifierFrom0x1,
+      } = await provingScheme.generateProof({
         sources: [account1],
         destination: account4,
       });
 
-      expect(
-        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
-      ).to.be.eql(account3Signer.address);
+      expect(await zkBadgeboundERC721.ownerOf(nullifierFrom0x1)).to.be.eql(account3Signer.address);
 
       expect(await zkBadgeboundERC721.balanceOf(account4Signer.address)).to.be.eql(
         BigNumber.from(0)
@@ -323,15 +311,13 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         .transferWithSismo(
           account3Signer.address,
           account4Signer.address,
-          BigNumber.from(inputs.publicInputs.nullifier),
+          nullifierFrom0x1,
           request,
           proofData
         );
 
       // it should transfer the nft to the new destination
-      expect(
-        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
-      ).to.be.eql(account4Signer.address);
+      expect(await zkBadgeboundERC721.ownerOf(nullifierFrom0x1)).to.be.eql(account4Signer.address);
 
       expect(await zkBadgeboundERC721.balanceOf(account3Signer.address)).to.be.eql(
         BigNumber.from(0)
@@ -339,7 +325,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
 
       await checkAttestationIsWellRegistered({
         request,
-        nullifier: BigNumber.from(inputs.publicInputs.nullifier),
+        nullifier: nullifierFrom0x1,
         expectedBurnCount: 2,
         tx: transferTx,
       });
@@ -350,7 +336,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       // 3 - Checks that 0x4 holds the badge
       checkAccountHoldsBadge(account4Signer.address, badgeId);
 
-      evmRevert(hre, resetStateSnapshotId);
+      await evmRevert(hre, resetStateSnapshotId);
     });
   });
 
@@ -358,7 +344,11 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     it('source 0x1 mints the ZK Badge and the ERC721 on dest 0x2 for the first time with a valid proof of ownership of 0x1 and 0x2', async () => {
       resetStateSnapshotId = await evmSnapshot(hre);
 
-      const { request, proofData, inputs } = await provingScheme.generateProof({
+      const {
+        request,
+        proofData,
+        nullifier: nullifierFrom0x1,
+      } = await provingScheme.generateProof({
         sources: [account1],
         destination: account2,
       });
@@ -367,7 +357,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
 
       await checkAttestationIsWellRegistered({
         request,
-        nullifier: BigNumber.from(inputs.publicInputs.nullifier),
+        nullifier: nullifierFrom0x1,
         tx: mintNftTx,
       });
     });
@@ -403,7 +393,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       const { nullifier: nullifierFrom0x3 } = await mintBadge({
         sources: [account3],
         destination: account2,
-        badgeId,
         provingScheme,
       });
 
@@ -452,7 +441,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       await mintBadge({
         sources: [account3],
         destination: account3,
-        badgeId,
         provingScheme,
         expectedBurnCount: 1,
       });
@@ -473,14 +461,12 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       );
 
       // we use the same proof request as in the previous test to check that the token Id is indeed the nullifier used for the badge
-      const { inputs } = await provingScheme.generateProof({
+      const nullifierFrom0x3 = await provingScheme.getNullifier({
         sources: [account3],
         destination: account3,
       });
 
-      expect(
-        await zkBadgeboundERC721.ownerOf(BigNumber.from(inputs.publicInputs.nullifier))
-      ).to.be.eql(account3Signer.address);
+      expect(await zkBadgeboundERC721.ownerOf(nullifierFrom0x3)).to.be.eql(account3Signer.address);
     });
 
     it('dest0x2 should NOT be able to transfer the nft1 (minted with nullifier from 0x1) on 0x3', async () => {
@@ -512,7 +498,11 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     });
 
     it('dest0x2 should NOT be able to transfer the nft1 on 0x3 even with a valid proof (proof with 0x1 nullifier)', async () => {
-      const { request, proofData, inputs } = await provingScheme.generateProof({
+      const {
+        request,
+        proofData,
+        nullifier: nullifierFrom0x1,
+      } = await provingScheme.generateProof({
         sources: [account1],
         destination: account3,
       });
@@ -521,7 +511,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         zkBadgeboundERC721.transferWithSismo(
           account2Signer.address,
           account3Signer.address,
-          BigNumber.from(inputs.publicInputs.nullifier),
+          nullifierFrom0x1,
           request,
           proofData
         )
@@ -548,13 +538,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     });
 
     it('dest 0x2 should be able to transfer the ERC721 from 0x2 to 0x1 with a valid proof of ownership of 0x1 and 0x2', async () => {
-      const { request, proofData, inputs } = await provingScheme.generateProof({
-        sources: [account1],
-        destination: account1,
-      });
-
-      const nullifierFrom0x1 = BigNumber.from(inputs.publicInputs.nullifier);
-
       // 0x1 should not have the badge yet
       await checkAccountHoldsBadge(account1Signer.address, badgeId, false);
 
@@ -562,6 +545,15 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       expect(await zkBadgeboundERC721.balanceOf(account1Signer.address)).to.be.eql(
         BigNumber.from(0)
       );
+
+      const {
+        request,
+        proofData,
+        nullifier: nullifierFrom0x1,
+      } = await provingScheme.generateProof({
+        sources: [account1],
+        destination: account1,
+      });
 
       // 0x2 should have no badge
       await checkAccountHoldsBadge(account2Signer.address, badgeId, false);
@@ -612,7 +604,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       await mintBadge({
         sources: [account1],
         destination: account2,
-        badgeId,
         provingScheme,
       });
 
@@ -625,12 +616,10 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     it('dest 0x2 should be able to mint the ERC721', async () => {
       evmSnapshotId = await evmSnapshot(hre);
 
-      const { inputs } = await provingScheme.generateProof({
+      const { nullifier: nullifierFrom0x1 } = await provingScheme.generateProof({
         sources: [account1],
         destination: account2,
       });
-
-      const nullifierFrom0x1 = BigNumber.from(inputs.publicInputs.nullifier);
 
       await zkBadgeboundERC721.connect(account2Signer).claim();
 
@@ -666,7 +655,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       const { nullifier: nullifierFrom0x4 } = await mintBadge({
         sources: [account4],
         destination: account2,
-        badgeId,
         provingScheme,
       });
 
@@ -721,7 +709,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       const { nullifier: nullifierFrom0x3 } = await mintBadge({
         sources: [account3],
         destination: account2,
-        badgeId,
         provingScheme,
       });
 
@@ -767,12 +754,14 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         destination: account3,
       });
 
-      const { request, proofData, inputs } = await provingScheme.generateProof({
+      const {
+        request,
+        proofData,
+        nullifier: nullifierFrom0x3,
+      } = await provingScheme.generateProof({
         sources: [account3],
         destination: account3,
       });
-
-      const nullifierFrom0x3 = BigNumber.from(inputs.publicInputs.nullifier);
 
       // revert transferWithSismo (valid proof, but the nft (nullifier) is not the same than the nullifier in the proof)
       await expect(
@@ -788,6 +777,120 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       ).to.be.revertedWith(
         `BadgeNullifierNotEqualToTokenId(${nullifierFrom0x3}, ${nullifierFrom0x4})`
       );
+      await evmRevert(hre, resetStateSnapshotId);
+    });
+  });
+
+  describe('Remaining scenarios: Test that strange edge cases do not happen', async () => {
+    it('0x3 should NOT be able to mint an ERC721 on 0x3 if 0x3 holds a badge (but not the gated badge)', async () => {
+      // 0x1 mints a badge on 0x03 (but not the gated badge)
+      await mintBadge({
+        sources: [account1],
+        destination: account3,
+        group: groups[1], // group 1 is not the gated badge group
+        value: BigNumber.from(2), // 2 is the value of the second group
+        provingScheme,
+      });
+
+      // 0x3 should NOT hold the gated badge
+      await checkAccountHoldsBadge(account3Signer.address, badgeId, false);
+
+      // 0x3 should NOT be able to mint an ERC721 on 0x3 if 0x3 holds a badge (but not the gated badge)
+      await expect(zkBadgeboundERC721.connect(account3Signer).claim()).to.be.revertedWith(
+        'UserDoesNotMeetRequirements()'
+      );
+      await evmRevert(hre, resetStateSnapshotId);
+    });
+
+    it('0x1 should NOT be able to mint a NFT on 0x00', async () => {
+      resetStateSnapshotId = await evmSnapshot(hre);
+      // 0x1 mints a badge on 0x02
+      await mintBadge({
+        sources: [account1],
+        destination: account2,
+        provingScheme,
+      });
+
+      await expect(
+        zkBadgeboundERC721.connect(account2Signer).claimTo(zeroAddress)
+      ).to.be.revertedWith('UserDoesNotMeetRequirements()');
+    });
+
+    it('should NOT allow the transfer of the nft to 0x00', async () => {
+      resetStateSnapshotId = await evmSnapshot(hre);
+
+      const { nullifier: nullifierFrom0x1 } = await mintBadge({
+        sources: [account1],
+        destination: account2,
+        provingScheme,
+      });
+
+      // 0x2 mint the nft
+      await zkBadgeboundERC721.connect(account2Signer).claim();
+
+      // 0x2 should hold the nft
+      expect(await zkBadgeboundERC721.balanceOf(account2Signer.address)).to.be.eql(
+        BigNumber.from(1)
+      );
+
+      // 0x2 should NOT be able to transfer the nft to 0x00
+      await expect(
+        zkBadgeboundERC721
+          .connect(account2Signer)
+          ['safeTransferFrom(address,address,uint256)'](
+            account2Signer.address,
+            zeroAddress,
+            nullifierFrom0x1
+          )
+      ).to.be.revertedWith('UserDoesNotMeetRequirements()');
+      await evmRevert(hre, resetStateSnapshotId);
+    });
+
+    it('should NOT allow the transfer of the nft from 0x00 if NFT is not minted', async () => {
+      resetStateSnapshotId = await evmSnapshot(hre);
+
+      const { nullifier: nullifierFrom0x1 } = await mintBadge({
+        sources: [account1],
+        destination: account2,
+        provingScheme,
+      });
+
+      // 0x2 should NOT be able to transfer the nft from 0x00 to 0x2
+      await expect(
+        zkBadgeboundERC721
+          .connect(account2Signer)
+          ['safeTransferFrom(address,address,uint256)'](
+            zeroAddress,
+            account2Signer.address,
+            nullifierFrom0x1
+          )
+      ).to.be.revertedWith('ERC721: invalid token ID');
+
+      await evmRevert(hre, resetStateSnapshotId);
+    });
+
+    it('should NOT allow the transfer of the nft from 0x00 if NFT is minted', async () => {
+      resetStateSnapshotId = await evmSnapshot(hre);
+
+      const { nullifier: nullifierFrom0x1 } = await mintBadge({
+        sources: [account1],
+        destination: account2,
+        provingScheme,
+      });
+
+      // 0x2 mint the nft
+      await zkBadgeboundERC721.connect(account2Signer).claim();
+
+      // 0x2 should NOT be able to transfer the nft from 0x00 to 0x2
+      await expect(
+        zkBadgeboundERC721
+          .connect(account2Signer)
+          ['safeTransferFrom(address,address,uint256)'](
+            zeroAddress,
+            account2Signer.address,
+            nullifierFrom0x1
+          )
+      ).to.be.revertedWith('ERC721: transfer from incorrect owner');
     });
   });
 });

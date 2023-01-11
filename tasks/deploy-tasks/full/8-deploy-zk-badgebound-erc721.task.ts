@@ -22,6 +22,9 @@ async function deploymentAction(
 
   // Deploy SismoAddressesProvider
   const { zkBadgeboundERC721 } = (await hre.run('deploy-zk-badgebound-erc721', {
+    name: 'Mergoor Pass',
+    symbol: 'MPT',
+    // tokenURI: 'https://test.com/mergerpass', -> add correct token URI
     options,
   })) as DeployedZkBadgeboundERC721;
 

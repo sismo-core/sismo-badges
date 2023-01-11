@@ -389,6 +389,7 @@ export class HydraS1ZKPS {
       proofData: proof.toBytes(),
       inputs,
       userParams,
+      nullifier: await this.getNullifier(proofGenerationArgs),
     };
   }
 

@@ -8,7 +8,7 @@ import {
   HydraS1AccountboundAttester,
 } from 'types';
 import { expect } from 'chai';
-import { decodeGroupProperties, HydraS1ZKPS } from './hydra-s1';
+import { decodeGroupProperties, HydraS1ZKPS, ProofGenerationArgs } from './hydra-s1';
 import { RequestStruct } from 'types/HydraS1Base';
 import { DeployOptions } from 'tasks/deploy-tasks/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -147,19 +147,19 @@ export const checkAttestationIsWellRegistered = async ({
 export const mintBadge = async ({
   sources,
   destination,
-  badgeId,
+  group,
+  value,
   provingScheme,
   expectedBurnCount,
-}: {
-  sources: HydraS1Account[];
-  destination: HydraS1Account;
-  badgeId: BigNumberish;
+}: ProofGenerationArgs & {
   provingScheme: HydraS1ZKPS;
   expectedBurnCount?: number;
 }) => {
   const { request, proofData, inputs } = await provingScheme.generateProof({
     sources,
     destination,
+    group,
+    value,
   });
 
   const generateAttestationsTransaction = await provingScheme.defaultAttester.generateAttestations(
@@ -173,6 +173,10 @@ export const mintBadge = async ({
     expectedBurnCount: expectedBurnCount ?? 0,
     tx: generateAttestationsTransaction,
   });
+
+  const badgeId = (await provingScheme.defaultAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+    group?.properties.groupIndex ?? provingScheme.groups[0].properties.groupIndex
+  );
 
   await checkAccountHoldsBadge(BigNumber.from(destination.identifier).toHexString(), badgeId, true);
 
