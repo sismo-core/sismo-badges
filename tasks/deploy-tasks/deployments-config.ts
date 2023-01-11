@@ -78,18 +78,18 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       proxyAdmin: ALPHA_MAINNET_PROXY_ADMIN,
     },
     badges: {
-      address: '',
+      address: '0xe77eb6fb5037bCb11db10b9Ae478A7D01354Ae01',
       owner: ALPHA_MAINNET_OWNER,
       // Badges Metadata URI for the Badges contract
       uri: 'https://hub.sismo.io/badges/mainnet/{id}.json',
     },
     front: {
-      address: '',
+      address: '0xF518eBd3feeb8dc240b5dE46Ec6C57A0313891c1',
       collectionIdFirst: '0',
       collectionIdLast: '10000000',
     },
     hydraS1Verifier: {
-      address: '',
+      address: '0x9338459cD17c9cE309D47d776e5B5A705586c62C',
     },
     hydraS1SimpleAttester: {
       enableDeployment: false,
@@ -99,17 +99,17 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       initialRoot: '0',
     },
     hydraS1AccountboundAttester: {
-      address: '',
+      address: '0x0Fb92857855A34F6bFf6f8c42F9673f6e8329406',
       collectionIdFirst: '10000001',
       collectionIdLast: '20000000',
       initialRoot: '0',
       owner: ALPHA_MAINNET_OWNER,
     },
     pythia1Verifier: {
-      address: '',
+      address: '0x0aC9a4f4bd025F6c414E72fe8B8Dc2FA4aAFBf21',
     },
     synapsPythia1SimpleAttester: {
-      address: '',
+      address: '0xdd12CD5EeA2F185E675120044d4A1b9dB99933c2',
       collectionIdFirst: '30000001',
       collectionIdLast: '30000100',
       commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
@@ -117,15 +117,15 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_MAINNET_OWNER,
     },
     attestationsRegistry: {
-      address: '',
+      address: '0xB62F00e4e637e0E1031420D86B84e46BaE2a139F',
       owner: ALPHA_MAINNET_OWNER,
     },
     availableRootsRegistry: {
-      address: '',
+      address: '0x5E5e0CEfB86c39dbf3AFf31a61375e2D8eF4D001',
       owner: ALPHA_MAINNET_ROOTS_OWNER_RELAYER,
     },
     commitmentMapper: {
-      address: '',
+      address: '0x485ccCC5088873b74d622f505141d950297EC64a',
       owner: ALPHA_MAINNET_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
