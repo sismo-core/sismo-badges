@@ -64,6 +64,8 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
   let badgeId: BigNumber;
   let badgeId2: BigNumber;
 
+  let roles: { admin: string };
+
   before(async () => {
     chainId = parseInt(await hre.getChainId());
 
@@ -131,6 +133,10 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         groups[1].properties.groupIndex
       );
 
+      roles = {
+        admin: await zkBadgeboundERC721.DEFAULT_ADMIN_ROLE(),
+      };
+
       // set up the proving scheme
       provingScheme = new HydraS1ZKPS({
         accountsTreesWithData,
@@ -146,6 +152,59 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       expect(await zkBadgeboundERC721.name()).to.equal('Mergoor Pass');
       expect(await zkBadgeboundERC721.symbol()).to.equal('MPT');
       expect(await zkBadgeboundERC721.MERGOOOR_PASS_BADGE_TOKEN_ID()).to.equal(badgeId);
+      // expect(await zkBadgeboundERC721.tokenURI(0)).to.equal('https://test.com/mergerpass');
+    });
+  });
+
+  describe('Access Control', async () => {
+    it('Should check roles', async () => {
+      expect(await zkBadgeboundERC721.hasRole(roles.admin, deployer.address)).to.be.true;
+    });
+
+    it('Should revert when the sender has not the admin role', async () => {
+      await expect(
+        zkBadgeboundERC721.connect(account5Signer).setBaseTokenUri('https://other-test-domain.com/')
+      ).to.be.revertedWith(
+        `AccessControl: account ${account5Signer.address.toLowerCase()} is missing role ${
+          roles.admin
+        }`
+      );
+    });
+
+    it('Should set the URI', async () => {
+      const tx = await zkBadgeboundERC721
+        .connect(deployer)
+        .setBaseTokenUri('https://other-test-domain.com/');
+
+      await expect(tx)
+        .to.emit(zkBadgeboundERC721, 'BaseTokenUriChanged')
+        .withArgs('https://other-test-domain.com/');
+    });
+
+    it('Should revert when pause() is triggered with no admin role', async () => {
+      await expect(zkBadgeboundERC721.connect(account5Signer).pause()).to.be.revertedWith(
+        `AccessControl: account ${account5Signer.address.toLowerCase()} is missing role ${
+          roles.admin
+        }`
+      );
+    });
+
+    it('Should pause the contract and unpause', async () => {
+      await zkBadgeboundERC721.connect(deployer).pause();
+
+      expect(await zkBadgeboundERC721.paused()).to.be.true;
+      await zkBadgeboundERC721.connect(deployer).unpause();
+      expect(await zkBadgeboundERC721.paused()).to.be.false;
+    });
+
+    it('Should grant admin role', async () => {
+      await zkBadgeboundERC721.connect(deployer).grantRole(roles.admin, account5Signer.address);
+      expect(await zkBadgeboundERC721.hasRole(roles.admin, account5Signer.address)).to.be.true;
+    });
+
+    it('Should revoke admin role', async () => {
+      await zkBadgeboundERC721.connect(account5Signer).revokeRole(roles.admin, deployer.address);
+      expect(await zkBadgeboundERC721.hasRole(roles.admin, deployer.address)).to.be.false;
     });
   });
 
@@ -160,7 +219,22 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       });
     });
 
+    it('dest 0x2 should not be able to mint the ERC721 since the contract is paused', async () => {
+      await zkBadgeboundERC721.connect(account5Signer).pause();
+      expect(await zkBadgeboundERC721.paused()).to.be.true;
+      await expect(zkBadgeboundERC721.connect(account2Signer).claim()).to.be.revertedWith(
+        'NoTokenTransferWhilePaused()'
+      );
+      await zkBadgeboundERC721.connect(account5Signer).unpause();
+    });
+
     it('dest 0x2 should NOT be able to mint the ERC721 on 0x3 without proof', async () => {
+      await mintBadge({
+        sources: [account1],
+        destination: account2,
+        provingScheme,
+      });
+
       await checkAccountHoldsBadge(account2Signer.address, badgeId, true);
 
       await expect(

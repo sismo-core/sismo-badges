@@ -21,8 +21,6 @@ import {Pausable} from '@openzeppelin/contracts/security/Pausable.sol';
 contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
   uint256 public constant MERGOOOR_PASS_BADGE_TOKEN_ID = 200002;
 
-  bytes32 public constant PAUSER_ROLE = keccak256('PAUSER_ROLE');
-
   string private _baseTokenURI;
 
   event BaseTokenUriChanged(string baseTokenURI);
@@ -39,7 +37,6 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
     string memory baseTokenURI
   ) ERC721(name, symbol) {
     _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-    _setupRole(PAUSER_ROLE, _msgSender());
 
     _setBaseTokenUri(baseTokenURI);
   }
@@ -182,14 +179,14 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
   /**
    * @dev Pauses all token transfers.
    */
-  function pause() public virtual onlyRole(PAUSER_ROLE) {
+  function pause() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
     _pause();
   }
 
   /**
    * @dev Unpauses all token transfers.
    */
-  function unpause() public virtual onlyRole(PAUSER_ROLE) {
+  function unpause() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
     _unpause();
   }
 
