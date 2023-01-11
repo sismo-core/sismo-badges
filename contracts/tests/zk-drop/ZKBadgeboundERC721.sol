@@ -21,6 +21,7 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
 
   error NFTAlreadyOwned(address owner, uint256 balance);
   error BadgeNullifierNotEqualToTokenId(uint256 badgeNullifier, uint256 tokenId);
+  error BadgeNullifierZeroNotAllowed();
   error BadgeDestinationAndNFTDestinationNotEqual(address badgeDestination, address nftDestination);
 
   constructor() ERC721('Mergoor Pass', 'MPT') {}
@@ -42,9 +43,12 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
    */
   function claimTo(address to) public {
     _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
-    uint256 nullifier = _getNulliferOfBadge(to);
+    uint256 badgeNullifier = _getNulliferOfBadge(to);
+    if (badgeNullifier == 0) {
+      revert BadgeNullifierZeroNotAllowed();
+    }
 
-    _mint(to, nullifier);
+    _mint(to, badgeNullifier);
   }
 
   /**
@@ -67,18 +71,26 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
   function safeTransferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
     _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
+    if (badgeNullifier == 0) {
+      revert BadgeNullifierZeroNotAllowed();
+    }
     if (badgeNullifier != tokenId) {
       revert BadgeNullifierNotEqualToTokenId(badgeNullifier, tokenId);
     }
+
     _safeTransfer(from, to, tokenId, '');
   }
 
   function transferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
     _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
+    if (badgeNullifier == 0) {
+      revert BadgeNullifierZeroNotAllowed();
+    }
     if (badgeNullifier != tokenId) {
       revert BadgeNullifierNotEqualToTokenId(badgeNullifier, tokenId);
     }
+
     _transfer(from, to, tokenId);
   }
 
