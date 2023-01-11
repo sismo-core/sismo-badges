@@ -33,6 +33,11 @@ export const SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS =
 
 const THREE_DAYS = '295200';
 
+// Mainnet
+const ALPHA_MAINNET_OWNER = '';
+const ALPHA_MAINNET_ROOTS_OWNER_RELAYER = '';
+const ALPHA_MAINNET_PROXY_ADMIN = '';
+
 // Polygon
 const ALPHA_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const ALPHA_POLYGON_ROOTS_OWNER_RELAYER = '0xf0a0b692e1c764281c211948d03edeef5fb57111';
@@ -65,6 +70,71 @@ const ALPHA_MUMBAI_STAGING_ROOTS_OWNER_RELAYER = '0x63f08f8f13126b9eadc76dd68390
 const ALPHA_MUMBAI_STAGING_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
 
 export const deploymentsConfig: DeploymentsConfigTypes = {
+  mainnet: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: ALPHA_MAINNET_PROXY_ADMIN,
+    },
+    badges: {
+      address: '',
+      owner: ALPHA_MAINNET_OWNER,
+      // Badges Metadata URI for the Badges contract
+      uri: 'https://hub.sismo.io/badges/mainnet/{id}.json',
+    },
+    front: {
+      address: '',
+      collectionIdFirst: '0',
+      collectionIdLast: '10000000',
+    },
+    hydraS1Verifier: {
+      address: '',
+    },
+    hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
+      address: '',
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0',
+      owner: ALPHA_MAINNET_OWNER,
+    },
+    pythia1Verifier: {
+      address: '',
+    },
+    synapsPythia1SimpleAttester: {
+      address: '',
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: ALPHA_MAINNET_OWNER,
+    },
+    attestationsRegistry: {
+      address: '',
+      owner: ALPHA_MAINNET_OWNER,
+    },
+    availableRootsRegistry: {
+      address: '',
+      owner: ALPHA_MAINNET_ROOTS_OWNER_RELAYER,
+    },
+    commitmentMapper: {
+      address: '',
+      owner: ALPHA_MAINNET_OWNER,
+      EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
+      EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_MAINNET_OWNER,
+    },
+  },
   polygonPlayground: {
     deployOptions: {
       manualConfirm: true,
