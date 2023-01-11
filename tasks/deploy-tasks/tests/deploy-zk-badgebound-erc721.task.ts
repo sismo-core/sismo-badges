@@ -12,6 +12,9 @@ import {
 } from '../utils';
 
 export interface DeployZKBadgeboundERC721Args {
+  name: string;
+  symbol: string;
+  tokenURI: string;
   options?: DeployOptions;
 }
 
@@ -22,12 +25,12 @@ export interface DeployedZkBadgeboundERC721 {
 const CONTRACT_NAME = 'ZKBadgeboundERC721';
 
 async function deploymentAction(
-  { options }: DeployZKBadgeboundERC721Args,
+  { name, symbol, tokenURI, options }: DeployZKBadgeboundERC721Args,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [];
+  const deploymentArgs = [name, symbol, tokenURI];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
@@ -47,4 +50,8 @@ async function deploymentAction(
   return { zkBadgeboundERC721 };
 }
 
-task('deploy-zk-badgebound-erc721').setAction(wrapCommonDeployOptions(deploymentAction));
+task('deploy-zk-badgebound-erc721')
+  .addParam('name', 'Name of the token')
+  .addParam('symbol', 'Symbol of the token')
+  .addParam('tokenURI', 'Token URI')
+  .setAction(wrapCommonDeployOptions(deploymentAction));

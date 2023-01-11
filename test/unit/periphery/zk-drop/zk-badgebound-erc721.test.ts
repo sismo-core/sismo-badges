@@ -106,6 +106,9 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         }));
 
       ({ zkBadgeboundERC721 } = await hre.run('deploy-zk-badgebound-erc721', {
+        name: 'Mergoor Pass',
+        symbol: 'MPT',
+        tokenURI: 'https://test.com/mergerpass',
         options: { deploymentNamePrefix: 'zk-badgebound-erc721' },
       }));
 
@@ -142,7 +145,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     it('should check the contract configuration', async () => {
       expect(await zkBadgeboundERC721.name()).to.equal('Mergoor Pass');
       expect(await zkBadgeboundERC721.symbol()).to.equal('MPT');
-      expect(await zkBadgeboundERC721.MERGOOOR_PASS_BADGE_ID()).to.equal(badgeId);
+      expect(await zkBadgeboundERC721.MERGOOOR_PASS_BADGE_TOKEN_ID()).to.equal(badgeId);
     });
   });
 

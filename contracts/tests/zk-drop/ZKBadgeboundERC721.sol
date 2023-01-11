@@ -3,6 +3,8 @@ pragma solidity ^0.8.14;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {UsingSismo, Request} from '../../core/SismoLib.sol';
+import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
+import {Pausable} from '@openzeppelin/contracts/security/Pausable.sol';
 
 /**
  * @title ZkBadgeboundERC721
@@ -16,21 +18,37 @@ import {UsingSismo, Request} from '../../core/SismoLib.sol';
  * Each time a NFT is minted or transferred, we make sure that the ZK Badge owned by the account is the same as the one used to mint or transfer the NFT
  */
 
-contract ZKBadgeboundERC721 is ERC721, UsingSismo {
-  uint256 public constant MERGOOOR_PASS_BADGE_ID = 200002;
+contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
+  uint256 public constant MERGOOOR_PASS_BADGE_TOKEN_ID = 200002;
+
+  bytes32 public constant PAUSER_ROLE = keccak256('PAUSER_ROLE');
+
+  string private _baseTokenURI;
+
+  event BaseTokenUriChanged(string baseTokenURI);
 
   error NFTAlreadyOwned(address owner, uint256 balance);
   error BadgeNullifierNotEqualToTokenId(uint256 badgeNullifier, uint256 tokenId);
   error BadgeNullifierZeroNotAllowed();
   error BadgeDestinationAndNFTDestinationNotEqual(address badgeDestination, address nftDestination);
+  error NoTokenTransferWhilePaused();
 
-  constructor() ERC721('Mergoor Pass', 'MPT') {}
+  constructor(
+    string memory name,
+    string memory symbol,
+    string memory baseTokenURI
+  ) ERC721(name, symbol) {
+    _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+    _setupRole(PAUSER_ROLE, _msgSender());
+
+    _setBaseTokenUri(baseTokenURI);
+  }
 
   /**
    * @dev Mints a NFT and transfers it to the account that holds the ZK Badge
-   * @notice The account that calls this function must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_ID
+   * @notice The account that calls this function must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID
    */
-  function claim() public onlyBadgeHolders(MERGOOOR_PASS_BADGE_ID) {
+  function claim() public onlyBadgeHolders(MERGOOOR_PASS_BADGE_TOKEN_ID) {
     uint256 nullifier = _getNulliferOfBadge(_msgSender());
 
     _mint(_msgSender(), nullifier);
@@ -39,10 +57,10 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
   /**
    * @dev Mints a NFT and transfers it to the account that holds the ZK Badge
    * @param to address of the account that will receive the NFT
-   * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_ID
+   * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID
    */
   function claimTo(address to) public {
-    _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
+    _requireBadge(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier == 0) {
       revert BadgeNullifierZeroNotAllowed();
@@ -63,13 +81,13 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
 
   /**
    * @dev Transfers a NFT to the account that holds the ZK Badge with the same nullifier
-   * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_ID
+   * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID
    * @param from address of the account that currently owns the NFT
-   * @param to address of the account that will receive the NFT (must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_ID)
+   * @param to address of the account that will receive the NFT (must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID)
    * @param tokenId id of the NFT to transfer
    */
   function safeTransferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
-    _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
+    _requireBadge(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier == 0) {
       revert BadgeNullifierZeroNotAllowed();
@@ -82,7 +100,7 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
   }
 
   function transferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
-    _requireBadge(to, MERGOOOR_PASS_BADGE_ID);
+    _requireBadge(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier == 0) {
       revert BadgeNullifierZeroNotAllowed();
@@ -96,9 +114,9 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
 
   /**
    * @dev Transfers a NFT to the account that holds the ZK Badge with the same nullifier
-   * @notice The address `to` will receive a ZK Badge and a NFT with the id MERGOOOR_PASS_BADGE_ID that is linked to the same nullifier
+   * @notice The address `to` will receive a ZK Badge and a NFT with the id MERGOOOR_PASS_BADGE_TOKEN_ID that is linked to the same nullifier
    * @param from address of the account that currently owns the NFT
-   * @param to address of the account that will receive the NFT (the address will also receive a ZK Badge with the id MERGOOOR_PASS_BADGE_ID)
+   * @param to address of the account that will receive the NFT (the address will also receive a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID)
    * @param tokenId id of the NFT to transfer
    * @param request user request containing the data needed to mint the ZK Badge
    * @param sismoProof Proof of eligibilty to mint the ZK Badge
@@ -130,6 +148,10 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
     if (balanceOf(to) > 0) {
       revert NFTAlreadyOwned(to, balanceOf(to));
     }
+
+    if (paused()) {
+      revert NoTokenTransferWhilePaused();
+    }
   }
 
   /**
@@ -137,7 +159,46 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo {
    * @param to destination address referenced in the proof with this nullifier
    */
   function _getNulliferOfBadge(address to) internal view returns (uint256) {
-    bytes memory extraData = BADGES.getBadgeExtraData(to, MERGOOOR_PASS_BADGE_ID);
+    bytes memory extraData = BADGES.getBadgeExtraData(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
     return HYDRA_S1_ACCOUNTBOUND_ATTESTER.getNullifierFromExtraData(extraData);
+  }
+
+  /**
+   * @dev Set BaseTokenUri for ERC721 contract
+   */
+  function setBaseTokenUri(string memory baseUri) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setBaseTokenUri(baseUri);
+  }
+
+  function _setBaseTokenUri(string memory baseUri) private {
+    _baseTokenURI = baseUri;
+    emit BaseTokenUriChanged(baseUri);
+  }
+
+  function _baseURI() internal view override returns (string memory) {
+    return _baseTokenURI;
+  }
+
+  /**
+   * @dev Pauses all token transfers.
+   */
+  function pause() public virtual onlyRole(PAUSER_ROLE) {
+    _pause();
+  }
+
+  /**
+   * @dev Unpauses all token transfers.
+   */
+  function unpause() public virtual onlyRole(PAUSER_ROLE) {
+    _unpause();
+  }
+
+  /**
+   * @dev See {IERC165-supportsInterface}.
+   */
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(ERC721, AccessControl) returns (bool) {
+    return super.supportsInterface(interfaceId);
   }
 }
