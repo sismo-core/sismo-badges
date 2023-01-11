@@ -72,8 +72,11 @@ async function deploymentAction(
   if (hre.network.config.chainId !== 31337 || process.env.FORK === 'true') {
     const tx = {
       to: create2FactoryDeployer,
-      value: utils.parseEther('0.01'),
+      value: utils.parseEther('0.1'),
     };
+    if (options?.log) {
+      console.log(`Send 0.1 ETH to create2FactoryDeployer ${create2FactoryDeployer}`);
+    }
     const sendFundTx = await deployer.sendTransaction(tx);
     await sendFundTx.wait();
     // The deployer should always be 0x77694e7c30b74dd271eaca4207ada0fc10632f5f
@@ -81,6 +84,9 @@ async function deploymentAction(
       throw new Error('The deployer should be 0x77694e7c30b74dd271eaca4207ada0fc10632f5f');
     }
 
+    if (options?.log) {
+      console.log(`Deploy ${deploymentName} Proxy`);
+    }
     const proxy = await hre.deployments.deploy(deploymentName + 'Proxy', {
       contract:
         'contracts/periphery/utils/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy',
@@ -90,6 +96,9 @@ async function deploymentAction(
       args: [create2FactoryContract, proxyDeployer, '0x'],
       log: true,
     });
+    if (options?.log) {
+      console.log(`Proxy deployed on ${proxy.address}`);
+    }
   } else {
     // ONLY ON LOCAL NETWORK
 
@@ -193,6 +202,9 @@ async function deploymentAction(
   await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
 
   // Save the deployment
+  await hre.deployments.save(`${deploymentName}Implem`, {
+    ...deployed,
+  });
   await hre.deployments.save(deploymentName, {
     ...deployed,
     address: sismoAddressesProviderProxyAddress,
