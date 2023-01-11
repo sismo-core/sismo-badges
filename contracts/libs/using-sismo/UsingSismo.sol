@@ -82,25 +82,6 @@ contract UsingSismo is Context {
   }
 
   /**
-   * @dev Mint badges from sismoProof received by "Prove With Sismo" off-chain flow
-   * @param request user request
-   * @param sismoProof Sismo proof
-   * @param attester Attester address (default = HYDRA_S1_ACCOUNTBOUND_ATTESTER, see the next function)
-   * @return Address of the owner of the badges, tokenIds of the badges minted and levels of the badges minted
-   * @notice This function will use the default attester (HYDRA_S1_ACCOUNTBOUND_ATTESTER) if no attester is specified.
-   */
-  function _mintSismoBadges(
-    Request memory request,
-    bytes memory sismoProof,
-    address attester // default == HYDRA_S1_ACCOUNTBOUND_ATTESTER, see next function.
-  ) public returns (address, uint256[] memory, uint256[] memory) {
-    (address owner, uint256[] memory badgesTokenIds, uint256[] memory badgesLevels) = Attester(
-      attester
-    ).mintBadges(request, sismoProof);
-    return (owner, badgesTokenIds, badgesLevels);
-  }
-
-  /**
    * @dev Mint badge from sismoProof received by "Prove With Sismo" off-chain flow (DEFAULT ATTESTER USAGE)
    * @param request user request
    * @param sismoProof Sismo proof
@@ -117,6 +98,25 @@ contract UsingSismo is Context {
     ) = HYDRA_S1_ACCOUNTBOUND_ATTESTER.mintBadges(request, sismoProof);
 
     return (owner, badgesTokenIds[0], badgesLevels[0]);
+  }
+
+  /**
+   * @dev Mint badges from sismoProof received by "Prove With Sismo" off-chain flow
+   * @param request user request
+   * @param sismoProof Sismo proof
+   * @param attester Attester address (default = HYDRA_S1_ACCOUNTBOUND_ATTESTER, see the next function)
+   * @return Address of the owner of the badges, tokenIds of the badges minted and levels of the badges minted
+   * @notice This function will use the default attester (HYDRA_S1_ACCOUNTBOUND_ATTESTER) if no attester is specified.
+   */
+  function _mintSismoBadges(
+    Request memory request,
+    bytes memory sismoProof,
+    address attester // default == HYDRA_S1_ACCOUNTBOUND_ATTESTER, see next function.
+  ) public returns (address, uint256[] memory, uint256[] memory) {
+    (address owner, uint256[] memory badgesTokenIds, uint256[] memory badgesLevels) = Attester(
+      attester
+    ).mintBadges(request, sismoProof);
+    return (owner, badgesTokenIds, badgesLevels);
   }
 
   /**
