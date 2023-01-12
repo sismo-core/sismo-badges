@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.14;
 
-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol';
 import {UsingSismo, Request} from '../../core/SismoLib.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 import {Pausable} from '@openzeppelin/contracts/security/Pausable.sol';
+import {Context} from '@openzeppelin/contracts/utils/Context.sol';
 
 /**
  * @title ZkBadgeboundERC721
@@ -18,8 +19,8 @@ import {Pausable} from '@openzeppelin/contracts/security/Pausable.sol';
  * Each time a NFT is minted or transferred, we make sure that the ZK Badge owned by the account is the same as the one used to mint or transfer the NFT
  */
 
-contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
-  uint256 public constant MERGOOOR_PASS_BADGE_TOKEN_ID = 200002;
+contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pausable {
+  uint256 public immutable MERGOOOR_PASS_BADGE_TOKEN_ID;
 
   string private _baseTokenURI;
 
@@ -34,10 +35,20 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
   constructor(
     string memory name,
     string memory symbol,
-    string memory baseTokenURI
-  ) ERC721(name, symbol) {
-    _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+    string memory baseTokenURI,
+    uint256 passTokenId
+  ) {
+    MERGOOOR_PASS_BADGE_TOKEN_ID = passTokenId;
+    initialize(name, symbol, baseTokenURI);
+  }
 
+  function initialize(
+    string memory name,
+    string memory symbol,
+    string memory baseTokenURI
+  ) public initializer {
+    __ERC721_init(name, symbol);
+    _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     _setBaseTokenUri(baseTokenURI);
   }
 
@@ -83,7 +94,11 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
    * @param to address of the account that will receive the NFT (must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID)
    * @param tokenId id of the NFT to transfer
    */
-  function safeTransferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
+  function safeTransferFrom(
+    address from,
+    address to,
+    uint256 tokenId
+  ) public override(ERC721Upgradeable) {
     _requireBadge(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier == 0) {
@@ -96,7 +111,11 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
     _safeTransfer(from, to, tokenId, '');
   }
 
-  function transferFrom(address from, address to, uint256 tokenId) public override(ERC721) {
+  function transferFrom(
+    address from,
+    address to,
+    uint256 tokenId
+  ) public override(ERC721Upgradeable) {
     _requireBadge(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier == 0) {
@@ -141,7 +160,7 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
     address to,
     uint256,
     uint256
-  ) internal view override(ERC721) {
+  ) internal view override(ERC721Upgradeable) {
     if (balanceOf(to) > 0) {
       revert NFTAlreadyOwned(to, balanceOf(to));
     }
@@ -195,7 +214,15 @@ contract ZKBadgeboundERC721 is ERC721, UsingSismo, AccessControl, Pausable {
    */
   function supportsInterface(
     bytes4 interfaceId
-  ) public view virtual override(ERC721, AccessControl) returns (bool) {
+  ) public view virtual override(ERC721Upgradeable, AccessControl) returns (bool) {
     return super.supportsInterface(interfaceId);
+  }
+
+  function _msgSender() internal view override(Context, ContextUpgradeable) returns (address) {
+    return msg.sender;
+  }
+
+  function _msgData() internal pure override(Context, ContextUpgradeable) returns (bytes calldata) {
+    return msg.data;
   }
 }

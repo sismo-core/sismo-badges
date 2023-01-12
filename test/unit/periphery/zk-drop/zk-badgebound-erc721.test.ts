@@ -3,6 +3,8 @@ import { EddsaPublicKey, HydraS1Account, KVMerkleTree } from '@sismo-core/hydra-
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import hre, { ethers } from 'hardhat';
+import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
+import { getImplementation } from '../../../../utils';
 import {
   checkAccountHoldsBadge,
   checkAttestationIsWellRegistered,
@@ -15,6 +17,7 @@ import {
   AvailableRootsRegistry,
   Badges,
   HydraS1AccountboundAttester,
+  TransparentUpgradeableProxy__factory,
   ZKBadgeboundERC721,
 } from '../../../../types';
 import {
@@ -107,10 +110,19 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
           deploymentNamePrefix: 'zk-badgebound-erc721',
         }));
 
+      badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+        groups[0].properties.groupIndex
+      );
+
+      badgeId2 = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+        groups[1].properties.groupIndex
+      );
+
       ({ zkBadgeboundERC721 } = await hre.run('deploy-zk-badgebound-erc721', {
-        name: 'Mergoor Pass',
-        symbol: 'MPT',
-        tokenURI: 'https://test.com/mergerpass',
+        name: 'Ziki Pass',
+        symbol: 'ZKP',
+        tokenURI: 'https://test.com/zikipass',
+        passTokenId: badgeId.toString(),
         options: { deploymentNamePrefix: 'zk-badgebound-erc721' },
       }));
 
@@ -123,14 +135,6 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       await hydraS1AccountboundAttester.setCooldownDurationForGroupIndex(
         groups[0].properties.groupIndex,
         cooldownDuration
-      );
-
-      badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
-        groups[0].properties.groupIndex
-      );
-
-      badgeId2 = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
-        groups[1].properties.groupIndex
       );
 
       roles = {
@@ -149,10 +153,9 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     });
 
     it('should check the contract configuration', async () => {
-      expect(await zkBadgeboundERC721.name()).to.equal('Mergoor Pass');
-      expect(await zkBadgeboundERC721.symbol()).to.equal('MPT');
-      expect(await zkBadgeboundERC721.MERGOOOR_PASS_BADGE_TOKEN_ID()).to.equal(badgeId);
-      // expect(await zkBadgeboundERC721.tokenURI(0)).to.equal('https://test.com/mergerpass');
+      expect(await zkBadgeboundERC721.name()).to.be.eql('Ziki Pass');
+      expect(await zkBadgeboundERC721.symbol()).to.equal('ZKP');
+      expect(await zkBadgeboundERC721.MERGOOOR_PASS_BADGE_TOKEN_ID()).to.be.eql(badgeId);
     });
   });
 
@@ -965,6 +968,38 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
             nullifierFrom0x1
           )
       ).to.be.revertedWith('ERC721: transfer from incorrect owner');
+    });
+  });
+
+  /*************************************************************************************/
+  /******************************* UPDATE IMPLEMENTATION *******************************/
+  /*************************************************************************************/
+  describe('Update implementation', () => {
+    it('Should update the implementation', async () => {
+      const proxyAdminSigner = await ethers.getSigner(
+        deploymentsConfig[hre.network.name].deployOptions.proxyAdmin as string
+      );
+
+      const { zkBadgeboundERC721: newZKBadgeboundERC721 } = await hre.run(
+        'deploy-zk-badgebound-erc721',
+        {
+          name: 'Ziki Pass',
+          symbol: 'ZKP',
+          tokenURI: 'https://test.com/zikipass',
+          passTokenId: badgeId.toString(),
+          options: { deploymentNamePrefix: 'zk-badgebound-erc721-new-implem', behindProxy: false },
+        }
+      );
+
+      const zkBadgeboundERC721Proxy = TransparentUpgradeableProxy__factory.connect(
+        zkBadgeboundERC721.address,
+        proxyAdminSigner
+      );
+
+      await (await zkBadgeboundERC721Proxy.upgradeTo(newZKBadgeboundERC721.address)).wait();
+
+      const implementationAddress = await getImplementation(zkBadgeboundERC721Proxy);
+      expect(implementationAddress).to.eql(newZKBadgeboundERC721.address);
     });
   });
 });

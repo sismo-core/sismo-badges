@@ -22,9 +22,10 @@ async function deploymentAction(
 
   // Deploy SismoAddressesProvider
   const { zkBadgeboundERC721 } = (await hre.run('deploy-zk-badgebound-erc721', {
-    name: 'Mergoor Pass',
-    symbol: 'MPT',
-    // tokenURI: 'https://test.com/mergerpass', -> add correct token URI
+    name: 'Ziki Pass',
+    symbol: 'ZKP',
+    tokenURI: 'https://metadata-zikies.zkdrop.io/ziki-pass/123',
+    passTokenId: '515',
     options,
   })) as DeployedZkBadgeboundERC721;
 
