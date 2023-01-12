@@ -1,9 +1,15 @@
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { DeployOptions } from '../utils';
+import {
+  afterDeployment,
+  beforeDeployment,
+  buildDeploymentName,
+  customDeployContract,
+  DeployOptions,
+  getDeployer,
+} from '../utils';
 import { deploymentsConfig } from '../deployments-config';
-import { DeployedSismoAddressesProvider } from 'tasks/deploy-tasks/unit/core/deploy-sismo-addresses-provider.task';
-import { AddressesProvider } from 'types';
+import { AddressesProvider, AddressesProvider__factory } from '../../../types';
 
 export interface Deployed9 {
   sismoAddressesProvider: AddressesProvider;
@@ -19,24 +25,42 @@ async function deploymentAction(
   if (options.manualConfirm || options.log) {
     console.log('9-upgrade-addresses-provider-on-testnets: ', hre.network.name);
   }
+  const CONTRACT_NAME = 'AddressesProvider';
 
   // Deploy SismoAddressesProvider
-  const { sismoAddressesProvider } = (await hre.run('deploy-sismo-addresses-provider', {
-    owner: config.sismoAddressesProvider.owner,
-    badges: config.badges.address,
-    attestationsRegistry: config.attestationsRegistry.address,
-    front: config.front.address,
-    hydraS1AccountboundAttester: config.hydraS1AccountboundAttester.address,
-    commitmentMapperRegistry: config.commitmentMapper.address,
-    availableRootsRegistry: config.availableRootsRegistry.address,
-    hydraS1Verifier: config.hydraS1Verifier.address,
-    options: {
+  const deployer = await getDeployer(hre);
+  const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
+
+  const deploymentArgs = [
+    config.badges.address,
+    config.attestationsRegistry.address,
+    config.front.address,
+    config.hydraS1AccountboundAttester.address,
+    config.availableRootsRegistry.address,
+    config.commitmentMapper.address,
+    config.hydraS1Verifier.address,
+    deployer.address,
+  ];
+
+  const initData = new AddressesProvider__factory().interface.encodeFunctionData('initialize', [
+    deployer.address,
+  ]);
+
+  await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
+  const deployed = await customDeployContract(
+    hre,
+    deployer,
+    deploymentName,
+    CONTRACT_NAME,
+    deploymentArgs,
+    {
       ...options,
-      isImplementationUpgrade: true,
-      proxyAdmin: config.deployOptions.proxyAdmin,
-      proxyAddress: config.sismoAddressesProvider.address,
-    },
-  })) as DeployedSismoAddressesProvider;
+      proxyData: initData,
+    }
+  );
+  await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
+
+  const sismoAddressesProvider = AddressesProvider__factory.connect(deployed.address, deployer);
 
   return {
     sismoAddressesProvider,

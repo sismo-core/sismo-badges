@@ -17,6 +17,7 @@ export interface DeployZKBadgeboundERC721Args {
   symbol: string;
   tokenURI: string;
   gatingBadgeTokenId: number;
+  admin: string;
   options?: DeployOptions;
 }
 
@@ -27,12 +28,12 @@ export interface DeployedZkBadgeboundERC721 {
 const CONTRACT_NAME = 'ZKBadgeboundERC721';
 
 async function deploymentAction(
-  { name, symbol, tokenURI, gatingBadgeTokenId, options }: DeployZKBadgeboundERC721Args,
+  { name, symbol, tokenURI, gatingBadgeTokenId, admin, options }: DeployZKBadgeboundERC721Args,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [name, symbol, tokenURI, gatingBadgeTokenId];
+  const deploymentArgs = [name, symbol, tokenURI, gatingBadgeTokenId, admin];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
@@ -40,6 +41,7 @@ async function deploymentAction(
     name,
     symbol,
     tokenURI,
+    admin,
   ]);
 
   const deployed = await customDeployContract(

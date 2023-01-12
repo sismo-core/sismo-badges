@@ -1,23 +1,23 @@
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { DeployOptions } from '../utils';
-import { deploymentsConfig } from '../deployments-config';
+import { DeployOptions } from '../../utils';
+import { deploymentsConfig } from '../../deployments-config';
 import { ZKBadgeboundERC721 } from 'types';
 import { DeployedZkBadgeboundERC721 } from 'tasks/deploy-tasks/tests/deploy-zk-badgebound-erc721.task';
 
-export interface Deployed8 {
+export interface DeployedZikiPass {
   zkBadgeboundERC721: ZKBadgeboundERC721;
 }
 
 async function deploymentAction(
   { options }: { options: DeployOptions },
   hre: HardhatRuntimeEnvironment
-): Promise<Deployed8> {
+): Promise<DeployedZikiPass> {
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
   options = { ...config.deployOptions, ...options };
 
   if (options.manualConfirm || options.log) {
-    console.log('8-deploy-zk-badgebound-erc721: ', hre.network.name);
+    console.log('deploy-ziki-pass-staging: ', hre.network.name);
   }
 
   // Deploy SismoAddressesProvider
@@ -26,6 +26,7 @@ async function deploymentAction(
     symbol: 'ZKP',
     tokenURI: 'https://metadata-zikies.zkdrop.io/ziki-pass/123',
     gatingBadgeTokenId: '10000515',
+    admin: '0xf61cabba1e6fc166a66bca0fcaa83762edb6d4bd',
     options,
   })) as DeployedZkBadgeboundERC721;
 
@@ -34,4 +35,4 @@ async function deploymentAction(
   };
 }
 
-task('8-deploy-zk-badgebound-erc721').setAction(deploymentAction);
+task('deploy-ziki-pass-staging').setAction(deploymentAction);

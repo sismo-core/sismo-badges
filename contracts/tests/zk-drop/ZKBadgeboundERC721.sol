@@ -36,19 +36,21 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
     string memory name,
     string memory symbol,
     string memory baseTokenURI,
-    uint256 gatingBadgeTokenId
+    uint256 gatingBadgeTokenId,
+    address admin
   ) {
     GATING_BADGE_TOKEN_ID = gatingBadgeTokenId;
-    initialize(name, symbol, baseTokenURI);
+    initialize(name, symbol, baseTokenURI, admin);
   }
 
   function initialize(
     string memory name,
     string memory symbol,
-    string memory baseTokenURI
+    string memory baseTokenURI,
+    address admin
   ) public initializer {
     __ERC721_init(name, symbol);
-    _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+    _setupRole(DEFAULT_ADMIN_ROLE, admin);
     _setBaseTokenUri(baseTokenURI);
   }
 

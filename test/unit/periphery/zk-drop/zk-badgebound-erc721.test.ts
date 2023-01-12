@@ -123,6 +123,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         symbol: 'ZKP',
         tokenURI: 'https://test.com/zikipass',
         gatingBadgeTokenId: badgeId.toString(),
+        admin: deployer.address,
         options: { deploymentNamePrefix: 'zk-badgebound-erc721' },
       }));
 
@@ -987,6 +988,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
           symbol: 'ZKP',
           tokenURI: 'https://test.com/zikipass',
           gatingBadgeTokenId: badgeId.toString(),
+          admin: proxyAdminSigner.address,
           options: { deploymentNamePrefix: 'zk-badgebound-erc721-new-implem', behindProxy: false },
         }
       );

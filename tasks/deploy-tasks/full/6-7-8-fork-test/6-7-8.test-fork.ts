@@ -48,7 +48,6 @@ import {
 } from '../../../../test/utils/pythia-1';
 import { Deployed7 } from 'tasks/deploy-tasks/full/7-upgrade-hydra-s1-accountbound-and-pythia-1-proxies.task';
 import { Deployed6 } from 'tasks/deploy-tasks/full/6-deploy-sismo-addresses-provider.task';
-import { Deployed8 } from 'tasks/deploy-tasks/full/8-deploy-zk-badgebound-erc721.task';
 import { HydraS1Account, KVMerkleTree } from '@sismo-core/hydra-s1';
 import { registerRootForAttester, TestingHelper } from '../../../../test/utils/test-helpers';
 
@@ -244,7 +243,7 @@ describe('FORK Test AddressesProvider and ZKBadgeboundERC7221', () => {
           manualConfirm: false,
           log: false,
         },
-      })) as Deployed8;
+      }));
     });
 
     it('Should run the upgrade script', async () => {

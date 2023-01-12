@@ -4,7 +4,6 @@ import { AddressesProvider } from '../../../../types/AddressesProvider';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import hre, { ethers } from 'hardhat';
-import { Deployed0 } from 'tasks/deploy-tasks/full/0-deploy-core-and-hydra-s1-simple-and-accountbound-and-pythia1.task';
 import {
   AttestationsRegistry,
   AttestationsRegistry__factory,
@@ -13,13 +12,14 @@ import {
   Badges__factory,
   CommitmentMapperRegistry__factory,
   Front,
+  Front__factory,
   HydraS1AccountboundAttester,
   HydraS1AccountboundAttester__factory,
+  HydraS1Verifier__factory,
 } from '../../../../types';
 import { HydraS1Verifier } from '@sismo-core/hydra-s1';
 import { toUtf8Bytes } from 'ethers/lib/utils';
 import { deploymentsConfig } from '../../deployments-config';
-import { getImplementation } from '../../../../utils';
 import { evmSnapshot, impersonateAddress } from '../../../../test/utils';
 import { Deployed9 } from 'tasks/deploy-tasks/full/9-upgrade-addresses-provider-on-testnets.task';
 
@@ -83,6 +83,16 @@ describe('Test Sismo Addresses Provider', () => {
         config.hydraS1AccountboundAttester.address,
         await impersonateAddress(hre, config.hydraS1AccountboundAttester.owner)
       ) as HydraS1AccountboundAttester;
+
+      hydraS1Verifier = HydraS1Verifier__factory.connect(
+        config.hydraS1Verifier.address,
+        await impersonateAddress(hre, config.hydraS1AccountboundAttester.owner)
+      ) as HydraS1Verifier;
+
+      front = Front__factory.connect(
+        config.front.address,
+        await impersonateAddress(hre, config.hydraS1AccountboundAttester.owner)
+      ) as Front;
     });
   });
 
@@ -100,6 +110,27 @@ describe('Test Sismo Addresses Provider', () => {
       })) as Deployed9;
 
       evmSnapshotId = await evmSnapshot(hre);
+    });
+
+    it('should have correct contracts as immutables', async () => {
+      expect(await sismoAddressesProvider.BADGES()).to.be.equal(config.badges.address);
+      expect(await sismoAddressesProvider.ATTESTATIONS_REGISTRY()).to.be.equal(
+        config.attestationsRegistry.address
+      );
+      expect(await sismoAddressesProvider.FRONT()).to.be.equal(config.front.address);
+      expect(await sismoAddressesProvider.HYDRA_S1_ACCOUNTBOUND_ATTESTER()).to.be.equal(
+        config.hydraS1AccountboundAttester.address
+      );
+      expect(await sismoAddressesProvider.COMMITMENT_MAPPER_REGISTRY()).to.be.equal(
+        config.commitmentMapper.address
+      );
+      expect(await sismoAddressesProvider.AVAILABLE_ROOTS_REGISTRY()).to.be.equal(
+        config.availableRootsRegistry.address
+      );
+      expect(await sismoAddressesProvider.HYDRA_S1_VERIFIER()).to.be.equal(
+        config.hydraS1Verifier.address
+      );
+      console.log(await sismoAddressesProvider.BADGES());
     });
   });
 
@@ -258,49 +289,6 @@ describe('Test Sismo Addresses Provider', () => {
         'newAttestationsRegistryContract'
       );
       expect(newAttestationsRegistryContract).to.be.eql(newAttestationsRegistryAddress);
-    });
-  });
-
-  /*************************************************************************************/
-  /******************************* UPDATE IMPLEMENTATION *******************************/
-  /*************************************************************************************/
-  describe('Update implementation', () => {
-    it('Should update the implementation', async () => {
-      const proxyAdminSigner = await ethers.getSigner(
-        deploymentsConfig[hre.network.name].deployOptions.proxyAdmin as string
-      );
-
-      const CONTRACT_NAME = 'AddressesProvider';
-
-      const deploymentArgs = [
-        badges.address,
-        attestationsRegistry.address,
-        front.address,
-        hydraS1AccountboundAttester.address,
-        availableRootsRegistry.address,
-        commitmentMapperRegistry.address,
-        hydraS1Verifier.address,
-        deployer.address,
-      ];
-
-      const newSismoAddressesProvider = await hre.deployments.deploy(CONTRACT_NAME, {
-        contract: 'contracts/core/utils/AddressesProvider.sol:AddressesProvider',
-        from: deployer.address,
-        deterministicDeployment: false,
-        // note proxyData is the encoded call (i.e initialize(params))
-        args: deploymentArgs,
-        log: true,
-      });
-
-      const AdressesProviderProxy = TransparentUpgradeableProxy__factory.connect(
-        sismoAddressesProvider.address,
-        proxyAdminSigner
-      );
-
-      await (await AdressesProviderProxy.upgradeTo(newSismoAddressesProvider.address)).wait();
-
-      const implementationAddress = await getImplementation(AdressesProviderProxy);
-      expect(implementationAddress).to.eql(newSismoAddressesProvider.address);
     });
   });
 });
