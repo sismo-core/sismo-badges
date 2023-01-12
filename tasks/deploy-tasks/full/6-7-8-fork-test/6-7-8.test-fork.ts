@@ -148,7 +148,7 @@ describe('FORK Test AddressesProvider and ZKBadgeboundERC7221', () => {
     // create two groups in the merkle tree with respectively all values of 1 and 2
     ({ accountsTreesWithData, registryTree, groups, accounts, commitmentMapperPubKey } =
       await generateProvingData({
-        groupValues: [1, 2],
+        nbOfGroups: 2,
       }));
 
     accountsSigners = signers;

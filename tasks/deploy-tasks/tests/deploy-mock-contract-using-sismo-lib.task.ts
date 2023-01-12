@@ -25,7 +25,6 @@ async function deploymentAction(
   { options }: DeployMockContractUsingSismoLibArgs,
   hre: HardhatRuntimeEnvironment
 ): Promise<DeployedMockContractUsingSismoLib> {
-  console.log(`Deploying ${CONTRACT_NAME}...`);
   const deployer = await getDeployer(hre);
 
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);

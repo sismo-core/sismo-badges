@@ -75,7 +75,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     // create two groups in the merkle tree with respectively all values of 1 and 2
     ({ accountsTreesWithData, registryTree, groups, accounts, commitmentMapperPubKey } =
       await generateProvingData({
-        groupValues: [1, 2],
+        nbOfGroups: 2,
       }));
 
     cooldownDuration = 60 * 60 * 24;
@@ -238,6 +238,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         sources: [account1],
         destination: account2,
         provingScheme,
+        isDestinationAlreadyHoldingTheBadge: true,
       });
 
       await checkAccountHoldsBadge(account2Signer.address, badgeId, true);
@@ -473,6 +474,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         sources: [account3],
         destination: account2,
         provingScheme,
+        isDestinationAlreadyHoldingTheBadge: true,
       });
 
       // We retrieve the old nullifier to see if it is still the one registered in the extraData of the attestation (should not be the case)
@@ -735,6 +737,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         sources: [account4],
         destination: account2,
         provingScheme,
+        isDestinationAlreadyHoldingTheBadge: true,
       });
 
       const attestationsExtraData4 = await attestationsRegistry.getAttestationExtraData(
@@ -789,6 +792,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         sources: [account3],
         destination: account2,
         provingScheme,
+        isDestinationAlreadyHoldingTheBadge: true,
       });
 
       // 0x2 should have the badge with 0x3 nullifier
@@ -888,6 +892,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         sources: [account1],
         destination: account2,
         provingScheme,
+        isDestinationAlreadyHoldingTheBadge: true,
       });
 
       await expect(
@@ -902,6 +907,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         sources: [account1],
         destination: account2,
         provingScheme,
+        isDestinationAlreadyHoldingTheBadge: true,
       });
 
       // 0x2 mint the nft
@@ -932,6 +938,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         sources: [account1],
         destination: account2,
         provingScheme,
+        isDestinationAlreadyHoldingTheBadge: true,
       });
 
       // 0x2 should NOT be able to transfer the nft from 0x00 to 0x2
@@ -955,6 +962,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         sources: [account1],
         destination: account2,
         provingScheme,
+        isDestinationAlreadyHoldingTheBadge: true,
       });
 
       // 0x2 mint the nft
