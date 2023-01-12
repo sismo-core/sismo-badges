@@ -58,13 +58,13 @@ contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
     // if proxy did not setup owner yet or if called by constructor (for implem setup)
     if (owner() == address(0) || address(this).code.length == 0) {
       _transferOwnership(ownerAddress);
-      set(address(BADGES), 'Badges');
-      set(address(ATTESTATIONS_REGISTRY), 'AttestationsRegistry');
-      set(address(FRONT), 'Front');
-      set(address(HYDRA_S1_ACCOUNTBOUND_ATTESTER), 'HydraS1AccountboundAttester');
-      set(address(AVAILABLE_ROOTS_REGISTRY), 'AvailableRootsRegistry');
-      set(address(COMMITMENT_MAPPER_REGISTRY), 'CommitmentMapperRegistry');
-      set(address(HYDRA_S1_VERIFIER), 'HydraS1Verifier');
+      _set(address(BADGES), 'Badges');
+      _set(address(ATTESTATIONS_REGISTRY), 'AttestationsRegistry');
+      _set(address(FRONT), 'Front');
+      _set(address(HYDRA_S1_ACCOUNTBOUND_ATTESTER), 'HydraS1AccountboundAttester');
+      _set(address(AVAILABLE_ROOTS_REGISTRY), 'AvailableRootsRegistry');
+      _set(address(COMMITMENT_MAPPER_REGISTRY), 'CommitmentMapperRegistry');
+      _set(address(HYDRA_S1_VERIFIER), 'HydraS1Verifier');
     }
   }
 
@@ -74,15 +74,7 @@ contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
    * @param contractName Name of the contract.
    */
   function set(address contractAddress, string memory contractName) public onlyOwner {
-    bytes32 contractNameHash = keccak256(abi.encodePacked(contractName));
-
-    if (_contractAddresses[contractNameHash] == address(0)) {
-      _contractNames.push(contractName);
-    }
-
-    _contractAddresses[contractNameHash] = contractAddress;
-
-    emit ContractAddressSet(contractAddress, contractName);
+    _set(contractAddress, contractName);
   }
 
   /**
@@ -95,7 +87,7 @@ contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
     string[] calldata contractNames
   ) external onlyOwner {
     for (uint256 i = 0; i < contractAddresses.length; i++) {
-      set(contractAddresses[i], contractNames[i]);
+      _set(contractAddresses[i], contractNames[i]);
     }
   }
 
@@ -162,5 +154,22 @@ contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
     }
 
     return (contractNames, contractNamesHash, contractAddresses);
+  }
+
+  /**
+   * @dev Sets the address of a contract.
+   * @param contractAddress Address of the contract.
+   * @param contractName Name of the contract.
+   */
+  function _set(address contractAddress, string memory contractName) internal {
+    bytes32 contractNameHash = keccak256(abi.encodePacked(contractName));
+
+    if (_contractAddresses[contractNameHash] == address(0)) {
+      _contractNames.push(contractName);
+    }
+
+    _contractAddresses[contractNameHash] = contractAddress;
+
+    emit ContractAddressSet(contractAddress, contractName);
   }
 }
