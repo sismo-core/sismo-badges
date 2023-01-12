@@ -24,9 +24,10 @@ async function deploymentAction(
   const { zkBadgeboundERC721 } = (await hre.run('deploy-zk-badgebound-erc721', {
     name: 'Ziki Pass',
     symbol: 'ZKP',
-    tokenURI: 'https://metadata-zikies.zkdrop.io/ziki-pass/123',
+    tokenURI: 'https://metadata-zikies.zkdrop.io/ziki-pass/',
     gatingBadgeTokenId: '10000515',
-    admin: '0xf61cabba1e6fc166a66bca0fcaa83762edb6d4bd',
+    admin: '0xf61cabba1e6fc166a66bca0fcaa83762edb6d4bd', // leo21.eth
+    deploymentName: 'ZikiPass',
     options,
   })) as DeployedZkBadgeboundERC721;
 

@@ -5,7 +5,6 @@ import { ZKBadgeboundERC721, ZKBadgeboundERC721__factory } from '../../../types'
 import {
   afterDeployment,
   beforeDeployment,
-  buildDeploymentName,
   customDeployContract,
   DeployOptions,
   getDeployer,
@@ -13,6 +12,7 @@ import {
 } from '../utils';
 
 export interface DeployZKBadgeboundERC721Args {
+  deploymentName?: string;
   name: string;
   symbol: string;
   tokenURI: string;
@@ -28,11 +28,18 @@ export interface DeployedZkBadgeboundERC721 {
 const CONTRACT_NAME = 'ZKBadgeboundERC721';
 
 async function deploymentAction(
-  { name, symbol, tokenURI, gatingBadgeTokenId, admin, options }: DeployZKBadgeboundERC721Args,
+  {
+    deploymentName,
+    name,
+    symbol,
+    tokenURI,
+    gatingBadgeTokenId,
+    admin,
+    options,
+  }: DeployZKBadgeboundERC721Args,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
-  const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
   const deploymentArgs = [name, symbol, tokenURI, gatingBadgeTokenId, admin];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
@@ -47,7 +54,7 @@ async function deploymentAction(
   const deployed = await customDeployContract(
     hre,
     deployer,
-    deploymentName,
+    deploymentName ? deploymentName : `${options?.deploymentNamePrefix}_${CONTRACT_NAME}`,
     CONTRACT_NAME,
     deploymentArgs,
     { ...options, proxyData: initData }
@@ -74,6 +81,7 @@ async function deploymentAction(
 }
 
 task('deploy-zk-badgebound-erc721')
+  .addOptionalParam('deploymentName', 'Name of the deployment')
   .addParam('name', 'Name of the token')
   .addParam('symbol', 'Symbol of the token')
   .addParam('tokenURI', 'Token URI')
