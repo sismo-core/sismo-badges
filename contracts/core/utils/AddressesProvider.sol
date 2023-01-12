@@ -16,7 +16,7 @@ import {CommitmentMapperRegistry} from '../../periphery/utils/CommitmentMapperRe
 import {HydraS1Verifier} from '@sismo-core/hydra-s1/contracts/HydraS1Verifier.sol';
 
 contract AddressesProvider is IAddressesProvider, Initializable, Ownable {
-  uint8 public constant IMPLEMENTATION_VERSION = 1;
+  uint8 public constant IMPLEMENTATION_VERSION = 2;
 
   Badges public immutable BADGES;
   AttestationsRegistry public immutable ATTESTATIONS_REGISTRY;
