@@ -122,7 +122,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
         name: 'Ziki Pass',
         symbol: 'ZKP',
         tokenURI: 'https://test.com/zikipass',
-        passTokenId: badgeId.toString(),
+        gatingBadgeTokenId: badgeId.toString(),
         options: { deploymentNamePrefix: 'zk-badgebound-erc721' },
       }));
 
@@ -155,7 +155,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
     it('should check the contract configuration', async () => {
       expect(await zkBadgeboundERC721.name()).to.be.eql('Ziki Pass');
       expect(await zkBadgeboundERC721.symbol()).to.equal('ZKP');
-      expect(await zkBadgeboundERC721.MERGOOOR_PASS_BADGE_TOKEN_ID()).to.be.eql(badgeId);
+      expect(await zkBadgeboundERC721.GATING_BADGE_TOKEN_ID()).to.be.eql(badgeId);
     });
   });
 
@@ -986,7 +986,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
           name: 'Ziki Pass',
           symbol: 'ZKP',
           tokenURI: 'https://test.com/zikipass',
-          passTokenId: badgeId.toString(),
+          gatingBadgeTokenId: badgeId.toString(),
           options: { deploymentNamePrefix: 'zk-badgebound-erc721-new-implem', behindProxy: false },
         }
       );

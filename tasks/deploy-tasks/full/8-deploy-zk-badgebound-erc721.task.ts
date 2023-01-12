@@ -25,7 +25,7 @@ async function deploymentAction(
     name: 'Ziki Pass',
     symbol: 'ZKP',
     tokenURI: 'https://metadata-zikies.zkdrop.io/ziki-pass/123',
-    passTokenId: '515',
+    gatingBadgeTokenId: '515',
     options,
   })) as DeployedZkBadgeboundERC721;
 

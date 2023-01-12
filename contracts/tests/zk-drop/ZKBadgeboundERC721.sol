@@ -20,7 +20,7 @@ import {Context} from '@openzeppelin/contracts/utils/Context.sol';
  */
 
 contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pausable {
-  uint256 public immutable MERGOOOR_PASS_BADGE_TOKEN_ID;
+  uint256 public immutable GATING_BADGE_TOKEN_ID;
 
   string private _baseTokenURI;
 
@@ -36,9 +36,9 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
     string memory name,
     string memory symbol,
     string memory baseTokenURI,
-    uint256 passTokenId
+    uint256 gatingBadgeTokenId
   ) {
-    MERGOOOR_PASS_BADGE_TOKEN_ID = passTokenId;
+    GATING_BADGE_TOKEN_ID = gatingBadgeTokenId;
     initialize(name, symbol, baseTokenURI);
   }
 
@@ -56,7 +56,7 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
    * @dev Mints a NFT and transfers it to the account that holds the ZK Badge
    * @notice The account that calls this function must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID
    */
-  function claim() public onlyBadgeHolders(MERGOOOR_PASS_BADGE_TOKEN_ID) {
+  function claim() public onlyBadgeHolders(GATING_BADGE_TOKEN_ID) {
     uint256 nullifier = _getNulliferOfBadge(_msgSender());
 
     _mint(_msgSender(), nullifier);
@@ -68,7 +68,7 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
    * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID
    */
   function claimTo(address to) public {
-    _requireBadge(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
+    _requireBadge(to, GATING_BADGE_TOKEN_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier == 0) {
       revert BadgeNullifierZeroNotAllowed();
@@ -99,7 +99,7 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
     address to,
     uint256 tokenId
   ) public override(ERC721Upgradeable) {
-    _requireBadge(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
+    _requireBadge(to, GATING_BADGE_TOKEN_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier == 0) {
       revert BadgeNullifierZeroNotAllowed();
@@ -116,7 +116,7 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
     address to,
     uint256 tokenId
   ) public override(ERC721Upgradeable) {
-    _requireBadge(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
+    _requireBadge(to, GATING_BADGE_TOKEN_ID);
     uint256 badgeNullifier = _getNulliferOfBadge(to);
     if (badgeNullifier == 0) {
       revert BadgeNullifierZeroNotAllowed();
@@ -175,7 +175,7 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
    * @param to destination address referenced in the proof with this nullifier
    */
   function _getNulliferOfBadge(address to) internal view returns (uint256) {
-    bytes memory extraData = BADGES.getBadgeExtraData(to, MERGOOOR_PASS_BADGE_TOKEN_ID);
+    bytes memory extraData = BADGES.getBadgeExtraData(to, GATING_BADGE_TOKEN_ID);
     return HYDRA_S1_ACCOUNTBOUND_ATTESTER.getNullifierFromExtraData(extraData);
   }
 

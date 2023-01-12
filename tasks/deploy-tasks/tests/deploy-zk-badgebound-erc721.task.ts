@@ -15,7 +15,7 @@ export interface DeployZKBadgeboundERC721Args {
   name: string;
   symbol: string;
   tokenURI: string;
-  passTokenId: number;
+  gatingBadgeTokenId: number;
   options?: DeployOptions;
 }
 
@@ -26,12 +26,12 @@ export interface DeployedZkBadgeboundERC721 {
 const CONTRACT_NAME = 'ZKBadgeboundERC721';
 
 async function deploymentAction(
-  { name, symbol, tokenURI, passTokenId, options }: DeployZKBadgeboundERC721Args,
+  { name, symbol, tokenURI, gatingBadgeTokenId, options }: DeployZKBadgeboundERC721Args,
   hre: HardhatRuntimeEnvironment
 ) {
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
-  const deploymentArgs = [name, symbol, tokenURI, passTokenId];
+  const deploymentArgs = [name, symbol, tokenURI, gatingBadgeTokenId];
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
 
@@ -59,5 +59,5 @@ task('deploy-zk-badgebound-erc721')
   .addParam('name', 'Name of the token')
   .addParam('symbol', 'Symbol of the token')
   .addParam('tokenURI', 'Token URI')
-  .addParam('passTokenId', 'Token ID of the pass token')
+  .addParam('gatingBadgeTokenId', 'gatingBadgeTokenId')
   .setAction(wrapCommonDeployOptions(deploymentAction));
