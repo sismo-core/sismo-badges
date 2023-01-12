@@ -1,5 +1,6 @@
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { getImplementation } from './../../../utils';
 import { ZKBadgeboundERC721, ZKBadgeboundERC721__factory } from '../../../types';
 import {
   afterDeployment,
@@ -52,6 +53,21 @@ async function deploymentAction(
 
   await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
   const zkBadgeboundERC721 = ZKBadgeboundERC721__factory.connect(deployed.address, deployer);
+
+  if (options?.manualConfirm || options?.log) {
+    console.log(`
+  ************************************************************
+  *                           RECAP                          *
+  ************************************************************
+
+  date: ${new Date().toISOString()}
+
+  * ZKBadgeboundERC721:
+  -> proxy: ${zkBadgeboundERC721.address}
+  -> implem: ${await getImplementation(zkBadgeboundERC721)}
+  `);
+  }
+
   return { zkBadgeboundERC721 };
 }
 
