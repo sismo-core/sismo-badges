@@ -12,10 +12,10 @@ import {Context} from '@openzeppelin/contracts/utils/Context.sol';
  * @dev Non-Transferrable NFT (SBT) that can only be claimed by users eligible to a specific ZK Badge.
  * This contract implements two different "Prove With Sismo" flows to claim the SBT:
  * 2-txs flow: #1(tx) user is directed to Sismo to mint the ZK badge.
- *             #2(tx) user calls claim() that checks that they own the ZK badge and mint the SBT
+ *             #2(tx) user calls claim() that checks that they own the ZK badge and mints the SBT
  * 1-tx flow:  #1(off-chain) user is directed to Sismo to create a ZK Proof of eligibility
  *             #(tx): user calls claimWithSismo(req, proof) that forwards the proof to the ZK Attester
- *                    ZK Attester checks the proof and mints the ZK Badge
+ *                    ZK Attester checks the proof (and mints the ZK Badge). Then the SBT is claimed.
  *
  * BadgeBound: The SBT is bound to a specific ZK Badge, which is identified by its nullifier.
  * tokenId Of SBT == nullifier of ZK Badge
