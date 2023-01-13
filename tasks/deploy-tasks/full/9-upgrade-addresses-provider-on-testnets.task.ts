@@ -27,11 +27,12 @@ async function deploymentAction(
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
 
   // we need to use the proxyAdmins of staging since we deployed addressesProvider create2 on staging
-  let network: string;
-  if (process.env.FORK_NETWORK === 'goerliTestnet') {
-    network = 'goerliStaging';
-  } else if (process.env.FORK_NETWORK === 'mumbaiTestnet') {
-    network = 'mumbaiStaging';
+  let badNetwork: string;
+  let deploymentNetwork = process.env.FORK_NETWORK ?? hre.network.name;
+  if (deploymentNetwork === 'goerliTestnet') {
+    badNetwork = 'goerliStaging';
+  } else if (deploymentNetwork === 'mumbaiTestnet') {
+    badNetwork = 'mumbaiStaging';
   } else {
     throw new Error('Invalid network');
   }
@@ -52,7 +53,7 @@ async function deploymentAction(
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
 
-  const proxyAdmin = deploymentsConfig[network].deployOptions.proxyAdmin; // we need to use the proxyAdmins of staging since we deployed addressesProvider create2 on staging
+  const proxyAdmin = deploymentsConfig[badNetwork].deployOptions.proxyAdmin; // we need to use the proxyAdmins of staging since we deployed addressesProvider create2 on staging
 
   const deploymentArgs = [
     config.badges.address,
@@ -87,7 +88,7 @@ async function deploymentAction(
 
   const sismoAddressesProvider = AddressesProvider__factory.connect(
     deployed.address,
-    await hre.ethers.getSigner(deploymentsConfig[network].sismoAddressesProvider.owner as string)
+    await hre.ethers.getSigner(deploymentsConfig[badNetwork].sismoAddressesProvider.owner as string)
   );
 
   if (options?.log) {
