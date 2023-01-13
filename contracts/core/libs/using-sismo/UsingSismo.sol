@@ -19,14 +19,18 @@ enum BalanceRequirementType {
  * @notice This contract is intended to be used by other contracts that need to mint Sismo badges from Sismo proofs or check if an user holds certain Sismo Badges thanks
  * to high level functions such as `_mintSismoBadge` and `_requireBadges`.
  *
- * This contract can be wiewed as a library that goes by pair with the "Prove With Sismo" off-chain flow. The "Prove With Sismo" off-chain flow is a flow that allows
- * users to prove that they hold a specific Sismo badge and mint it on-chain thanks to a Sismo proof. The "Prove With Sismo" off-chain flow allows an user to:
+ * This contract can be viewed as a library that goes by pair with the "Prove With Sismo" off-chain flow. The "Prove With Sismo" off-chain flow is a flow that allows
+ * users to prove that they are eligible to a specific Sismo badge and mint it on-chain thanks to a Sismo proof.
+ * There are two different "Prove With Sismo" flows for on-chain gating:
  *
- * 1. Know if he is eligible to mint a Sismo badge
- * 2. Generate a Sismo proof that proves that he can mint a Sismo Badge
- * 3. Send the proof on-chain to mint the Sismo badge
+ * 2-txs flow: #1(tx) user is directed to Sismo and mints the Badge.
+ *             #2(tx) app smart contract uses the onlyBadgeOwner modifier
+ *                                            or _requireBadges check function
+ *                    to gate their function to Badge holders only
+ * 1-tx flow:  #1(off-chain) user is directed to Sismo to create a Sismo Proof of Badge eligibility
+ *             #(tx): app smart contract uses the _mintSismoBadge function that forwards the proof to the Attester
+ *                    The Attester checks the proof (and mints the ZK Badge).
  *
- * However, if a user wants to prove that he holds a specific Sismo badge without a proof, the `_requireBadges` function of this contract will check if he holds the badge or not.
  */
 
 contract UsingSismo is Context {
@@ -133,7 +137,7 @@ contract UsingSismo is Context {
   }
 
   /*******************************************************
-    2. CORE BADGE REQUIREMENTS FUNCTIONS
+    2. CORE BADGE REQUIREMENTS FUNCTIONS 
     (with default values, see section 4)
   *******************************************************/
 
