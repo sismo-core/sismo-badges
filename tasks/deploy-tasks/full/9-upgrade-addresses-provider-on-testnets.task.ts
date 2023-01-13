@@ -14,6 +14,7 @@ import {
   AddressesProvider__factory,
   TransparentUpgradeableProxy__factory,
 } from '../../../types';
+import { confirm } from '../../../tasks/utils';
 
 export interface Deployed9 {
   sismoAddressesProvider: AddressesProvider;

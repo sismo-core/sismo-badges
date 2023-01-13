@@ -1,7 +1,7 @@
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-import { AddressesProvider__factory, AvailableRootsRegistry__factory } from '../../types';
+import { AddressesProvider__factory } from '../../types';
 import { manualConfirmValidity } from '../utils/confirm';
 import { CommonTaskOptions, wrapCommonOptions } from '../utils';
 
@@ -18,13 +18,13 @@ async function action(
   { signer, contractAddressesAsString, contractNamesAsString, options }: SetBatchArgs,
   hre: HardhatRuntimeEnvironment
 ): Promise<void> {
+  const contractAddresses = contractAddressesAsString.split(',');
+  const contractNames = contractNamesAsString.split(',');
+
   const sismoAddressesProvider = AddressesProvider__factory.connect(
     (await hre.deployments.get(`AddressesProvider`)).address,
     signer
   );
-
-  const contractAddresses = contractAddressesAsString.split(',');
-  const contractNames = contractNamesAsString.split(',');
 
   const actionSetBatchArgs = {
     contractAddresses,
