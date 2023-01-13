@@ -34,6 +34,8 @@ enum BalanceRequirementType {
  */
 
 contract UsingSismo is Context {
+  uint256 public constant SISMO_LIB_VERSION = 1;
+
   AddressesProvider public immutable ADDRESSES_PROVIDER =
     AddressesProvider(0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05);
 
