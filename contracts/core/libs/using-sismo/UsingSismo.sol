@@ -352,7 +352,7 @@ contract UsingSismo is Context {
     if (balanceRequirementType == BalanceRequirementType.gte) {
       return balance >= requiredBalance;
     } else if (balanceRequirementType == BalanceRequirementType.lte) {
-      return balance <= requiredBalance;
+      return balance <= requiredBalance && balance > 0;
     } else if (balanceRequirementType == BalanceRequirementType.equal) {
       return balance == requiredBalance;
     } else {
