@@ -1,46 +1,56 @@
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-
 import { AddressesProvider__factory } from '../../types';
-import { manualConfirmValidity } from '../utils/confirm';
 import { CommonTaskOptions, wrapCommonOptions } from '../utils';
-
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { confirm } from '../utils/confirm';
+import { deploymentsConfig } from '../../tasks/deploy-tasks/deployments-config';
 
 export type SetBatchArgs = {
-  signer: SignerWithAddress;
   contractAddressesAsString: string;
   contractNamesAsString: string;
   options?: CommonTaskOptions;
 };
 
 async function action(
-  { signer, contractAddressesAsString, contractNamesAsString, options }: SetBatchArgs,
+  { contractAddressesAsString, contractNamesAsString, options }: SetBatchArgs,
   hre: HardhatRuntimeEnvironment
 ): Promise<void> {
+  const [signer] = await hre.ethers.getSigners();
+
+  const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
+
   const contractAddresses = contractAddressesAsString.split(',');
   const contractNames = contractNamesAsString.split(',');
 
   const sismoAddressesProvider = AddressesProvider__factory.connect(
-    (await hre.deployments.get(`AddressesProvider`)).address,
+    config.sismoAddressesProvider.address,
     signer
   );
 
-  const actionSetBatchArgs = {
-    contractAddresses,
-  };
-
-  await manualConfirmValidity(actionSetBatchArgs, options);
-
-  const tx = await sismoAddressesProvider.setBatch(contractAddresses, contractNames);
-  await tx.wait();
-
-  if (options?.log) {
+  if (process.env.SET_BATCH_MANUAL_OPERATION === 'true') {
     console.log(`
+    ************************************
+    *             SET BATCH            *
+    ************************************`);
 
-    Batch set for ${contractNames} at ${sismoAddressesProvider.address}
+    if (options?.manualConfirm) {
+      await confirm();
+    }
 
-    `);
+    // we can't connect as signer, we need manual operation
+    const iface = new hre.ethers.utils.Interface(AddressesProvider__factory.abi);
+    const data = iface.encodeFunctionData('setBatch', [contractAddresses, contractNames]);
+
+    console.log({
+      from: await sismoAddressesProvider.owner(),
+      to: sismoAddressesProvider.address,
+      data: data,
+    });
+
+    console.log('Send the transaction using etherscan !');
+  } else {
+    console.log(`
+    Aborting setBatch...`);
   }
 }
 

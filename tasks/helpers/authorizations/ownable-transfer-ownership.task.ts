@@ -37,7 +37,10 @@ async function ownableTransferOwnership(
   }
 
   // verify the signer has the rights to transfer ownership of the current contract
-  if (signer.address.toLowerCase() !== currentOwner.toLowerCase()) {
+  if (
+    signer.address.toLowerCase() !== currentOwner.toLowerCase() &&
+    process.env.OWNER_MANUAL_OPERATION !== 'true'
+  ) {
     throw new Error(
       `The current signer (${signer.address}) is not owner of the current contract ${ownableContract.address}. Can't transfer ownership`
     );
@@ -60,13 +63,26 @@ async function ownableTransferOwnership(
     console.log();
     await confirm();
   }
-  const tx = await ownableContract.transferOwnership(actionTransferOwnership.newOwner);
-  await tx.wait();
 
-  if (options?.log || options?.manualConfirm) {
-    console.log(`
+  if (process.env.OWNER_MANUAL_OPERATION === 'true') {
+    // we can't connect as signer, we need manual operation
+    const iface = new hre.ethers.utils.Interface(Ownable__factory.abi);
+    const data = iface.encodeFunctionData('transferOwnership', [actionTransferOwnership.newOwner]);
+
+    console.log({
+      from: currentOwner.toLowerCase(),
+      to: contractAddress,
+      data: data,
+    });
+  } else {
+    const tx = await ownableContract.transferOwnership(actionTransferOwnership.newOwner);
+    await tx.wait();
+
+    if (options?.log || options?.manualConfirm) {
+      console.log(`
     * Ownership transferred !
     `);
+    }
   }
 }
 
