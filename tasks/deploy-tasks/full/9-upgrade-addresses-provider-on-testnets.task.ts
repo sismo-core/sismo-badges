@@ -20,7 +20,23 @@ async function deploymentAction(
   hre: HardhatRuntimeEnvironment
 ): Promise<Deployed9> {
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
-  options = { ...config.deployOptions, ...options };
+
+  // we need to use the proxyAdmins of staging since we deployed addressesProvider create2 on staging
+  let network: string;
+  if (process.env.FORK_NETWORK === 'goerliTestnet') {
+    network = 'goerliStaging';
+  } else if (process.env.FORK_NETWORK === 'mumbaiTestnet') {
+    network = 'mumbaiStaging';
+  } else {
+    throw new Error('Invalid network');
+  }
+
+  options = {
+    isImplementationUpgrade: true,
+    proxyAddress: config.sismoAddressesProvider.address,
+    ...config.deployOptions,
+    ...options,
+  };
 
   if (options.manualConfirm || options.log) {
     console.log('9-upgrade-addresses-provider-on-testnets: ', hre.network.name);
@@ -56,11 +72,16 @@ async function deploymentAction(
     {
       ...options,
       proxyData: initData,
+      behindProxy: true,
+      proxyAdmin: deploymentsConfig[network].deployOptions.proxyAdmin,
     }
   );
   await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
 
-  const sismoAddressesProvider = AddressesProvider__factory.connect(deployed.address, deployer);
+  const sismoAddressesProvider = AddressesProvider__factory.connect(
+    deployed.address,
+    await hre.ethers.getSigner(deploymentsConfig[network].sismoAddressesProvider.owner as string)
+  );
 
   return {
     sismoAddressesProvider,

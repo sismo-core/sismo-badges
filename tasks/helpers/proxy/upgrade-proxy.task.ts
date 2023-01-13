@@ -10,11 +10,18 @@ export type UpgradeProxyArgs = {
   proxyAddress: string;
   proxyData: string;
   newImplementationAddress: string;
+  specificProxyAdmin?: string; // this proxy admin will be used instead of the one in the config
   options?: CommonTaskOptions;
 };
 
 async function upgradeProxy(
-  { proxyAddress, proxyData, newImplementationAddress, options }: UpgradeProxyArgs,
+  {
+    proxyAddress,
+    proxyData,
+    newImplementationAddress,
+    specificProxyAdmin,
+    options,
+  }: UpgradeProxyArgs,
   hre: HardhatRuntimeEnvironment
 ): Promise<void> {
   const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
@@ -50,7 +57,7 @@ async function upgradeProxy(
     console.log('Send the transaction using etherscan !');
   } else {
     // We can connect as proxy admin because signer is unlock
-    const proxyAdmin = config.deployOptions.proxyAdmin as string;
+    const proxyAdmin = specificProxyAdmin ?? (config.deployOptions.proxyAdmin as string);
     const proxyAdminSigner = await hre.ethers.getSigner(proxyAdmin);
     const proxy = TransparentUpgradeableProxy__factory.connect(proxyAddress, proxyAdminSigner);
 

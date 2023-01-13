@@ -393,7 +393,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
     sismoAddressesProvider: {
-      address: '',
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
       owner: ALPHA_GOERLI_TESTNET_OWNER,
     },
   },
@@ -595,7 +595,7 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
     },
     sismoAddressesProvider: {
-      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+      address: '0x52097335aC9f74eD6751F29B796110A0eD9096E7',
       owner: ALPHA_GOERLI_STAGING_OWNER,
     },
   },

@@ -141,6 +141,7 @@ export const customDeployContract = async (
         proxyAddress,
         proxyData: options.proxyData,
         newImplementationAddress: deployed.address,
+        specificProxyAdmin: options.proxyAdmin,
         options,
       });
     }

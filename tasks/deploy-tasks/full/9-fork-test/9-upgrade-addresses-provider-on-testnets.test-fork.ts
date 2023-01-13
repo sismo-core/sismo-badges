@@ -98,16 +98,34 @@ describe('Test Sismo Addresses Provider', () => {
 
   describe('Update AddressesProvider implem', () => {
     it('Should run the upgrade script', async () => {
-      const admin = await impersonateAddress(
+      let network: string;
+      if (process.env.FORK_NETWORK === 'goerliTestnet') {
+        network = 'goerliStaging';
+      } else if (process.env.FORK_NETWORK === 'mumbaiTestnet') {
+        network = 'mumbaiStaging';
+      } else {
+        throw new Error('Invalid network');
+      }
+
+      const proxyAdmin = await impersonateAddress(
         hre,
-        deploymentsConfig['goerliStaging'].deployOptions.proxyAdmin ??
-          config.sismoAddressesProvider.owner
+        deploymentsConfig[network].deployOptions.proxyAdmin ?? config.sismoAddressesProvider.owner
       );
 
-      console.log('admin', admin.address);
       ({ sismoAddressesProvider } = await hre.run('9-upgrade-addresses-provider-on-testnets', {
         options: { manualConfirm: false, log: false },
       })) as Deployed9;
+
+      const owner = await impersonateAddress(
+        hre,
+        deploymentsConfig[network].sismoAddressesProvider.owner
+      );
+
+      await hre.run('set-batch', {
+        signer: owner,
+        contractAddressesAsString: `${config.badges.address},${config.attestationsRegistry.address},${config.front.address},${config.hydraS1AccountboundAttester.address},${config.availableRootsRegistry.address},${config.commitmentMapper.address},${config.hydraS1Verifier.address}`,
+        contractNamesAsString: `Badges,AttestationsRegistry,Front,HydraS1AccountboundAttester,AvailableRootsRegistry,CommitmentMapperRegistry,HydraS1Verifier`,
+      });
 
       evmSnapshotId = await evmSnapshot(hre);
     });
@@ -130,7 +148,6 @@ describe('Test Sismo Addresses Provider', () => {
       expect(await sismoAddressesProvider.HYDRA_S1_VERIFIER()).to.be.equal(
         config.hydraS1Verifier.address
       );
-      console.log(await sismoAddressesProvider.BADGES());
     });
   });
 
