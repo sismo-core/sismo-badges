@@ -463,7 +463,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       });
 
       await expect(zkBadgeboundERC721.claimWithSismo(request, proofData)).to.be.revertedWith(
-        `NFTAlreadyOwned("${account2Signer.address}", 1)`
+        `ERC721AlreadyOwned("${account2Signer.address}", 1)`
       );
     });
 
@@ -500,7 +500,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       );
 
       await expect(zkBadgeboundERC721.claimTo(account2Signer.address)).to.be.revertedWith(
-        `NFTAlreadyOwned("${account2Signer.address}", 1)`
+        `ERC721AlreadyOwned("${account2Signer.address}", 1)`
       );
     });
 
@@ -511,7 +511,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       });
 
       await expect(zkBadgeboundERC721.claimWithSismo(request, proofData)).to.be.revertedWith(
-        `NFTAlreadyOwned("${account2Signer.address}", 1)`
+        `ERC721AlreadyOwned("${account2Signer.address}", 1)`
       );
     });
 
@@ -593,7 +593,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
           request,
           proofData
         )
-      ).to.be.revertedWith(`NFTAlreadyOwned("${account3Signer.address}", 1)`);
+      ).to.be.revertedWith(`ERC721AlreadyOwned("${account3Signer.address}", 1)`);
     });
 
     it('source 0x1 should be able to mint a badge on dest 0x2', async () => {
