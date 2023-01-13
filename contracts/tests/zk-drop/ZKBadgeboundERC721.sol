@@ -8,15 +8,26 @@ import {Pausable} from '@openzeppelin/contracts/security/Pausable.sol';
 import {Context} from '@openzeppelin/contracts/utils/Context.sol';
 
 /**
- * @title ZkBadgeboundERC721
- * @dev ERC721 token that can be minted by holding a specific ZK Badge
- * @notice This implementation offers to any account holding a specific ZK Badge the possibility to mint a NFT and transfer it to another account
- * The ZK Badge used in this implementation is bounded to an account thanks to a nullifier (in a zero knowledge way)
+ * @title ZKBadgeboundERC721 (ZK-SBT)
+ * @dev Non-Transferrable NFT (SBT) that can only be claimed by users eligible to a specific ZK Badge.
+ * This contract implements two different "Prove With Sismo" flows to claim the SBT:
+ * 2-txs flow: #1(tx) user is directed to Sismo to mint the ZK badge.
+ *             #2(tx) user calls claim() that checks that they own the ZK badge and mint the SBT
+ * 1-tx flow:  #1(off-chain) user is directed to Sismo to create a ZK Proof of eligibility
+ *             #(tx): user calls claimWithSismo(req, proof) that forwards the proof to the ZK Attester
+ *                    ZK Attester checks the proof and mints the ZK Badge
  *
- * The nullifier is a cryptographic information that prevents any account from producing a proof for the same ZK Badge twice
- * We use the nullifier in this contract to make sure that each NFT minted or transfered is linked with a 1-o-1 relationship to a specific ZK Badge and therefore to a specific account
- * To ensure this feature, we use the nullifier as the tokenId of the NFT that is minted or transferred
- * Each time a NFT is minted or transferred, we make sure that the ZK Badge owned by the account is the same as the one used to mint or transfer the NFT
+ * BadgeBound: The SBT is bound to a specific ZK Badge, which is identified by its nullifier.
+ * tokenId Of SBT == nullifier of ZK Badge
+ * The nullifier is an anon identifier of the source account used to prove eligibility to the ZK Badge.
+ *
+ * Accountbound: The Badge is Accountbound, so is the SBT.
+ * The eligible account used to generate ZK Proof can burn and mint the ZK Badge to a new destination
+ * Can be done only once every cooldown duration. Makes it possible to lose
+ * 2-tx flow:  #1(tx) Burn/mint ZK Badge to new destination
+ *             #2(tx) call transfer() SBT to new destination
+ * 1-tx flow:  #1(off-chain) get ZK Proof of eligibility
+ *             #2(tx) call transferWithSismo(req,proof)
  */
 
 contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pausable {
@@ -26,10 +37,10 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
 
   event BaseTokenUriChanged(string baseTokenURI);
 
-  error NFTAlreadyOwned(address owner, uint256 balance);
+  error ERC721AlreadyOwned(address owner, uint256 balance);
   error BadgeNullifierNotEqualToTokenId(uint256 badgeNullifier, uint256 tokenId);
   error BadgeNullifierZeroNotAllowed();
-  error BadgeDestinationAndNFTDestinationNotEqual(address badgeDestination, address nftDestination);
+  error BadgeDestinationAndSBTDestinationNotEqual(address badgeDestination, address nftDestination);
   error NoTokenTransferWhilePaused();
 
   constructor(
@@ -55,8 +66,8 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
   }
 
   /**
-   * @dev Mints a NFT and transfers it to the account that holds the ZK Badge
-   * @notice The account that calls this function must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID
+   * @dev Claim function callable by ZK Badge holders
+   * @notice Claim 2-tx flow (see L14)
    */
   function claim() public onlyBadgeHolders(GATING_BADGE_TOKEN_ID) {
     uint256 nullifier = _getNulliferOfBadge(_msgSender());
@@ -65,9 +76,9 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
   }
 
   /**
-   * @dev Mints a NFT and transfers it to the account that holds the ZK Badge
-   * @param to address of the account that will receive the NFT
-   * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID
+   * @dev Claim function callable by anyone for ZK Badge holders
+   * @notice Claim 2-tx flow (see L14)
+   * @param to recipient of the SBT, must hold the ZK Badge
    */
   function claimTo(address to) public {
     _requireBadge(to, GATING_BADGE_TOKEN_ID);
@@ -80,9 +91,10 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
   }
 
   /**
-   * @dev Mints a ZK Badge and a NFT and transfers it to the account that holds the newly minted ZK Badge
+   * @dev Claim by providing the ZK Proof of eligibility
+   * @notice Claim 1-tx flow (see L16)
    * @param request user request containing the data needed to mint the ZK Badge
-   * @param sismoProof Proof of eligibilty to mint the ZK Badge
+   * @param sismoProof Proof of eligibility to mint the ZK Badge
    */
   function claimWithSismo(Request memory request, bytes memory sismoProof) public {
     (address destination, , ) = _mintSismoBadge(request, sismoProof);
@@ -90,11 +102,12 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
   }
 
   /**
-   * @dev Transfers a NFT to the account that holds the ZK Badge with the same nullifier
-   * @notice The address `to` must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID
-   * @param from address of the account that currently owns the NFT
-   * @param to address of the account that will receive the NFT (must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID)
-   * @param tokenId id of the NFT to transfer
+   * @dev Transfers the SBT to a new destination
+   * @notice Mint/burn 2-tx flow (see L27)
+   * @notice The address `to` must hold a ZK Badge
+   * @param from address of the account that currently owns the SBT
+   * @param to address of the account that will receive the SBT (must hold a ZK Badge)
+   * @param tokenId id of the SBT to transfer (= ZK Badge nullifer)
    */
   function safeTransferFrom(
     address from,
@@ -113,6 +126,14 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
     _safeTransfer(from, to, tokenId, '');
   }
 
+  /**
+   * @dev Transfers the SBT to a new destination
+   * @notice Mint/burn 2-tx flow (see L27)
+   * @notice The address `to` must hold a ZK Badge
+   * @param from address of the account that currently owns the SBT
+   * @param to address of the account that will receive the SBT (must hold a ZK Badge)
+   * @param tokenId id of the SBT to transfer (= ZK Badge nullifer)
+   */
   function transferFrom(
     address from,
     address to,
@@ -131,13 +152,13 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
   }
 
   /**
-   * @dev Transfers a NFT to the account that holds the ZK Badge with the same nullifier
-   * @notice The address `to` will receive a ZK Badge and a NFT with the id MERGOOOR_PASS_BADGE_TOKEN_ID that is linked to the same nullifier
-   * @param from address of the account that currently owns the NFT
-   * @param to address of the account that will receive the NFT (the address will also receive a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID)
-   * @param tokenId id of the NFT to transfer
+   * @dev Transfers the SBT to a new destination
+   * @notice Mint/burn 1-tx flow (see L29)
+   * @param from address of the account that currently owns the SBT
+   * @param to address of the account that will receive the SBT (must hold a ZK Badge with the id MERGOOOR_PASS_BADGE_TOKEN_ID)
+   * @param tokenId id of the SBT to transfer
    * @param request user request containing the data needed to mint the ZK Badge
-   * @param sismoProof Proof of eligibilty to mint the ZK Badge
+   * @param sismoProof Proof of eligibility to mint the ZK Badge
    */
   function transferWithSismo(
     address from,
@@ -148,14 +169,14 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
   ) public {
     (address destination, , ) = _mintSismoBadge(request, sismoProof);
     if (destination != to) {
-      revert BadgeDestinationAndNFTDestinationNotEqual(destination, to);
+      revert BadgeDestinationAndSBTDestinationNotEqual(destination, to);
     }
     safeTransferFrom(from, destination, tokenId);
   }
 
   /**
-   * @dev Prevent the transfer of a NFT if the destination address already owns a NFT
-   * @param to Address to transfer the NFT to
+   * @dev Prevent the transfer of a SBT if the destination address already owns a SBT
+   * @param to Address to transfer the SBT to
    */
   function _beforeTokenTransfer(
     address,
@@ -163,8 +184,10 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
     uint256,
     uint256
   ) internal view override(ERC721Upgradeable) {
+    // Prevent the transfer of a SBT if the destination address already owns a SBT
+    // Not critical but lowers the complexity
     if (balanceOf(to) > 0) {
-      revert NFTAlreadyOwned(to, balanceOf(to));
+      revert ERC721AlreadyOwned(to, balanceOf(to));
     }
 
     if (paused()) {
@@ -182,7 +205,7 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
   }
 
   /**
-   * @dev Set BaseTokenUri for ERC721 contract
+   * @dev Set BaseTokenUri for SBT contract
    */
   function setBaseTokenUri(string memory baseUri) public onlyRole(DEFAULT_ADMIN_ROLE) {
     _setBaseTokenUri(baseUri);
