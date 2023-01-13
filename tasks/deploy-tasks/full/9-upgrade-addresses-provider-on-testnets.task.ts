@@ -9,7 +9,11 @@ import {
   getDeployer,
 } from '../utils';
 import { deploymentsConfig } from '../deployments-config';
-import { AddressesProvider, AddressesProvider__factory } from '../../../types';
+import {
+  AddressesProvider,
+  AddressesProvider__factory,
+  TransparentUpgradeableProxy__factory,
+} from '../../../types';
 
 export interface Deployed9 {
   sismoAddressesProvider: AddressesProvider;
@@ -47,6 +51,8 @@ async function deploymentAction(
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
 
+  const proxyAdmin = deploymentsConfig[network].deployOptions.proxyAdmin; // we need to use the proxyAdmins of staging since we deployed addressesProvider create2 on staging
+
   const deploymentArgs = [
     config.badges.address,
     config.attestationsRegistry.address,
@@ -73,7 +79,7 @@ async function deploymentAction(
       ...options,
       proxyData: initData,
       behindProxy: true,
-      proxyAdmin: deploymentsConfig[network].deployOptions.proxyAdmin,
+      proxyAdmin,
     }
   );
   await afterDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, deployed, options);
@@ -82,6 +88,40 @@ async function deploymentAction(
     deployed.address,
     await hre.ethers.getSigner(deploymentsConfig[network].sismoAddressesProvider.owner as string)
   );
+
+  if (options?.log) {
+    console.log(
+      `
+      ************************************
+      *        UPGRADE PROXY ADMIN       *
+      ************************************
+      
+      Change staging proxy admin (${proxyAdmin}) 
+      to the expected testnet proxy admin (${options?.proxyAdmin!})) ?
+      `
+    );
+    if (options?.manualConfirm) {
+      await confirm();
+    }
+  }
+  const sismoAddressesProviderProxy = await TransparentUpgradeableProxy__factory.connect(
+    sismoAddressesProvider.address,
+    await hre.ethers.getSigner(proxyAdmin as string)
+  );
+
+  const transfertAdminTx = await sismoAddressesProviderProxy.changeAdmin(
+    config.deployOptions.proxyAdmin!
+  );
+  await transfertAdminTx.wait();
+
+  if (options?.log) {
+    console.log(
+      `
+      * Proxy admin successfully changed to ${config.deployOptions.proxyAdmin!} *
+      
+      ************************************`
+    );
+  }
 
   return {
     sismoAddressesProvider,
