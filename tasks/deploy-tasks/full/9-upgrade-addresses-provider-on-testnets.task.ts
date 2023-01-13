@@ -63,11 +63,11 @@ async function deploymentAction(
     config.availableRootsRegistry.address,
     config.commitmentMapper.address,
     config.hydraS1Verifier.address,
-    deployer.address,
+    config.sismoAddressesProvider.owner,
   ];
 
   const initData = new AddressesProvider__factory().interface.encodeFunctionData('initialize', [
-    deployer.address,
+    config.sismoAddressesProvider.owner,
   ]);
 
   await beforeDeployment(hre, deployer, CONTRACT_NAME, deploymentArgs, options);
@@ -80,7 +80,8 @@ async function deploymentAction(
     {
       ...options,
       proxyData: initData,
-      behindProxy: true,
+      isImplementationUpgrade: true, // implementation version has been bumped from v1 to v2
+      proxyAddress: config.sismoAddressesProvider.address,
       proxyAdmin,
     }
   );
@@ -90,40 +91,6 @@ async function deploymentAction(
     deployed.address,
     await hre.ethers.getSigner(deploymentsConfig[badNetwork].sismoAddressesProvider.owner as string)
   );
-
-  if (options?.log) {
-    console.log(
-      `
-      ************************************
-      *        UPGRADE PROXY ADMIN       *
-      ************************************
-      
-      Change staging proxy admin (${proxyAdmin}) 
-      to the expected testnet proxy admin (${options?.proxyAdmin!})) ?
-      `
-    );
-    if (options?.manualConfirm) {
-      await confirm();
-    }
-  }
-  const sismoAddressesProviderProxy = await TransparentUpgradeableProxy__factory.connect(
-    sismoAddressesProvider.address,
-    await hre.ethers.getSigner(proxyAdmin as string)
-  );
-
-  const transfertAdminTx = await sismoAddressesProviderProxy.changeAdmin(
-    config.deployOptions.proxyAdmin!
-  );
-  await transfertAdminTx.wait();
-
-  if (options?.log) {
-    console.log(
-      `
-      * Proxy admin successfully changed to ${config.deployOptions.proxyAdmin!} *
-      
-      ************************************`
-    );
-  }
 
   return {
     sismoAddressesProvider,
