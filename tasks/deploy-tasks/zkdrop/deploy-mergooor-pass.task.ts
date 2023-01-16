@@ -24,9 +24,9 @@ async function deploymentAction(
   const { zkBadgeboundERC721 } = (await hre.run('deploy-zk-badgebound-erc721', {
     name: 'Mergooor Pass',
     symbol: 'MP',
-    tokenURI: 'https://metadata.zkdrop.io/mergooor-pass/',
+    tokenURI: 'ipfs://QmPR9q3Q5fByxzfMfRp32azvH2UPXhPoDFhHWAsiGNHBwS/',
     gatingBadgeTokenId: '10000040',
-    admin: '0x10f5d45854e038071485ac9e402308cf80d2d2fe', // timbeiko.eth
+    admin: '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294', // Sismo owner
     deploymentName: 'MergooorPass',
     options,
   })) as DeployedZkBadgeboundERC721;
