@@ -2,7 +2,8 @@
 pragma solidity ^0.8.14;
 
 import '@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol';
-import {UsingSismo, Request} from '../core/SismoLib.sol';
+import {UsingSismo} from '../libs/SismoLib.sol';
+import {Request} from '../core/libs/Structs.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 import {Pausable} from '@openzeppelin/contracts/security/Pausable.sol';
 import {Context} from '@openzeppelin/contracts/utils/Context.sol';

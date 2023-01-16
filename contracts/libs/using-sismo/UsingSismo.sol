@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.14;
 
-import {AddressesProvider} from '../../utils/AddressesProvider.sol';
-import {Badges} from '../../Badges.sol';
-import {Attester} from '../../Attester.sol';
-import {HydraS1AccountboundAttester} from '../../../attesters/hydra-s1/HydraS1AccountboundAttester.sol';
+import {AddressesProvider} from '../../core/utils/AddressesProvider.sol';
+import {Badges} from '../../core/Badges.sol';
+import {Attester} from '../../core/Attester.sol';
+import {HydraS1AccountboundAttester} from '../../attesters/hydra-s1/HydraS1AccountboundAttester.sol';
 import {Context} from '@openzeppelin/contracts/utils/Context.sol';
-import {Request, Claim, Attestation} from '../Structs.sol';
+import {Request, Claim, Attestation} from '../../core/libs/Structs.sol';
 
 enum BalanceRequirementType {
   gte,
