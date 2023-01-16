@@ -3,15 +3,15 @@ import { EddsaPublicKey, HydraS1Account, KVMerkleTree } from '@sismo-core/hydra-
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import hre, { ethers } from 'hardhat';
-import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
-import { getImplementation } from '../../../../utils';
+import { deploymentsConfig } from '../../../tasks/deploy-tasks/deployments-config';
+import { getImplementation } from '../../../utils';
 import {
   checkAccountHoldsBadge,
   checkAttestationIsWellRegistered,
   deployCoreContracts,
   mintBadge,
   registerRootForAttester,
-} from '../../../../test/utils/test-helpers';
+} from '../../utils/test-helpers';
 import {
   AttestationsRegistry,
   AvailableRootsRegistry,
@@ -19,7 +19,7 @@ import {
   HydraS1AccountboundAttester,
   TransparentUpgradeableProxy__factory,
   ZKBadgeboundERC721,
-} from '../../../../types';
+} from '../../../types';
 import {
   evmRevert,
   evmSnapshot,
@@ -27,7 +27,7 @@ import {
   generateProvingData,
   HydraS1ZKPS,
   increaseTime,
-} from '../../../utils';
+} from '../../utils';
 
 describe('Test ZK Badgebound ERC721 Contract', async () => {
   let attestationsRegistry: AttestationsRegistry;
