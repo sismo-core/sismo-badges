@@ -14,9 +14,9 @@ import 'hardhat-storage-layout';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 import 'hardhat-deploy';
-import { Wallet } from 'ethers';
+import { BigNumber, Wallet } from 'ethers';
 import fg from 'fast-glob';
-import { HardhatNetworkForkingUserConfig } from 'hardhat/types';
+import { singletonFactory } from './utils/singletonFactory';
 
 dotenv.config();
 
@@ -47,7 +47,7 @@ const FORK_NETWORK = process.env.FORK_NETWORK || '';
 
 const forkUrl = {
   kovan: NETWORKS_RPC_URL[EthereumNetwork.kovan],
-  main: NETWORKS_RPC_URL[EthereumNetwork.main],
+  mainnet: NETWORKS_RPC_URL[EthereumNetwork.mainnet],
   polygon: NETWORKS_RPC_URL[PolygonNetwork.main],
   polygonPlayground: NETWORKS_RPC_URL[PolygonNetwork.main],
   rinkeby: NETWORKS_RPC_URL[EthereumNetwork.rinkeby],
@@ -85,6 +85,16 @@ const accounts = Array.from(Array(20), (_, index) => {
   };
 });
 
+const deterministicDeployment = (network: string) => {
+  const info = singletonFactory[parseInt(network)];
+  return {
+    factory: info!.address,
+    deployer: info!.signerAddress,
+    funding: BigNumber.from(info!.gasLimit).mul(BigNumber.from(info!.gasPrice)).toString(),
+    signedTx: info!.transaction,
+  };
+};
+
 const LOCAL_CHAIN_ID = process.env.LOCAL_CHAIN_ID ? parseInt(process.env.LOCAL_CHAIN_ID) : 31337;
 const LOCAL_HOSTNAME = process.env.LOCAL_HOSTNAME ?? 'localhost';
 const LOCAL_PORT = process.env.LOCAL_PORT ? parseInt(process.env.LOCAL_PORT) : 8545;
@@ -109,7 +119,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   networks: {
     kovan: getCommonNetworkConfig(EthereumNetwork.kovan, 42),
-    main: getCommonNetworkConfig(EthereumNetwork.main, 1),
+    mainnet: getCommonNetworkConfig(EthereumNetwork.mainnet, 1),
     polygon: getCommonNetworkConfig(PolygonNetwork.main, 137),
     polygonPlayground: getCommonNetworkConfig(PolygonNetwork.main, 137),
     goerliStaging: getCommonNetworkConfig(EthereumNetwork.goerli, 5),
@@ -147,6 +157,7 @@ const config: HardhatUserConfig = {
       url: 'http://localhost:8555',
     },
   },
+  deterministicDeployment,
 };
 
 export default config;

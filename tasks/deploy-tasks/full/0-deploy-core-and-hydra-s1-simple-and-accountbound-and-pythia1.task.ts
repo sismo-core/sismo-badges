@@ -1,4 +1,3 @@
-import { DeployedFrontendLib } from '../unit/periphery/deploy-frontend-lib.task';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import {
@@ -132,11 +131,6 @@ async function deploymentAction(
     'deploy-pythia-1-simple-attester',
     pythia1SimpleAttesterArgs
   )) as DeployedPythia1SimpleAttester;
-
-  const { frontendLib } = (await hre.run('deploy-frontend-lib', {
-    hydraS1AccountboundAttester: hydraS1AccountboundAttester.address,
-    options,
-  })) as DeployedFrontendLib;
 
   // Register an initial root for attester
   if (hydraS1SimpleAttester && (options.manualConfirm || options.log)) {
@@ -331,9 +325,6 @@ async function deploymentAction(
 
     * Pythia1Verifier:
       -> address: ${(await hre.deployments.all()).Pythia1Verifier.address}
-
-    * FrontendLib:
-      -> address: ${frontendLib.address}
   `);
   }
 

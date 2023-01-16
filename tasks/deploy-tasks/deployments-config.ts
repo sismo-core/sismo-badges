@@ -25,7 +25,18 @@ const COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD = [
   '0x018683c5d2f1f71d7e8b65ab0990635c019de9183359db7e80543c485426e490',
 ];
 
+// Account 0 of the create2Factory mnemonic
+export const SISMO_ADDRESSES_PROVIDER_PROXY_DEPLOYER = '0x77694e7C30B74dd271EACA4207Ada0fC10632f5f';
+// Should always be the same for all chains (deployed with create2)
+export const SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS =
+  '0x3340Ac0CaFB3ae34dDD53dba0d7344C1Cf3EFE05';
+
 const THREE_DAYS = '295200';
+
+// Mainnet
+const ALPHA_MAINNET_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
+const ALPHA_MAINNET_ROOTS_OWNER_RELAYER = '0x2a265b954b96d4940b94eb69e8fc8e7346369d05';
+const ALPHA_MAINNET_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
 
 // Polygon
 const ALPHA_POLYGON_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
@@ -59,6 +70,71 @@ const ALPHA_MUMBAI_STAGING_ROOTS_OWNER_RELAYER = '0x63f08f8f13126b9eadc76dd68390
 const ALPHA_MUMBAI_STAGING_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
 
 export const deploymentsConfig: DeploymentsConfigTypes = {
+  mainnet: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: ALPHA_MAINNET_PROXY_ADMIN,
+    },
+    badges: {
+      address: '0xe77eb6fb5037bCb11db10b9Ae478A7D01354Ae01',
+      owner: ALPHA_MAINNET_OWNER,
+      // Badges Metadata URI for the Badges contract
+      uri: 'https://hub.sismo.io/badges/mainnet/{id}.json',
+    },
+    front: {
+      address: '0xF518eBd3feeb8dc240b5dE46Ec6C57A0313891c1',
+      collectionIdFirst: '0',
+      collectionIdLast: '10000000',
+    },
+    hydraS1Verifier: {
+      address: '0x9338459cD17c9cE309D47d776e5B5A705586c62C',
+    },
+    hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
+      address: '0x0Fb92857855A34F6bFf6f8c42F9673f6e8329406',
+      collectionIdFirst: '10000001',
+      collectionIdLast: '20000000',
+      initialRoot: '0',
+      owner: ALPHA_MAINNET_OWNER,
+    },
+    pythia1Verifier: {
+      address: '0x0aC9a4f4bd025F6c414E72fe8B8Dc2FA4aAFBf21',
+    },
+    synapsPythia1SimpleAttester: {
+      address: '0xdd12CD5EeA2F185E675120044d4A1b9dB99933c2',
+      collectionIdFirst: '30000001',
+      collectionIdLast: '30000100',
+      commitmentSignerPubKeyX: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[0],
+      commitmentSignerPubKeyY: COMMITMENT_SIGNER_PUB_KEY_SYNAPS_PROD[1],
+      owner: ALPHA_MAINNET_OWNER,
+    },
+    attestationsRegistry: {
+      address: '0xB62F00e4e637e0E1031420D86B84e46BaE2a139F',
+      owner: ALPHA_MAINNET_OWNER,
+    },
+    availableRootsRegistry: {
+      address: '0x5E5e0CEfB86c39dbf3AFf31a61375e2D8eF4D001',
+      owner: ALPHA_MAINNET_ROOTS_OWNER_RELAYER,
+    },
+    commitmentMapper: {
+      address: '0x485ccCC5088873b74d622f505141d950297EC64a',
+      owner: ALPHA_MAINNET_OWNER,
+      EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
+      EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_MAINNET_OWNER,
+    },
+  },
   polygonPlayground: {
     deployOptions: {
       manualConfirm: true,
@@ -118,6 +194,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: SANDBOX_POLYGON_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: SANDBOX_POLYGON_OWNER,
     },
   },
   polygon: {
@@ -179,6 +259,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_POLYGON_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_POLYGON_OWNER,
     },
   },
   // Deployer alpha-prod-gnosis-mnemonic-deployer-dec-19-2022
@@ -242,6 +326,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_GNOSIS_OWNER,
+    },
   },
   // deployer: alpha-testnets-goerli-mnemonic-deployer-dec-15-2022
   goerliTestnet: {
@@ -304,6 +392,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
     },
+    sismoAddressesProvider: {
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+      owner: ALPHA_GOERLI_TESTNET_OWNER,
+    },
   },
   // deployer: alpha-testnets-mumbai-mnemonic-deployer-dec-15-2022
   mumbaiTestnet: {
@@ -365,6 +457,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_MUMBAI_TESTNET_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_PROD[1],
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_MUMBAI_TESTNET_OWNER,
     },
   },
 
@@ -432,6 +528,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
     },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_MUMBAI_STAGING_OWNER,
+    },
   },
   // deployer "alpha-testnets-goerli-mnemonic-deployer-october-4-2022"
   goerliStaging: {
@@ -493,6 +593,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: ALPHA_GOERLI_STAGING_OWNER,
       EdDSAPubKeyX: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_EDDSA_PUB_KEY_STAGING[1],
+    },
+    sismoAddressesProvider: {
+      address: '0x52097335aC9f74eD6751F29B796110A0eD9096E7',
+      owner: ALPHA_GOERLI_STAGING_OWNER,
     },
   },
   local: {
@@ -556,6 +660,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       EdDSAPubKeyX: '0x1e468ad0fcde4edec429cd41eb28a0e78d4f31fa2c25172ef677468b2b38a9dc',
       EdDSAPubKeyY: '0x2b6e9a8e3b8ed419cca51e2e2ee7ae07d2902454deca17d7da7b00ae4a798add',
     },
+    sismoAddressesProvider: {
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+      owner: '0xb01ee322C4f028B8A6BFcD2a5d48107dc5bC99EC',
+    },
   },
   hardhat: {
     deployOptions: {
@@ -617,6 +725,10 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
       owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
       EdDSAPubKeyX: COMMITMENT_MAPPER_TESTER[0],
       EdDSAPubKeyY: COMMITMENT_MAPPER_TESTER[1],
+    },
+    sismoAddressesProvider: {
+      address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+      owner: '0xb01ee322c4f028b8a6bfcd2a5d48107dc5bc99ec',
     },
   },
 };

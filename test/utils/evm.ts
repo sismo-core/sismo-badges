@@ -1,5 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { ethers } from 'hardhat';
 
 export async function increaseTime(
   hre: HardhatRuntimeEnvironment,
@@ -42,4 +43,8 @@ export async function impersonateAddress(
   }
   const signer = hre.ethers.provider.getSigner(address);
   return SignerWithAddress.create(signer);
+}
+
+export async function getBlockTimestamp(): Promise<number> {
+  return (await ethers.provider.getBlock('latest')).timestamp;
 }
