@@ -234,6 +234,11 @@ contract ZKBadgeboundERC721 is ERC721Upgradeable, UsingSismo, AccessControl, Pau
     _unpause();
   }
 
+  function tokenURI(uint256) public view override returns (string memory) {
+    string memory baseURI = _baseURI();
+    return bytes(baseURI).length > 0 ? baseURI : '';
+  }
+
   /**
    * @dev See {IERC165-supportsInterface}.
    */

@@ -157,6 +157,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       expect(await zkBadgeboundERC721.name()).to.be.eql('Ziki Pass');
       expect(await zkBadgeboundERC721.symbol()).to.equal('ZKP');
       expect(await zkBadgeboundERC721.GATING_BADGE_TOKEN_ID()).to.be.eql(badgeId);
+      expect(await zkBadgeboundERC721.tokenURI(0)).to.be.eql('https://test.com/zikipass');
     });
   });
 
