@@ -36,4 +36,4 @@ async function deploymentAction(
   };
 }
 
-task('deploy-ziki-pass-staging').setAction(deploymentAction);
+task('deploy-mergooor-pass').setAction(deploymentAction);
