@@ -9,7 +9,7 @@ import {
   generateProvingData,
   HydraS1SimpleGroup,
   HydraS1ZKPS,
-} from '../../../../test/utils';
+} from '../../../utils';
 import {
   AvailableRootsRegistry,
   HydraS1AccountboundAttester,
@@ -21,7 +21,7 @@ import {
   deployCoreContracts,
   mintBadge,
   registerRootForAttester,
-} from '../../../../test/utils/test-helpers';
+} from '../../../utils/test-helpers';
 
 describe('Test UsingSismo Lib', async () => {
   let mockContractUsingSismoLib: MockContractUsingSismoLib;
@@ -65,7 +65,6 @@ describe('Test UsingSismo Lib', async () => {
   before(async () => {
     chainId = parseInt(await hre.getChainId());
 
-    // create two groups in the merkle tree with respectively all values of 1 and 2
     ({ accountsTreesWithData, registryTree, groups, accounts, commitmentMapperPubKey } =
       await generateProvingData({
         nbOfGroups: 2,

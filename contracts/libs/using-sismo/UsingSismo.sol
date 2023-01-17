@@ -16,11 +16,12 @@ enum BalanceRequirementType {
 
 /**
  * @title UsingSismo
- * @notice This contract is intended to be used by other contracts that need to mint Sismo badges from Sismo proofs or check if an user holds certain Sismo Badges thanks
+ * @author Sismo
+ * @notice This contract is intended to be used by other contracts that need to mint Sismo Badges from Sismo proofs or check if an user holds certain Sismo Badges thanks
  * to high level functions such as `_mintSismoBadge` and `_requireBadges`.
  *
  * This contract can be viewed as a library that goes by pair with the "Prove With Sismo" off-chain flow. The "Prove With Sismo" off-chain flow is a flow that allows
- * users to prove that they are eligible to a specific Sismo badge and mint it on-chain thanks to a Sismo proof.
+ * users to prove that they are eligible to a specific Sismo Badge and mint it on-chain thanks to a Sismo proof and a request.
  * There are two different "Prove With Sismo" flows for on-chain gating:
  *
  * 2-txs flow: #1(tx) user is directed to Sismo and mints the Badge.
@@ -29,7 +30,7 @@ enum BalanceRequirementType {
  *                    to gate their function to Badge holders only
  * 1-tx flow:  #1(off-chain) user is directed to Sismo to create a Sismo Proof of Badge eligibility
  *             #(tx): app smart contract uses the _mintSismoBadge function that forwards the proof to the Attester
- *                    The Attester checks the proof (and mints the ZK Badge).
+ *                    The Attester checks the proof (and mints the Sismo Badge).
  *
  */
 
@@ -146,7 +147,7 @@ contract UsingSismo is Context {
   /**
    * @dev Check if the user has the required badges
    * @param account User address
-   * @param badgeTokenIds TokenIds of the badges required
+   * @param badgeTokenIds TokenIds of the required badges
    * @param isEachBadgeRequired If true, the user must have all the badges required. If false, the user must have at least one of the badges required. Default = false (see section 4).
    * @param requiredBalances Required balances of the required badges. Default = [1, .., 1] (see section 4).
    * @param balanceRequirementType Balance requirement type. Default = gte (see section 4).
@@ -339,7 +340,7 @@ contract UsingSismo is Context {
   }
 
   /**
-   * @dev Check if the balance of the badge is ok
+   * @dev Check if the balance of the badge meets the requirement
    * @param balance Balance of the badge
    * @param requiredBalance Required balance of the badge
    * @param balanceRequirementType Type of the balance requirement (gte, lte, equal)

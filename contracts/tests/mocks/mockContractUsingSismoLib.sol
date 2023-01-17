@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.14;
 
-import {UsingSismo, Request} from '../../core/SismoLib.sol';
+import {UsingSismo, Request} from '../../libs/SismoLib.sol';
 
 contract MockContractUsingSismoLib is UsingSismo {
   uint256 public constant FIRST_GATED_BADGE_ID = 200002;
