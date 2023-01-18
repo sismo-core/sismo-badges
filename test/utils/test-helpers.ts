@@ -16,19 +16,9 @@ import { KVMerkleTree } from 'hydra-s1-previous';
 import { getBlockTimestamp } from '../../test/utils/evm';
 import { SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS } from '../../tasks/deploy-tasks/deployments-config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { HydraS1Account } from '@sismo-core/hydra-s1';
-
-export const registerRootForAttester = async (
-  availableRootsRegistry: AvailableRootsRegistry,
-  attester: HydraS1AccountboundAttester,
-  registryTree: KVMerkleTree
-) => {
-  const root = registryTree.getRoot();
-  await availableRootsRegistry.registerRootForAttester(attester.address, root);
-};
 
 /****************************************
- ***** Deployment helpers for testing ***
+ ********** Helpers for testing *********
  ****************************************/
 
 export const deployCoreContracts = async (deployer: SignerWithAddress, options: DeployOptions) => {
@@ -66,6 +56,15 @@ export const deployCoreContracts = async (deployer: SignerWithAddress, options: 
     availableRootsRegistry,
     sismoAddressesProvider,
   };
+};
+
+export const registerRootForAttester = async (
+  availableRootsRegistry: AvailableRootsRegistry,
+  attester: HydraS1AccountboundAttester,
+  registryTree: KVMerkleTree
+) => {
+  const root = registryTree.getRoot();
+  await availableRootsRegistry.registerRootForAttester(attester.address, root);
 };
 
 export const checkAccountHoldsBadge = async (
@@ -151,10 +150,24 @@ export const mintBadge = async ({
   value,
   provingScheme,
   expectedBurnCount,
+  isDestinationAlreadyHoldingTheBadge = false,
 }: ProofGenerationArgs & {
   provingScheme: HydraS1ZKPS;
   expectedBurnCount?: number;
+  isDestinationAlreadyHoldingTheBadge?: boolean;
 }) => {
+  sources = sources ?? [destination];
+
+  const badgeId = (await provingScheme.defaultAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+    group?.properties.groupIndex ?? provingScheme.groups[0].properties.groupIndex
+  );
+
+  await checkAccountHoldsBadge(
+    BigNumber.from(destination.identifier).toHexString(),
+    badgeId,
+    isDestinationAlreadyHoldingTheBadge
+  );
+
   const { request, proofData, inputs } = await provingScheme.generateProof({
     sources,
     destination,
@@ -174,13 +187,23 @@ export const mintBadge = async ({
     tx: generateAttestationsTransaction,
   });
 
-  const badgeId = (await provingScheme.defaultAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
-    group?.properties.groupIndex ?? provingScheme.groups[0].properties.groupIndex
-  );
-
   await checkAccountHoldsBadge(BigNumber.from(destination.identifier).toHexString(), badgeId, true);
 
   return { request, proofData, inputs, nullifier: BigNumber.from(inputs.publicInputs.nullifier) };
+};
+
+export const computeBadgeIds = async (provingScheme: HydraS1ZKPS) => {
+  const badgeIds: BigNumber[] = [];
+  for (let i = 0; i < provingScheme.groups.length; i++) {
+    const group = provingScheme.groups[i];
+    badgeIds.push(
+      (await provingScheme.defaultAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(
+        group.properties.groupIndex
+      )
+    );
+  }
+
+  return badgeIds;
 };
 
 export const getAddressesProviderContract = async (hre: HardhatRuntimeEnvironment) => {

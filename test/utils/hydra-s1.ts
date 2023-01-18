@@ -50,11 +50,11 @@ export const generateHydraS1Accounts = async (
 
 export type GroupData = { [address: string]: number };
 
-export const generateGroup = (S1Accounts: HydraS1Account[], value: number): GroupData => {
+export const generateGroup = (S1Accounts: HydraS1Account[]): GroupData => {
   const List = {};
   S1Accounts.forEach((account, index) => {
     Object.assign(List, {
-      [BigNumber.from(account.identifier).toHexString()]: value ?? 0,
+      [BigNumber.from(account.identifier).toHexString()]: index + 1,
     });
   });
   return List;
@@ -219,7 +219,7 @@ export const decodeRequestAndProofFromBytes = (data: string) => {
  * ***********************************************/
 
 export type GenerateAttesterGroup = {
-  groupValues: number[];
+  nbOfGroups: number;
   generationTimestamp?: number;
   isScore?: boolean;
   groupIndex?: number;
@@ -246,8 +246,8 @@ export const generateProvingData = async (options?: GenerateAttesterGroup) => {
   const groups = options?.groups ?? [];
   let generationTimestamp = options?.generationTimestamp ?? Math.round(Date.now() / 1000);
 
-  for (const groupValue of options?.groupValues ?? [1]) {
-    const availableGroup = generateGroup(accounts, groupValue);
+  for (let i = 0; i < (options ? options?.nbOfGroups : 1); i++) {
+    const availableGroup = generateGroup(accounts);
 
     const properties = {
       groupIndex: groups.length + 1,
@@ -255,8 +255,10 @@ export const generateProvingData = async (options?: GenerateAttesterGroup) => {
       isScore: options?.isScore ?? false,
     };
 
+    const randomAddress = ethers.utils.hexZeroPad(`0x${Math.floor(Math.random() * 1000000)}`, 20);
+
     groups.push({
-      data: availableGroup,
+      data: { ...availableGroup, [randomAddress]: 0 },
       properties,
       id: generateGroupIdFromProperties(properties).toHexString(),
     });
@@ -306,7 +308,7 @@ export type HydraS1ZKPSConstructorArgs = {
 };
 
 export type ProofGenerationArgs = {
-  sources: HydraS1Account[];
+  sources?: HydraS1Account[]; // if not provided, will take the first source
   destination: HydraS1Account;
   value?: BigNumber;
   attesterAddress?: string;
@@ -430,9 +432,11 @@ export class HydraS1ZKPS {
     const group = proofGenerationArgs.group ?? this.groups[0];
     const attesterAddress = proofGenerationArgs.attesterAddress ?? this.defaultAttester.address;
 
-    const source = proofGenerationArgs.sources[0];
     const destination = proofGenerationArgs.destination;
-    const claimedValue = proofGenerationArgs.value ?? BigNumber.from(1);
+    const source = proofGenerationArgs?.sources ? proofGenerationArgs.sources[0] : destination;
+
+    const claimedValue = group.data[BigNumber.from(source.identifier).toHexString()];
+
     const chainId = this.chainId;
     const externalNullifier = await generateExternalNullifier(
       attesterAddress,
