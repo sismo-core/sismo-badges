@@ -4,7 +4,7 @@ WORKDIR /usr/src/build
 # Install dependencies
 COPY package.json yarn.lock ./
 
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --network-timeout 100000
 COPY . .
 RUN yarn compile
 
