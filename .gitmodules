@@ -10,3 +10,6 @@
 	path = lib/hydra-s1-zkps
 	url = https://github.com/sismo-core/hydra-s1-zkps
 	branch = v1.0.7
+[submodule "lib/pythia-1-zkps"]
+	path = lib/pythia-1-zkps
+	url = https://github.com/sismo-core/pythia-1-zkps
