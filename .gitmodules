@@ -6,3 +6,7 @@
 	path = lib/openzeppelin-contracts-upgradeable
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
 	branch = v4.8.1
+[submodule "lib/hydra-s1-zkps"]
+	path = lib/hydra-s1-zkps
+	url = https://github.com/sismo-core/hydra-s1-zkps
+	branch = v1.0.7
