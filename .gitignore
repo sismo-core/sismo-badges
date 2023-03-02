@@ -8,4 +8,4 @@ types/**
 deployments/local
 save
 .env
-
+out

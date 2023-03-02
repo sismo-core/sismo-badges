@@ -13,7 +13,7 @@ contract MockContractUsingSismoLib is UsingSismo {
     1. MINT BADGES from sismoProof received by "Prove With Sismo" off-chain flow
   *******************************************************/
 
-  function testMintSismoBadgeWithAttester(
+  function mintSismoBadgeWithAttester(
     Request memory request,
     bytes memory proofData,
     address attester
@@ -21,11 +21,11 @@ contract MockContractUsingSismoLib is UsingSismo {
     _mintSismoBadge(request, proofData, attester);
   }
 
-  function testMintSismoBadge(Request memory request, bytes memory proofData) external {
+  function mintSismoBadge(Request memory request, bytes memory proofData) external {
     _mintSismoBadge(request, proofData);
   }
 
-  function testMintSismoBadgesWithAttester(
+  function mintSismoBadgesWithAttester(
     Request memory request,
     bytes memory proofData,
     address attester
@@ -33,7 +33,7 @@ contract MockContractUsingSismoLib is UsingSismo {
     _mintSismoBadges(request, proofData, attester);
   }
 
-  function testMintSismoBadges(Request memory request, bytes memory proofData) external {
+  function mintSismoBadges(Request memory request, bytes memory proofData) external {
     _mintSismoBadges(request, proofData);
   }
 
@@ -41,79 +41,79 @@ contract MockContractUsingSismoLib is UsingSismo {
     2. MODIFIERS
   *******************************************************/
 
-  function testOnlyBadgeHoldersModifier() external onlyBadgeHolders(FIRST_GATED_BADGE_ID) {
+  function onlyBadgeHoldersModifier() external onlyBadgeHolders(FIRST_GATED_BADGE_ID) {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgesHoldersWithAllBadgesRequiredModifier(
+  function onlyBadgesHoldersWithAllBadgesRequiredModifier(
     uint256[] memory gatedBadge
   ) external onlyBadgesHolders(gatedBadge, true) {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgesHoldersWithOnlyOneBadgeRequiredModifier(
+  function onlyBadgesHoldersWithOnlyOneBadgeRequiredModifier(
     uint256[] memory gatedBadge
   ) external onlyBadgesHolders(gatedBadge, false) {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgeHoldersWithGreaterBalanceModifier()
+  function onlyBadgeHoldersWithGreaterBalanceModifier()
     external
     onlyBadgeHoldersWithGreaterBalance(FIRST_GATED_BADGE_ID, 2)
   {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgeHoldersWithLowerBalanceModifier()
+  function onlyBadgeHoldersWithLowerBalanceModifier()
     external
     onlyBadgeHoldersWithLowerBalance(FIRST_GATED_BADGE_ID, 2)
   {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgeHoldersWithExactBalanceModifier()
+  function onlyBadgeHoldersWithExactBalanceModifier()
     external
     onlyBadgeHoldersWithExactBalance(FIRST_GATED_BADGE_ID, 1)
   {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier(
+  function onlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier(
     uint256[] memory badgeTokenIds,
     uint256[] memory minBalances
   ) external onlyBadgesHoldersWithGreaterBalance(badgeTokenIds, minBalances, true) {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier(
+  function onlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier(
     uint256[] memory badgeTokenIds,
     uint256[] memory minBalances
   ) external onlyBadgesHoldersWithGreaterBalance(badgeTokenIds, minBalances, false) {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
+  function onlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
     uint256[] memory badgeTokenIds,
     uint256[] memory maxBalances
   ) external onlyBadgesHoldersWithLowerBalance(badgeTokenIds, maxBalances, true) {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier(
+  function onlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier(
     uint256[] memory badgeTokenIds,
     uint256[] memory maxBalances
   ) external onlyBadgesHoldersWithLowerBalance(badgeTokenIds, maxBalances, false) {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
+  function onlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
     uint256[] memory badgeTokenIds,
     uint256[] memory exactBalances
   ) external onlyBadgesHoldersWithExactBalance(badgeTokenIds, exactBalances, true) {
     _inc(_msgSender());
   }
 
-  function testOnlyBadgesHoldersWithExactBalanceAndOnlyOneBadgeRequiredModifier(
+  function onlyBadgesHoldersWithExactBalanceAndOnlyOneBadgeRequiredModifier(
     uint256[] memory badgeTokenIds,
     uint256[] memory exactBalances
   ) external onlyBadgesHoldersWithExactBalance(badgeTokenIds, exactBalances, false) {

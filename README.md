@@ -61,10 +61,16 @@ yarn compile
 ```
 
 ### Test
-Launch all tests
+Launch all hardhat tests
 
 ```
 yarn test
+```
+
+Launch all forge tests
+
+```
+forge test
 ```
 
 ### Print storage layout 

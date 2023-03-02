@@ -165,7 +165,7 @@ describe('Test UsingSismo Lib', async () => {
         destination: account2,
       });
 
-      await mockContractUsingSismoLib.testMintSismoBadgeWithAttester(
+      await mockContractUsingSismoLib.mintSismoBadgeWithAttester(
         request,
         proofData,
         hydraS1AccountboundAttester.address
@@ -183,7 +183,7 @@ describe('Test UsingSismo Lib', async () => {
         destination: account2,
       });
 
-      await mockContractUsingSismoLib.testMintSismoBadge(request, proofData);
+      await mockContractUsingSismoLib.mintSismoBadge(request, proofData);
 
       await checkAccountHoldsBadge(account2Signer.address, badgeId);
       await evmRevert(hre, evmSnapshotId);
@@ -198,7 +198,7 @@ describe('Test UsingSismo Lib', async () => {
         destination: account2,
       });
 
-      await mockContractUsingSismoLib.testMintSismoBadgesWithAttester(
+      await mockContractUsingSismoLib.mintSismoBadgesWithAttester(
         request,
         proofData,
         hydraS1AccountboundAttester.address
@@ -217,7 +217,7 @@ describe('Test UsingSismo Lib', async () => {
         destination: account2,
       });
 
-      await mockContractUsingSismoLib.testMintSismoBadges(request, proofData);
+      await mockContractUsingSismoLib.mintSismoBadges(request, proofData);
 
       await checkAccountHoldsBadge(account2Signer.address, badgeId);
       await evmRevert(hre, evmSnapshotId);
@@ -230,7 +230,7 @@ describe('Test UsingSismo Lib', async () => {
         // 0x2 should not hold badge yet
         await checkAccountHoldsBadge(account2Signer.address, badgeId, false);
         await expect(
-          mockContractUsingSismoLib.connect(account2Signer).testOnlyBadgeHoldersModifier()
+          mockContractUsingSismoLib.connect(account2Signer).onlyBadgeHoldersModifier()
         ).to.be.revertedWith('UserDoesNotMeetRequirements()');
       });
 
@@ -242,7 +242,7 @@ describe('Test UsingSismo Lib', async () => {
           provingScheme,
         });
 
-        await testBalanceIncrease(account2Signer, 'testOnlyBadgeHoldersModifier');
+        await testBalanceIncrease(account2Signer, 'onlyBadgeHoldersModifier');
 
         await evmRevert(hre, evmSnapshotId);
       });
@@ -255,7 +255,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithAllBadgesRequiredModifier([badgeId, badgeId2])
+            .onlyBadgesHoldersWithAllBadgesRequiredModifier([badgeId, badgeId2])
         ).to.be.revertedWith(`UserDoesNotMeetAllRequirements(${badgeId}, 1)`);
       });
 
@@ -270,7 +270,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithAllBadgesRequiredModifier([badgeId, badgeId2])
+            .onlyBadgesHoldersWithAllBadgesRequiredModifier([badgeId, badgeId2])
         ).to.be.revertedWith(`UserDoesNotMeetAllRequirements(${badgeId2}, 1)`);
       });
 
@@ -287,7 +287,7 @@ describe('Test UsingSismo Lib', async () => {
 
         await testBalanceIncrease(
           account2Signer,
-          'testOnlyBadgesHoldersWithAllBadgesRequiredModifier',
+          'onlyBadgesHoldersWithAllBadgesRequiredModifier',
           [[badgeId, badgeId2]]
         );
 
@@ -303,7 +303,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithOnlyOneBadgeRequiredModifier([badgeId, badgeId2])
+            .onlyBadgesHoldersWithOnlyOneBadgeRequiredModifier([badgeId, badgeId2])
         ).to.be.revertedWith('UserDoesNotMeetRequirements()');
       });
 
@@ -319,7 +319,7 @@ describe('Test UsingSismo Lib', async () => {
 
         await testBalanceIncrease(
           account2Signer,
-          'testOnlyBadgesHoldersWithOnlyOneBadgeRequiredModifier',
+          'onlyBadgesHoldersWithOnlyOneBadgeRequiredModifier',
           [[badgeId, badgeId2]]
         );
 
@@ -334,7 +334,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgeHoldersWithGreaterBalanceModifier()
+            .onlyBadgeHoldersWithGreaterBalanceModifier()
         ).to.be.revertedWith('UserDoesNotMeetRequirements()');
       });
 
@@ -349,7 +349,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgeHoldersWithGreaterBalanceModifier()
+            .onlyBadgeHoldersWithGreaterBalanceModifier()
         ).to.be.revertedWith('UserDoesNotMeetRequirements()');
         await evmRevert(hre, evmSnapshotId);
       });
@@ -362,7 +362,7 @@ describe('Test UsingSismo Lib', async () => {
           provingScheme,
         });
 
-        await testBalanceIncrease(account3Signer, 'testOnlyBadgeHoldersWithGreaterBalanceModifier');
+        await testBalanceIncrease(account3Signer, 'onlyBadgeHoldersWithGreaterBalanceModifier');
 
         await evmRevert(hre, evmSnapshotId);
       });
@@ -375,7 +375,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgeHoldersWithLowerBalanceModifier()
+            .onlyBadgeHoldersWithLowerBalanceModifier()
         ).to.be.revertedWith('UserDoesNotMeetRequirements()');
       });
 
@@ -390,7 +390,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account1Signer)
-            .testOnlyBadgeHoldersWithLowerBalanceModifier()
+            .onlyBadgeHoldersWithLowerBalanceModifier()
         ).to.be.revertedWith('UserDoesNotMeetRequirements()');
         await evmRevert(hre, evmSnapshotId);
       });
@@ -403,7 +403,7 @@ describe('Test UsingSismo Lib', async () => {
           provingScheme,
         });
 
-        await testBalanceIncrease(account1Signer, 'testOnlyBadgeHoldersWithLowerBalanceModifier');
+        await testBalanceIncrease(account1Signer, 'onlyBadgeHoldersWithLowerBalanceModifier');
 
         await evmRevert(hre, evmSnapshotId);
       });
@@ -416,7 +416,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgeHoldersWithExactBalanceModifier()
+            .onlyBadgeHoldersWithExactBalanceModifier()
         ).to.be.revertedWith('UserDoesNotMeetRequirements()');
       });
 
@@ -431,7 +431,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account1Signer)
-            .testOnlyBadgeHoldersWithExactBalanceModifier()
+            .onlyBadgeHoldersWithExactBalanceModifier()
         ).to.be.revertedWith('UserDoesNotMeetRequirements()');
         await evmRevert(hre, evmSnapshotId);
       });
@@ -444,7 +444,7 @@ describe('Test UsingSismo Lib', async () => {
           provingScheme,
         });
 
-        await testBalanceIncrease(account1Signer, 'testOnlyBadgeHoldersWithExactBalanceModifier');
+        await testBalanceIncrease(account1Signer, 'onlyBadgeHoldersWithExactBalanceModifier');
 
         await evmRevert(hre, evmSnapshotId);
       });
@@ -457,7 +457,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -475,7 +475,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -504,7 +504,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -532,7 +532,7 @@ describe('Test UsingSismo Lib', async () => {
 
         await testBalanceIncrease(
           account3Signer,
-          'testOnlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier',
+          'onlyBadgesHoldersWithGreaterBalanceAndAllBadgesRequiredModifier',
           [
             [badgeId, badgeId2],
             [2, 2],
@@ -550,7 +550,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier(
+            .onlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -570,7 +570,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier(
+            .onlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -599,7 +599,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier(
+            .onlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -619,7 +619,7 @@ describe('Test UsingSismo Lib', async () => {
 
         await testBalanceIncrease(
           account3Signer,
-          'testOnlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier',
+          'onlyBadgesHoldersWithGreaterBalanceAndOnlyOneBadgeRequiredModifier',
           [
             [badgeId, badgeId2],
             [2, 2],
@@ -637,7 +637,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -657,7 +657,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -677,7 +677,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -706,7 +706,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -734,7 +734,7 @@ describe('Test UsingSismo Lib', async () => {
 
         await testBalanceIncrease(
           account3Signer,
-          'testOnlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier',
+          'onlyBadgesHoldersWithLowerBalanceAndAllBadgesRequiredModifier',
           [
             [badgeId, badgeId2],
             [2, 2],
@@ -751,7 +751,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier(
+            .onlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -770,7 +770,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier(
+            .onlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -797,7 +797,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier(
+            .onlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -816,7 +816,7 @@ describe('Test UsingSismo Lib', async () => {
 
         await testBalanceIncrease(
           account3Signer,
-          'testOnlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier',
+          'onlyBadgesHoldersWithLowerBalanceAndOnlyOneBadgeRequiredModifier',
           [
             [badgeId, badgeId2],
             [2, 2],
@@ -833,7 +833,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -852,7 +852,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -879,7 +879,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -906,7 +906,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
+            .onlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -932,7 +932,7 @@ describe('Test UsingSismo Lib', async () => {
 
         await testBalanceIncrease(
           account2Signer,
-          'testOnlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier',
+          'onlyBadgesHoldersWithExactBalanceAndAllBadgesRequiredModifier',
           [
             [badgeId, badgeId2],
             [2, 2],
@@ -949,7 +949,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account2Signer)
-            .testOnlyBadgesHoldersWithExactBalanceAndOnlyOneBadgeRequiredModifier(
+            .onlyBadgesHoldersWithExactBalanceAndOnlyOneBadgeRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -968,7 +968,7 @@ describe('Test UsingSismo Lib', async () => {
         await expect(
           mockContractUsingSismoLib
             .connect(account3Signer)
-            .testOnlyBadgesHoldersWithExactBalanceAndOnlyOneBadgeRequiredModifier(
+            .onlyBadgesHoldersWithExactBalanceAndOnlyOneBadgeRequiredModifier(
               [badgeId, badgeId2],
               [2, 2]
             )
@@ -988,7 +988,7 @@ describe('Test UsingSismo Lib', async () => {
 
         await testBalanceIncrease(
           account2Signer,
-          'testOnlyBadgesHoldersWithExactBalanceAndOnlyOneBadgeRequiredModifier',
+          'onlyBadgesHoldersWithExactBalanceAndOnlyOneBadgeRequiredModifier',
           [
             [badgeId, badgeId2],
             [2, 2],
