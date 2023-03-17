@@ -12,7 +12,7 @@
     "prettier": "prettier --write 'contracts/**/*.sol'",
     "chain": "hardhat node",
     "storage-layout": "hardhat print-storage-layout",
-    "deploy:local": "rm -rf deployments/local && hardhat deploy-full-local  --network local"
+    "deploy:local": "rm -rf deployments/local && hardhat deploy-full-local --network local"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-etherscan": "^3.0.1",
@@ -32,7 +32,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged --pattern 'test/**/*.ts'  --pattern 'tasks/**/*.ts' --pattern 'contracts/**/*.sol'"
+      "pre-commit": "pretty-quick --staged --pattern 'test/**/*.ts' --pattern 'tasks/**/*.ts' --pattern 'contracts/**/*.sol'"
     }
   },
   "dependencies": {

@@ -117,4 +117,3 @@ Prefer [Discord](https://discord.gg/sismo) or [Twitter](https://twitter.com/sism
 
 <br/>
 <img src="https://static.sismo.io/readme/bottom-main.png" alt="bottom" width="100%" >
-
