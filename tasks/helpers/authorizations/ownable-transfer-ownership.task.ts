@@ -30,7 +30,7 @@ async function ownableTransferOwnership(
   if (currentOwner.toLowerCase() === newOwner.toLowerCase()) {
     if (options?.log || options?.manualConfirm) {
       console.log(`
-    * CurrentOwner(${currentOwner}) is already the targetted owner. Nothing to do, exiting.
+    * CurrentOwner(${currentOwner}) is already the targeted owner. Nothing to do, exiting.
     `);
     }
     return;
@@ -46,7 +46,7 @@ async function ownableTransferOwnership(
     );
   }
 
-  // transfering ownership section
+  // transferring ownership section
   const actionTransferOwnership = {
     currentOwner,
     newOwner,

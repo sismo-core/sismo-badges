@@ -18,7 +18,7 @@ import {Request, Attestation, AttestationData} from './libs/Structs.sol';
  
  * - generateAttestations(request, proof) => will write attestations in the registry
  * 1. (MANDATORY) Implement the buildAttestations() view function which generate attestations from user request
- * 2. (MANDATORY) Implement teh _verifyRequest() internal function where to write checks
+ * 2. (MANDATORY) Implement the _verifyRequest() internal function where to write checks
  * 3. (OPTIONAL)  Override _beforeRecordAttestations and _afterRecordAttestations hooks
 
  * - deleteAttestations(collectionId, owner, proof) => will delete attestations in the registry

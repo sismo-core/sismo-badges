@@ -21,7 +21,7 @@ import {HydraS1SimpleAttester, IAttester, HydraS1Lib, HydraS1ProofData, HydraS1C
  * The Hydra-S1 Simple Attester contract is inherited and holds the complex Hydra S1 verification logic.
  * Request verification alongside proof verification is already implemented in the inherited HydraS1SimpleAttester, along with the buildAttestations logic.
  * However, we override the buildAttestations function to encode the nullifier and its burn count in the user attestation.
- * The _beforeRecordAttestations is also overriden to fit the Accountbound logic.
+ * The _beforeRecordAttestations is also overridden to fit the Accountbound logic.
  * We invite readers to refer to:
  *    - https://hydra-s1.docs.sismo.io for a full guide through the Hydra-S1 ZK Attestations
  *    - https://hydra-s1-circuits.docs.sismo.io for circuits, prover and verifiers of Hydra-S1
@@ -38,7 +38,7 @@ import {HydraS1SimpleAttester, IAttester, HydraS1Lib, HydraS1ProofData, HydraS1C
  * - Nullified
  *   Each source account gets one nullifier per claim (i.e only one attestation per source account per claim)
  *   While semaphore/ tornado cash are using the following notations: nullifierHash = hash(IdNullifier, externalNullifier)
- *   We prefered to use the naming 'nullifier' instead of 'nullifierHash' in our contracts and documentation.
+ *   We preferred to use the naming 'nullifier' instead of 'nullifierHash' in our contracts and documentation.
  *   We also renamed 'IdNullifier' in 'sourceSecret' (the secret tied to a source account) and we kept the 'externalNullifier' notation.
  *   Finally, here is our notations at Sismo: nullifier = hash(sourceSecret, externalNullifier)
 
