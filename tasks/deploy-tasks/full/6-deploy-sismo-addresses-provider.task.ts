@@ -13,7 +13,19 @@ async function deploymentAction(
   { options }: { options: DeployOptions },
   hre: HardhatRuntimeEnvironment
 ): Promise<Deployed6> {
-  const config = deploymentsConfig[process.env.FORK_NETWORK ?? hre.network.name];
+  // ZK Badges are deprecated, we only use SismoAddressesProvider for Sismo Connect
+  const config = {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: process.env.PROXY_ADMIN,
+    },
+    sismoAddressesProvider: {
+      owner: process.env.SISMO_ADDRESSES_PROVIDER_OWNER,
+    },
+  };
+
   options = { ...config.deployOptions, ...options };
 
   if (options.manualConfirm || options.log) {
@@ -22,14 +34,15 @@ async function deploymentAction(
 
   // Deploy SismoAddressesProvider
   const { sismoAddressesProvider } = (await hre.run('deploy-sismo-addresses-provider', {
+    config,
     owner: config.sismoAddressesProvider.owner,
-    badges: config.badges.address,
-    attestationsRegistry: config.attestationsRegistry.address,
-    front: config.front.address,
-    hydraS1AccountboundAttester: config.hydraS1AccountboundAttester.address,
-    commitmentMapperRegistry: config.commitmentMapper.address,
-    availableRootsRegistry: config.availableRootsRegistry.address,
-    hydraS1Verifier: config.hydraS1Verifier.address,
+    badges: '0x0000000000000000000000000000000000000000',
+    attestationsRegistry: '0x0000000000000000000000000000000000000000',
+    front: '0x0000000000000000000000000000000000000000',
+    hydraS1AccountboundAttester: '0x0000000000000000000000000000000000000000',
+    commitmentMapperRegistry: '0x0000000000000000000000000000000000000000',
+    availableRootsRegistry: '0x0000000000000000000000000000000000000000',
+    hydraS1Verifier: '0x0000000000000000000000000000000000000000',
     options: { ...options, proxyAdmin: config.deployOptions.proxyAdmin },
   })) as DeployedSismoAddressesProvider;
 

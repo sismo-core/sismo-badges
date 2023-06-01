@@ -21,6 +21,7 @@ import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-co
 import { confirm } from '../../../../tasks/utils';
 
 export interface DeploySismoAddressesProvider {
+  config: any;
   owner: string;
   badges: string;
   attestationsRegistry: string;
@@ -40,6 +41,7 @@ const CONTRACT_NAME = 'AddressesProvider';
 
 async function deploymentAction(
   {
+    config,
     owner,
     badges,
     attestationsRegistry,
@@ -52,8 +54,6 @@ async function deploymentAction(
   }: DeploySismoAddressesProvider,
   hre: HardhatRuntimeEnvironment
 ): Promise<DeployedSismoAddressesProvider> {
-  const config = deploymentsConfig[hre.network.name];
-
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
 
