@@ -253,9 +253,7 @@ async function deploymentAction(
 
   if (options?.log) {
     console.log(
-      `Transfer AddressesProvider ownership (${
-        deployer.address
-      }) from the deployer to the expected one (${options?.proxyAdmin!})`
+      `Transfer AddressesProvider ownership (${deployer.address}) from the deployer to the expected one (${owner})`
     );
     if (options?.manualConfirm) {
       await confirm();

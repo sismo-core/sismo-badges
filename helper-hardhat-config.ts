@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config({});
 
-export type Network = EthereumNetwork | PolygonNetwork | GnosisNetwork;
+export type Network = EthereumNetwork | PolygonNetwork | GnosisNetwork | ScrollNetwork;
 
 export enum EthereumNetwork {
   kovan = 'kovan',
@@ -22,10 +22,15 @@ export enum GnosisNetwork {
   gnosis = 'gnosis',
 }
 
+export enum ScrollNetwork {
+  goerli = 'scroll-testnet-goerli',
+}
+
 export type ParamsPerNetwork<T> =
   | EthereumParamsPerNetwork<T>
   | PolygonParamsPerNetwork<T>
-  | XDaiParamsPerNetwork<T>;
+  | XDaiParamsPerNetwork<T>
+  | ScrollParamsPerNetwork<T>;
 
 export interface EthereumParamsPerNetwork<Network> {
   [EthereumNetwork.harhatevm]: Network;
@@ -43,6 +48,10 @@ export interface PolygonParamsPerNetwork<T> {
 
 export interface XDaiParamsPerNetwork<T> {
   [GnosisNetwork.gnosis]: T;
+}
+
+export interface ScrollParamsPerNetwork<T> {
+  [ScrollNetwork.goerli]: T;
 }
 
 export interface ObjectString {
@@ -76,4 +85,5 @@ export const NETWORKS_RPC_URL: ParamsPerNetwork<string> = {
     process.env.POLYGON_RPC_URL
   ),
   [GnosisNetwork.gnosis]: 'https://rpc.gnosischain.com',
+  [ScrollNetwork.goerli]: 'https://alpha-rpc.scroll.io/l2',
 };

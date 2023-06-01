@@ -5,6 +5,7 @@ import {
   PolygonNetwork,
   GnosisNetwork,
   NETWORKS_RPC_URL,
+  ScrollNetwork,
 } from './helper-hardhat-config';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
@@ -56,6 +57,7 @@ const forkUrl = {
   goerliStaging: NETWORKS_RPC_URL[EthereumNetwork.goerli],
   mumbaiStaging: NETWORKS_RPC_URL[PolygonNetwork.mumbai],
   gnosis: NETWORKS_RPC_URL[GnosisNetwork.gnosis],
+  scrollGoerliTestnet: NETWORKS_RPC_URL[ScrollNetwork.goerli],
 };
 
 const forking = FORK
@@ -126,6 +128,7 @@ const config: HardhatUserConfig = {
     mumbaiStaging: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
     goerliTestnet: getCommonNetworkConfig(EthereumNetwork.goerli, 5),
     mumbaiTestnet: getCommonNetworkConfig(PolygonNetwork.mumbai, 80001),
+    scrollGoerliTestnet: getCommonNetworkConfig(ScrollNetwork.goerli, 534353),
     gnosis: getCommonNetworkConfig(GnosisNetwork.gnosis, 100),
     local: {
       url: `http://${LOCAL_HOSTNAME}:${LOCAL_PORT}`,

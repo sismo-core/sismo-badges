@@ -59,6 +59,10 @@ const ALPHA_GOERLI_TESTNET_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff3
 const ALPHA_MUMBAI_TESTNET_OWNER = '0xaee4acd5c4Bf516330ca8fe11B07206fC6709294';
 const ALPHA_MUMBAI_TESTNET_ROOTS_OWNER_RELAYER = '0xca0583a6682607282963d3e2545cd2e75697c2bb';
 const ALPHA_MUMBAI_TESTNET_PROXY_ADMIN = '0x2110475dfbB8d331b300178A867372991ff35fA3';
+// Scroll Goerli Testnet
+const ALPHA_SCROLL_GOERLI_TESTNET_OWNER = '0xBB8FcA8f2381CFeEDe5D7541d7bF76343EF6c67B';
+const ALPHA_SCROLL_GOERLI_TESTNET_ROOTS_OWNER = '0x8f9c04d7bA132Fd0CbA124eFCE3936328d217458'; // Sismo Signer from Hub
+const ALPHA_SCROLL_GOERLI_TESTNET_PROXY_ADMIN = '0x246E71bC2a257f4BE9C7fAD4664E6D7444844Adc';
 
 // Goerli Staging
 const ALPHA_GOERLI_STAGING_OWNER = '0x4e070E9b85a659F0B7B47cde33152ad6c2F63954';
@@ -461,6 +465,71 @@ export const deploymentsConfig: DeploymentsConfigTypes = {
     sismoAddressesProvider: {
       address: '',
       owner: ALPHA_MUMBAI_TESTNET_OWNER,
+    },
+  },
+  scrollGoerliTestnet: {
+    deployOptions: {
+      manualConfirm: true,
+      log: true,
+      behindProxy: true,
+      proxyAdmin: ALPHA_SCROLL_GOERLI_TESTNET_PROXY_ADMIN,
+    },
+    badges: {
+      address: '0x0000000000000000000000000000000000000000',
+      owner: '',
+      // Badges Metadata URI for the Badges contract
+      uri: '',
+    },
+    front: {
+      address: '0x0000000000000000000000000000000000000000',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+    },
+    hydraS1Verifier: {
+      address: '0x0000000000000000000000000000000000000000',
+    },
+    hydraS1SimpleAttester: {
+      enableDeployment: false,
+      address: '0x0000000000000000000000000000000000000000',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '0',
+    },
+    hydraS1AccountboundAttester: {
+      address: '0x0000000000000000000000000000000000000000',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      initialRoot: '',
+      owner: '',
+    },
+    pythia1Verifier: {
+      address: '0x0000000000000000000000000000000000000000',
+    },
+    synapsPythia1SimpleAttester: {
+      address: '0x0000000000000000000000000000000000000000',
+      collectionIdFirst: '',
+      collectionIdLast: '',
+      commitmentSignerPubKeyX: '',
+      commitmentSignerPubKeyY: '',
+      owner: '',
+    },
+    attestationsRegistry: {
+      address: '0x0000000000000000000000000000000000000000',
+      owner: '',
+    },
+    availableRootsRegistry: {
+      address: '0x0000000000000000000000000000000000000000',
+      owner: '',
+    },
+    commitmentMapper: {
+      address: '0x0000000000000000000000000000000000000000',
+      owner: '',
+      EdDSAPubKeyX: '',
+      EdDSAPubKeyY: '',
+    },
+    sismoAddressesProvider: {
+      address: '',
+      owner: ALPHA_SCROLL_GOERLI_TESTNET_OWNER,
     },
   },
 
