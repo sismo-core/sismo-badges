@@ -9,6 +9,7 @@ import {
   customDeployContract,
   wrapCommonDeployOptions,
   DeployOptions,
+  wrapAddressesProviderDeployOptions,
 } from '../../utils';
 
 import {
@@ -17,11 +18,10 @@ import {
   TransparentUpgradeableProxy__factory,
 } from '../../../../types';
 import { utils } from 'ethers';
-import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
+import { SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS } from '../../../../tasks/deploy-tasks/deployments-config';
 import { confirm } from '../../../../tasks/utils';
 
 export interface DeploySismoAddressesProvider {
-  config: any;
   owner: string;
   badges: string;
   attestationsRegistry: string;
@@ -38,10 +38,21 @@ export interface DeployedSismoAddressesProvider {
 }
 
 const CONTRACT_NAME = 'AddressesProvider';
+const addressesProviderConfiguration = {
+  deployOptions: {
+    manualConfirm: true,
+    log: true,
+    behindProxy: true,
+    proxyAdmin: process.env.PROXY_ADMIN ?? '',
+  },
+  sismoAddressesProvider: {
+    address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
+    owner: process.env.SISMO_ADDRESSES_PROVIDER_OWNER ?? '',
+  },
+};
 
 async function deploymentAction(
   {
-    config,
     owner,
     badges,
     attestationsRegistry,
@@ -54,6 +65,8 @@ async function deploymentAction(
   }: DeploySismoAddressesProvider,
   hre: HardhatRuntimeEnvironment
 ): Promise<DeployedSismoAddressesProvider> {
+  const config = addressesProviderConfiguration;
+
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
 
@@ -274,4 +287,4 @@ task('deploy-sismo-addresses-provider')
   .addParam('availableRootsRegistry', 'Address of the availableRootsRegistry contract')
   .addParam('commitmentMapperRegistry', 'Address of the commitmentMapperRegistry contract')
   .addParam('hydraS1Verifier', 'Address of the hydraS1Verifier contract')
-  .setAction(wrapCommonDeployOptions(deploymentAction));
+  .setAction(wrapAddressesProviderDeployOptions(deploymentAction, addressesProviderConfiguration));

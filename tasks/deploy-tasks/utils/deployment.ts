@@ -187,5 +187,21 @@ export const wrapCommonDeployOptions = (action: Function) => {
   };
 };
 
+export const wrapAddressesProviderDeployOptions = (action: Function, configuration: any) => {
+  return (args: any, hre: HardhatRuntimeEnvironment) => {
+    const config = configuration;
+    return action(
+      {
+        ...args,
+        options: {
+          ...config.deployOptions,
+          ...args.options,
+        },
+      },
+      hre
+    );
+  };
+};
+
 export const buildDeploymentName = (contractName: string, prefix?: string) =>
   prefix ? `${prefix}_${contractName}` : contractName;
