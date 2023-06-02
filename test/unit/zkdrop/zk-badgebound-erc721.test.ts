@@ -108,6 +108,7 @@ describe('Test ZK Badgebound ERC721 Contract', async () => {
       ({ attestationsRegistry, hydraS1AccountboundAttester, badges, availableRootsRegistry } =
         await deployCoreContracts(deployer, {
           deploymentNamePrefix: 'zk-badgebound-erc721',
+          proxyAdmin: deploymentsConfig[hre.network.name].deployOptions.proxyAdmin,
         }));
 
       badgeId = (await hydraS1AccountboundAttester.AUTHORIZED_COLLECTION_ID_FIRST()).add(

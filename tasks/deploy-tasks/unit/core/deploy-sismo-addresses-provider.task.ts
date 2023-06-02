@@ -18,8 +18,8 @@ import {
   TransparentUpgradeableProxy__factory,
 } from '../../../../types';
 import { utils } from 'ethers';
-import { SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS } from '../../../../tasks/deploy-tasks/deployments-config';
 import { confirm } from '../../../../tasks/utils';
+import { addressesProviderConfiguration } from '../../../../tasks/deploy-tasks/full/6-deploy-sismo-addresses-provider.task';
 
 export interface DeploySismoAddressesProvider {
   owner: string;
@@ -38,18 +38,6 @@ export interface DeployedSismoAddressesProvider {
 }
 
 const CONTRACT_NAME = 'AddressesProvider';
-const addressesProviderConfiguration = {
-  deployOptions: {
-    manualConfirm: true,
-    log: true,
-    behindProxy: true,
-    proxyAdmin: process.env.PROXY_ADMIN ?? '',
-  },
-  sismoAddressesProvider: {
-    address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
-    owner: process.env.SISMO_ADDRESSES_PROVIDER_OWNER ?? '',
-  },
-};
 
 async function deploymentAction(
   {

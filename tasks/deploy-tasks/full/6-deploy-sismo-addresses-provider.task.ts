@@ -9,16 +9,16 @@ export interface Deployed6 {
   sismoAddressesProvider: AddressesProvider;
 }
 
-const addressesProviderConfiguration = {
+export const addressesProviderConfiguration = {
   deployOptions: {
-    manualConfirm: true,
+    manualConfirm: process.env.MANUAL_CONFIRM === 'true',
     log: true,
     behindProxy: true,
-    proxyAdmin: process.env.PROXY_ADMIN ?? '',
+    proxyAdmin: process.env.PROXY_ADMIN,
   },
   sismoAddressesProvider: {
     address: SISMO_ADDRESSES_PROVIDER_CONTRACT_ADDRESS,
-    owner: process.env.SISMO_ADDRESSES_PROVIDER_OWNER ?? '',
+    owner: process.env.SISMO_ADDRESSES_PROVIDER_OWNER,
   },
 };
 

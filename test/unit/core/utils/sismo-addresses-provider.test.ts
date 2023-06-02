@@ -71,6 +71,7 @@ describe('Test Sismo Addresses Provider', () => {
         hydraS1Verifier: hydraS1Verifier.address,
         options: {
           deploymentNamePrefix: 'firstDeployment',
+          proxyAdmin: deploymentsConfig[hre.network.name].deployOptions?.proxyAdmin,
         },
       }));
       expect(sismoAddressesProvider.address).to.be.eql(addressesProviderContractAddress);
