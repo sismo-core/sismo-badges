@@ -9,6 +9,7 @@ import {
   customDeployContract,
   wrapCommonDeployOptions,
   DeployOptions,
+  wrapAddressesProviderDeployOptions,
 } from '../../utils';
 
 import {
@@ -17,8 +18,8 @@ import {
   TransparentUpgradeableProxy__factory,
 } from '../../../../types';
 import { utils } from 'ethers';
-import { deploymentsConfig } from '../../../../tasks/deploy-tasks/deployments-config';
 import { confirm } from '../../../../tasks/utils';
+import { addressesProviderConfiguration } from '../../../../tasks/deploy-tasks/full/6-deploy-sismo-addresses-provider.task';
 
 export interface DeploySismoAddressesProvider {
   owner: string;
@@ -52,7 +53,7 @@ async function deploymentAction(
   }: DeploySismoAddressesProvider,
   hre: HardhatRuntimeEnvironment
 ): Promise<DeployedSismoAddressesProvider> {
-  const config = deploymentsConfig[hre.network.name];
+  const config = addressesProviderConfiguration;
 
   const deployer = await getDeployer(hre);
   const deploymentName = buildDeploymentName(CONTRACT_NAME, options?.deploymentNamePrefix);
@@ -253,9 +254,7 @@ async function deploymentAction(
 
   if (options?.log) {
     console.log(
-      `Transfer AddressesProvider ownership (${
-        deployer.address
-      }) from the deployer to the expected one (${options?.proxyAdmin!})`
+      `Transfer AddressesProvider ownership (${deployer.address}) from the deployer to the expected one (${owner})`
     );
     if (options?.manualConfirm) {
       await confirm();
@@ -276,4 +275,4 @@ task('deploy-sismo-addresses-provider')
   .addParam('availableRootsRegistry', 'Address of the availableRootsRegistry contract')
   .addParam('commitmentMapperRegistry', 'Address of the commitmentMapperRegistry contract')
   .addParam('hydraS1Verifier', 'Address of the hydraS1Verifier contract')
-  .setAction(wrapCommonDeployOptions(deploymentAction));
+  .setAction(wrapAddressesProviderDeployOptions(deploymentAction, addressesProviderConfiguration));
