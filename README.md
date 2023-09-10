@@ -40,7 +40,7 @@ It also contains implementations of attester in `attesters/`:
 
 ## Sismo protocol
 
-A complete overview of the protocol is available in our [documentation](https://protocol.docs.sismo.io)
+A complete overview of the protocol is available in our [documentation](https://docs.sismo.io/sismo-docs/welcome-to-sismo/readme)
 
 
 ## Deployed contracts
