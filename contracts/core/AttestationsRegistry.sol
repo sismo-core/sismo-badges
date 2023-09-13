@@ -58,7 +58,7 @@ contract AttestationsRegistry is
    */
   function recordAttestations(Attestation[] calldata attestations) external override whenNotPaused {
     address issuer = _msgSender();
-    for (uint256 i = 0; i < attestations.length; i++) {
+    for (uint256 i; i < attestations.length;) {
       if (!_isAuthorized(issuer, attestations[i].collectionId))
         revert IssuerNotAuthorized(issuer, attestations[i].collectionId);
 
@@ -80,6 +80,9 @@ contract AttestationsRegistry is
         attestations[i].value
       );
       emit AttestationRecorded(attestations[i]);
+      unchecked{
+        ++i;
+      }
     }
   }
 
@@ -96,7 +99,7 @@ contract AttestationsRegistry is
       revert OwnersAndCollectionIdsLengthMismatch(owners, collectionIds);
 
     address issuer = _msgSender();
-    for (uint256 i = 0; i < owners.length; i++) {
+    for (uint256 i; i < owners.length;) {
       AttestationData memory attestationData = _attestationsData[collectionIds[i]][owners[i]];
 
       if (!_isAuthorized(issuer, collectionIds[i]))
@@ -115,6 +118,10 @@ contract AttestationsRegistry is
           attestationData.extraData
         )
       );
+
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -241,7 +248,7 @@ contract AttestationsRegistry is
   }
 
   /**
-   * @dev Function that trigger a TransferSingle event from the stateless ERC1155 Badges contract
+   * @dev Function that triggers a TransferSingle event from the stateless ERC1155 Badges contract
    * It enables off-chain apps such as opensea to catch the "shadow mints/burns" of badges
    */
   function _triggerBadgeTransferEvent(
