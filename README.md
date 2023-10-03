@@ -27,13 +27,13 @@ This repository contains the smart contracts of the Sismo Protocol.
 
 There are three core contracts:
 
- - `core/AttestationsRegistry.sol`: The registry stores all attestations. It is owned by the governance that authorizes/unauthorize issuers to record in it
- - `core/Attester.sol` The standard abstract contract must be inherited by attesters. Attesters are issuers of attestations. They verify user requests and build attestations that will be recorded in the registry
- - `core/Badges.sol` Reads the registry. Stateless Non Transferable Token view of attestations (ERC1155)
+ - [`AttestationsRegistry.sol`](/contracts/core/AttestationsRegistry.sol): The registry stores all attestations. It is owned by the governance that authorizes/unauthorizes issuers to record in it
+ - [`Attester.sol`](/contracts/core/Attester.sol): The standard abstract contract must be inherited by attesters. Attesters are issuers of attestations. They verify users' requests and build attestations that will be recorded in the registry
+ - [`Badges.sol`](/contracts/core/Badges.sol): Reads the registry. Stateless Non Transferable Token view of attestations (ERC1155)
 
-It also contains implementations of attester in `attesters/`:
-- `HydraS1SimpleAttester.sol`: ZK Attester using the [Hydra S1 Proving Scheme](https://hydra-s1.docs.sismo.io) and the notion of nullifiers. Users must provide a ZK Proof along with their request to generate attestations
-- `HydraS1AccountboundAttester.sol`: Accountbound version of the Simple Hydra S1 Simple Attester. (Users can update at will where the attestation is stored)
+It also contains implementations of attester in [`attesters`](/contracts/attesters):
+- [`HydraS1SimpleAttester.sol`](/contracts/attesters/hydra-s1/HydraS1SimpleAttester.sol): ZK Attester using the [Hydra S1 Proving Scheme](https://hydra-s1.docs.sismo.io) and the notion of nullifiers. Users must provide a ZK Proof along with their request to generate attestations
+- [`HydraS1AccountboundAttester.sol`](/contracts/attesters/hydra-s1/HydraS1AccountboundAttester.sol): Accountbound version of the Simple Hydra S1 Simple Attester. (Users can update at will where the attestation is stored)
 
 <br/><br/>
 
@@ -87,21 +87,21 @@ yarn deploy:local
 
 ## Create a new Attester
 
-To develop a new attester, you must inherit the `core/Attester.sol` abstract contract and implement the following functions: 
+To develop a new attester, you must inherit the [`core/Attester.sol`](/contracts/core/Attester.sol) abstract contract and implement the following functions: 
 
 -  `_verifyRequest(request, proofData)`: You must implement the user request verification against the proof provided by the user
--  `buildAttestations(request, proofData)`: You must build the attestations that will be recorded from a verified user request
+-  `buildAttestations(request, proofData)`: You must build the attestations that will be recorded from a verified user's request
 
 Other optional hook functions that can be implemented:
 
 - `_beforeRecordAttestations(request, proofData)`
 - `_afterRecordAttestations(request, proofData)`
 
-The `/attesters/hydra-s1/HydraS1SimpleAttester.sol` is a good example of an attester implementing those functions.
+The [`HydraS1SimpleAttester.sol`](/contracts/attesters/hydra-s1/HydraS1SimpleAttester.sol) is a good example of an attester implementing those functions.
 
 A [guide](https://attesters.docs.sismo.io) is offered in our documentation.
 
-Feel free open a PR with your new attester in `/attester`!
+Feel free open a PR with your new attester in [`attesters`](/contracts/attesters)!
 
 ## License
 
