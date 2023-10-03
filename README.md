@@ -27,9 +27,9 @@ This repository contains the smart contracts of the Sismo Protocol.
 
 There are three core contracts:
 
- - `core/AttestationsRegistry.sol`: The registry stores all attestations. It is owned by the governance that authorizes/unauthorize issuers to record in it
- - `core/Attester.sol` The standard abstract contract must be inherited by attesters. Attesters are issuers of attestations. They verify user requests and build attestations that will be recorded in the registry
- - `core/Badges.sol` Reads the registry. Stateless Non Transferable Token view of attestations (ERC1155)
+ - `core/AttestationsRegistry.sol`: The registry stores all attestations. It is owned by the governance that authorizes/unauthorizes issuers to record in it
+ - `core/Attester.sol`: The standard abstract contract must be inherited by attesters. Attesters are issuers of attestations. They verify users' requests and build attestations that will be recorded in the registry
+ - `core/Badges.sol`: Reads the registry. Stateless Non Transferable Token view of attestations (ERC1155)
 
 It also contains implementations of attester in `attesters/`:
 - `HydraS1SimpleAttester.sol`: ZK Attester using the [Hydra S1 Proving Scheme](https://hydra-s1.docs.sismo.io) and the notion of nullifiers. Users must provide a ZK Proof along with their request to generate attestations
@@ -90,7 +90,7 @@ yarn deploy:local
 To develop a new attester, you must inherit the `core/Attester.sol` abstract contract and implement the following functions: 
 
 -  `_verifyRequest(request, proofData)`: You must implement the user request verification against the proof provided by the user
--  `buildAttestations(request, proofData)`: You must build the attestations that will be recorded from a verified user request
+-  `buildAttestations(request, proofData)`: You must build the attestations that will be recorded from a verified user's request
 
 Other optional hook functions that can be implemented:
 
@@ -101,7 +101,7 @@ The `/attesters/hydra-s1/HydraS1SimpleAttester.sol` is a good example of an atte
 
 A [guide](https://attesters.docs.sismo.io) is offered in our documentation.
 
-Feel free open a PR with your new attester in `/attester`!
+Feel free open a PR with your new attester in `/attesters`!
 
 ## License
 
